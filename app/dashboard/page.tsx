@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useState } from "react";
 
-
 export default function RiskAssessmentDashboard() {
   const data = [
     {
@@ -101,7 +100,9 @@ export default function RiskAssessmentDashboard() {
                   <td className="px-6 py-4">{item.vessel}</td>
                   <td className="px-6 py-4">
                     <span
-                      className={`text-xs px-2 py-1 rounded-full font-medium ${riskStyle[item.risk]}`}
+                      className={`text-xs px-2 py-1 rounded-full font-medium ${
+                        riskStyle[item.risk as keyof typeof riskStyle]
+                      }`}
                     >
                       {item.risk}
                     </span>
