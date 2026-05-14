@@ -12,3 +12,11 @@
 - npx prisma generate
 - npx prisma studio
 // add "postinstall": "prisma generate", in json/scripts
+
+# shadcn
+- npx shadcn@latest init --preset [CODE] --template next
+- npx shadcn@latest add button
+- npx shadcn@latest add dropdown-menu
+
+# dark mode
+- npm install next-themes

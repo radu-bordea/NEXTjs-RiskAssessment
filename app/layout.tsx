@@ -9,12 +9,15 @@ import {
   UserButton,
 } from "@clerk/nextjs";
 
+import { ThemeProvider } from "@/components/theme-provider";
+
 import { Geist, Geist_Mono } from "next/font/google";
 
 import "./globals.css";
 
 import { syncUser } from "./actions/syncUsers";
 import Link from "next/link";
+import { ModeToggle } from "@/components/mode-toggle";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -39,15 +42,22 @@ export default async function RootLayout({
   // Sync logged-in Clerk users into Prisma
   await syncUser();
 
-  return (
-    <ClerkProvider>
-      <html lang="en">
-        <body
-          className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+return (
+  <ClerkProvider>
+    <html lang="en" suppressHydrationWarning>
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+      >
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
         >
-          <header className="flex justify-between items-center px-6 h-16 border-b border-zinc-100 dark:border-zinc-800">
+          <header className="flex justify-between items-center px-2 md:px-12 h-16 border-b border-zinc-100 dark:border-zinc-800">
             {/* Logo */}
             <div className="flex items-center gap-2">
+            <ModeToggle />
               <span className="w-2 h-2 rounded-full bg-[#1D9E75]" />
 
               <span className="font-bold tracking-wide text-sm">
@@ -55,12 +65,13 @@ export default async function RootLayout({
               </span>
             </div>
 
+
             {/* Auth */}
             <div className="flex items-center gap-3">
               {/* Signed out */}
               <Show when="signed-out">
                 <SignInButton>
-                  <button className="text-sm px-4 py-2 rounded-lg border border-[#1D9E75] text-[#1D9E75] hover:bg-[#E1F5EE] transition-colors cursor-pointer">
+                  <button className="text-sm px-4 py-2 rounded-lg border border-[#1D9E75] text-[#1D9E75] hover:bg-[#E1F5EE] dark:hover:bg-zinc-800 transition-colors cursor-pointer">
                     Sign in
                   </button>
                 </SignInButton>
@@ -102,8 +113,9 @@ export default async function RootLayout({
           </header>
 
           {children}
-        </body>
-      </html>
-    </ClerkProvider>
-  );
+        </ThemeProvider>
+      </body>
+    </html>
+  </ClerkProvider>
+);
 }
