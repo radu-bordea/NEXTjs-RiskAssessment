@@ -2,8 +2,25 @@ import { SignIn } from "@clerk/nextjs";
 
 export default function SignInPage() {
   return (
-    <div className="min-h-screen grid grid-cols-2">
-      {/* Left panel */}
+    <div className="min-h-screen grid grid-cols-1 md:grid-cols-2">
+      {/* Left panel — Clerk handles the form */}
+      <div className="flex items-center justify-center p-8 bg-white dark:bg-zinc-950">
+        <SignIn
+          forceRedirectUrl="/dashboard"
+          appearance={{
+            elements: {
+              rootBox: "w-full max-w-sm",
+              card: "shadow-none border border-zinc-200 dark:border-zinc-800 rounded-xl p-6",
+              headerTitle: "text-lg font-semibold",
+              formButtonPrimary:
+                "bg-[#0F6E56] hover:bg-[#085041] text-white text-sm",
+              footerActionLink: "text-[#1D9E75] hover:text-[#0F6E56]",
+            },
+          }}
+        />
+      </div>
+
+      {/* Right panel */}
       <div className="bg-[#04342C] flex flex-col justify-between p-8">
         <div>
           <div className="flex items-center gap-2">
@@ -52,22 +69,7 @@ export default function SignInPage() {
         </p>
       </div>
 
-      {/* Right panel — Clerk handles the form */}
-      <div className="flex items-center justify-center p-8 bg-white dark:bg-zinc-950">
-        <SignIn
-          forceRedirectUrl="/dashboard"
-          appearance={{
-            elements: {
-              rootBox: "w-full max-w-sm",
-              card: "shadow-none border border-zinc-200 dark:border-zinc-800 rounded-xl p-6",
-              headerTitle: "text-lg font-semibold",
-              formButtonPrimary:
-                "bg-[#0F6E56] hover:bg-[#085041] text-white text-sm",
-              footerActionLink: "text-[#1D9E75] hover:text-[#0F6E56]",
-            },
-          }}
-        />
-      </div>
+
     </div>
   );
 }

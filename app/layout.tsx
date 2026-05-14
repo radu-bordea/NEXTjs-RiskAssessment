@@ -64,15 +64,6 @@ export default async function RootLayout({
                     Sign in
                   </button>
                 </SignInButton>
-
-                {/* KEEP DURING DEVELOPMENT */}
-                {/* REMOVE LATER FOR INVITE-ONLY ACCESS */}
-
-                {/* <SignUpButton>
-                  <button className="text-sm px-4 py-2 rounded-lg bg-[#0F6E56] text-[#E1F5EE] hover:bg-[#085041] transition-colors cursor-pointer">
-                    Sign up
-                  </button>
-                </SignUpButton> */}
               </Show>
 
               {/* Signed in */}
