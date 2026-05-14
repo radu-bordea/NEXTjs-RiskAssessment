@@ -11,3 +11,4 @@
 - npx prisma migrate dev --name init
 - npx prisma generate
 - npx prisma studio
+// add "postinstall": "prisma generate", in json/scripts
