@@ -18,6 +18,8 @@ import "./globals.css";
 import { syncUser } from "./actions/syncUsers";
 import Link from "next/link";
 import { ModeToggle } from "@/components/mode-toggle";
+import { getUserRole } from "./actions/getUIserRole";
+import { log } from "console";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -41,6 +43,10 @@ export default async function RootLayout({
 }>) {
   // Sync logged-in Clerk users into Prisma
   await syncUser();
+
+  // Get user role and pass it down via context (optional, can also be done in individual pages)
+  const user = await getUserRole();
+  log("User role in layout:", user);
 
   return (
     <ClerkProvider>
@@ -79,25 +85,27 @@ export default async function RootLayout({
                 {/* Signed in */}
                 <Show when="signed-in">
                   <div className="flex items-center gap-3">
-                    <OrganizationSwitcher
-                      hidePersonal
-                      afterCreateOrganizationUrl="/"
-                      afterLeaveOrganizationUrl="/"
-                      afterSelectOrganizationUrl="/"
-                      appearance={{
-                        variables: {
-                          colorText: "#ffffff",
-                          colorBackground: "#1f1f23",
-                          colorInputBackground: "#2a2a30",
-                          colorNeutral: "#BEBEBE",
-                        },
-                        elements: {
-                          rootBox: "w-auto",
-                          organizationSwitcherTrigger:
-                            "border border-zinc-200 dark:border-zinc-700 rounded-lg px-3 py-2",
-                        },
-                      }}
-                    />
+                    {user === "ADMIN" && (
+                      <OrganizationSwitcher
+                        hidePersonal
+                        afterCreateOrganizationUrl="/"
+                        afterLeaveOrganizationUrl="/"
+                        afterSelectOrganizationUrl="/"
+                        appearance={{
+                          variables: {
+                            colorText: "#ffffff",
+                            colorBackground: "#1f1f23",
+                            colorInputBackground: "#2a2a30",
+                            colorNeutral: "#6d8777",
+                          },
+                          elements: {
+                            rootBox: "w-auto",
+                            organizationSwitcherTrigger:
+                              "border border-zinc-200 dark:border-zinc-700 rounded-lg px-3 py-2",
+                          },
+                        }}
+                      />
+                    )}
 
                     <UserButton
                       appearance={{
