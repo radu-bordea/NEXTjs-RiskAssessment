@@ -13,16 +13,74 @@ datasource db {
 }
 
 model User {
-  id        String   @id        // Clerk's user ID, e.g. "user_2abc..."
+  id        String   @id // Clerk's user ID, e.g. "user_2abc..."
   email     String   @unique
   name      String?
   role      Role     @default(MEMBER)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  risksCreated     Risk[] @relation("CreatedBy")
+  risksStateUpdate Risk[] @relation("StateUpdatedBy")
+}
+
+model Risk {
+  id      String  @id @default(cuid())
+  ref     String  @unique // e.g. "RA-N-040", your human-readable ID
+  cloneOf String? // ref of the original if this was cloned
+
+  workActivity     String // Work Activity Being Assessed
+  initiator        String // name of person who initiated
+  initiationDate   DateTime
+  reviewDate       DateTime?
+  vesselDepartment String? // e.g. "Company-TMS Tankers Ltd - Office"
+  raType           RAType    @default(NON_ROUTINE)
+  sct              Int? // SCT number
+  libraryIndex     String? // e.g. "NAVIGATION:Navigation in Kiel Canal"
+  state            RiskState @default(DRAFT)
+  notes            String? // any extra notes
+
+  fleet         String? // e.g. "TMS Tankers"
+  defectRelated Boolean @default(false)
+
+  // Relations
+  createdById String
+  createdBy   User   @relation("CreatedBy", fields: [createdById], references: [id])
+
+  stateUpdatedById String?
+  stateUpdatedBy   User?   @relation("StateUpdatedBy", fields: [stateUpdatedById], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([ref])
+  @@index([state])
+  @@index([createdById])
+  @@index([fleet])
+  @@index([defectRelated])
+  @@index([workActivity])
+  @@index([initiator])
+  @@index([vesselDepartment])
+  @@index([raType])
+  @@index([libraryIndex])
+  @@index([sct])
+  @@index([cloneOf])
 }
 
 enum Role {
   ADMIN
   MANAGER
   MEMBER
+}
+
+enum RAType {
+  ROUTINE
+  NON_ROUTINE
+}
+
+enum RiskState {
+  DRAFT
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
 }

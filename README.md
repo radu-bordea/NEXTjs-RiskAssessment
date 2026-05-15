@@ -13,6 +13,10 @@
 - npx prisma studio
 // add "postinstall": "prisma generate", in json/scripts
 
+- npx prisma db push
+- npx prisma generate
+- npx prisma db seed
+
 # shadcn
 - npx shadcn@latest init --preset [CODE] --template next
 - npx shadcn@latest add button
