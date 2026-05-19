@@ -2,7 +2,7 @@ import { z } from "zod";
 
 const additionalMeasureSchema = z.object({
   id: z.string().optional(),
-  furtherAction: z.string().optional(),
+  furtherAction: z.string().optional().nullable(),
   c: z.number().int().min(1).max(6).optional().nullable(),
   f: z.number().int().min(1).max(6).optional().nullable(),
   order: z.number().int().default(0),
@@ -13,7 +13,7 @@ const assessmentRowSchema = z.object({
   hazard: z.string().min(1, "Hazard is required"),
   impact: z.string().min(1, "Impact is required"),
   existingControls: z.string().optional(),
-  sct: z.string().optional(), // the dropdown value
+  sct: z.string().optional().nullable(), // the dropdown value
   c: z.number().int().min(1).max(6).optional().nullable(),
   f: z.number().int().min(1).max(6).optional().nullable(),
   order: z.number().int().default(0),
