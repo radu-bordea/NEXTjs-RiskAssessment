@@ -12,13 +12,7 @@ export default async function DashboardPage() {
     include: {
       createdBy: { select: { name: true, email: true } },
       stateUpdatedBy: { select: { name: true } },
-
-      // ✅ REQUIRED for SCT calculation
-      assessmentRows: {
-        select: {
-          sct: true,
-        },
-      },
+      assessmentRows: true,
     },
   });
 
