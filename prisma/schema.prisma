@@ -35,7 +35,6 @@ model Risk {
   reviewDate       DateTime?
   vesselDepartment String? // e.g. "Company-TMS Tankers Ltd - Office"
   raType           RAType    @default(NON_ROUTINE)
-  sct              Int? // SCT number
   libraryIndex     String? // e.g. "NAVIGATION:Navigation in Kiel Canal"
   state            RiskState @default(DRAFT)
   notes            String? // any extra notes
@@ -70,7 +69,6 @@ model Risk {
   @@index([vesselDepartment])
   @@index([raType])
   @@index([libraryIndex])
-  @@index([sct])
   @@index([cloneOf])
 }
 

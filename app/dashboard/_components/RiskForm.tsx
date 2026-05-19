@@ -187,12 +187,12 @@ export default function RiskForm({ currentUser }: { currentUser: User }) {
 
           <div>
             <label className={labelClass}>Vessel / Department</label>
-            <Input {...register("vesselDepartment")} placeholder="e.g. MV Atlantic Star - Bridge" />
+            <Input {...register("vesselDepartment")} placeholder="e.g. MMI Mobile Marine International" />
           </div>
 
           <div>
             <label className={labelClass}>Fleet</label>
-            <Input {...register("fleet")} placeholder="e.g. TMS Tankers" />
+            <Input {...register("fleet")} placeholder="e.g. M/V Mobile Voyager" />
           </div>
 
           <div>

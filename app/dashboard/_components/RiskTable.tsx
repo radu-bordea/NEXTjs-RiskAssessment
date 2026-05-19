@@ -34,7 +34,6 @@ export default function RiskTable({
     libraryIndex: "",
     isClone: "",
     defectRelated: "",
-    sct: "",
   });
 
   const router = useRouter();
@@ -80,7 +79,6 @@ export default function RiskTable({
       if (filters.isClone === "no" && r.cloneOf) return false;
       if (filters.defectRelated === "yes" && !r.defectRelated) return false;
       if (filters.defectRelated === "no" && r.defectRelated) return false;
-      if (filters.sct && getSctCount(r) !== Number(filters.sct)) return false;
       return true;
     });
   }, [risks, filters]);
@@ -105,13 +103,8 @@ export default function RiskTable({
       libraryIndex: "",
       isClone: "",
       defectRelated: "",
-      sct: "",
     });
 
-  const getSctCount = (r: Risk) =>
-    r.assessmentRows?.filter(
-      (row: { sct: string }) => row.sct && row.sct !== "",
-    ).length ?? 0;
 
   return (
     <div className="min-h-screen bg-white dark:bg-zinc-950 text-zinc-900 dark:text-white px-6 md:px-10 py-10 font-sans">
@@ -220,21 +213,6 @@ export default function RiskTable({
             <option value="yes">Yes</option>
             <option value="no">No</option>
           </select>
-
-          <select
-            value={filters.sct}
-            onChange={(e) => set("sct", e.target.value)}
-            className="px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-950 text-sm"
-          >
-            <option value="">SCT</option>
-            {[...new Set(risks.map((r) => r.sct).filter((s) => s !== null))]
-              .sort()
-              .map((s) => (
-                <option key={s!} value={s!}>
-                  {s}
-                </option>
-              ))}
-          </select>
         </div>
 
         <button
@@ -260,7 +238,6 @@ export default function RiskTable({
                   "Review Date",
                   "Vessel/Dept",
                   "RA Type",
-                  "SCT",
                   "Library Index",
                   "State",
                   "State Updated By",
@@ -279,7 +256,7 @@ export default function RiskTable({
               {filtered.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={13}
+                    colSpan={1}
                     className="px-4 py-10 text-center text-zinc-400 text-sm"
                   >
                     No risks found matching your filters.
@@ -317,7 +294,6 @@ export default function RiskTable({
                     <td className="px-4 py-3 whitespace-nowrap">
                       {raTypeLabel[r.raType]}
                     </td>
-                    <td className="px-4 py-3">{getSctCount(r)}</td>
                     <td className="px-4 py-3 max-w-45 truncate text-zinc-500">
                       {r.libraryIndex ?? "—"}
                     </td>
