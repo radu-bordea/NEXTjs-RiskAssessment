@@ -68,7 +68,7 @@ export default function RiskForm({ currentUser }: { currentUser: User }) {
   } = useForm<RiskFormValues, unknown, RiskFormValues>({
     resolver: zodResolver(riskSchema) as Resolver<RiskFormValues>,
     defaultValues: {
-      iinitiator: currentUser?.name ?? currentUser?.email ?? "",
+      initiator: currentUser?.name ?? currentUser?.email ?? "",
       initiationDate: new Date(),
       raType: "NON_ROUTINE",
       defectRelated: false,
@@ -81,7 +81,6 @@ export default function RiskForm({ currentUser }: { currentUser: User }) {
           sct: null,
           c: null,
           f: null,
-          rf: null,
           order: 0,
           additionalMeasures: [],
         },
@@ -259,7 +258,6 @@ export default function RiskForm({ currentUser }: { currentUser: User }) {
               sct: null,
               c: null,
               f: null,
-              rf: null,
               order: assessmentFields.length,
               additionalMeasures: [],
             })
