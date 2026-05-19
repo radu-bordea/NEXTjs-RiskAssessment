@@ -68,7 +68,7 @@ export default function RiskForm({ currentUser }: { currentUser: User }) {
   } = useForm<RiskFormValues, unknown, RiskFormValues>({
     resolver: zodResolver(riskSchema) as Resolver<RiskFormValues>,
     defaultValues: {
-      initiator: currentUser.name ?? currentUser.email,
+      iinitiator: currentUser?.name ?? currentUser?.email ?? "",
       initiationDate: new Date(),
       raType: "NON_ROUTINE",
       defectRelated: false,

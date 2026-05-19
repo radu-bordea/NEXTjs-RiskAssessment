@@ -18,6 +18,7 @@ export type Risk = {
   stateUpdatedBy: { name: string | null } | null;
 };
 
+
 export type User = {
   id: string;
   role: string;

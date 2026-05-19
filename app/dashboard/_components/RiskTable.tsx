@@ -3,6 +3,7 @@
 import { useState, useMemo } from "react";
 import { Risk, User } from "@/types";
 import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
 
 const stateStyle: Record<string, string> = {
   DRAFT: "bg-zinc-100 text-zinc-600 whitespace-nowrap",
@@ -332,19 +333,20 @@ export default function RiskTable({
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
-                        <button
+                        <Button
                           title="Preview"
+                           onClick={() => router.push(`/dashboard/risks/${r.id}`)}
                           className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-400 hover:text-zinc-700 transition-colors"
                         >
                           👁
-                        </button>
+                        </Button>
                         {canEdit && (
-                          <button
+                          <Button
                             title="Edit"
                             className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-400 hover:text-zinc-700 transition-colors"
                           >
                             ✏️
-                          </button>
+                          </Button>
                         )}
                       </div>
                     </td>
