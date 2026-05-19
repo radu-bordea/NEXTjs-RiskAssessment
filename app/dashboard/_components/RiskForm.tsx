@@ -77,7 +77,7 @@ export default function RiskForm({ currentUser }: { currentUser: User }) {
         {
           hazard: "",
           impact: "",
-          existingControl: "",
+          existingControls: "",
           sct: null,
           c: null,
           f: null,
@@ -255,7 +255,7 @@ export default function RiskForm({ currentUser }: { currentUser: User }) {
             appendRow({
               hazard: "",
               impact: "",
-              existingControl: "",
+              existingControls: "",
               sct: null,
               c: null,
               f: null,
