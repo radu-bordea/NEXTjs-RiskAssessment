@@ -242,7 +242,6 @@ export default function RiskForm({ currentUser }: { currentUser: User }) {
               onRemove={() => removeRow(index)}
               canRemove={assessmentFields.length > 1}
               setValue={setValue}
-              watch={watch}
             />
           ))}
         </div>
