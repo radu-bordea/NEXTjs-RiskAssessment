@@ -10,7 +10,6 @@ export type Risk = {
   vesselDepartment: string | null;
   fleet: string | null;
   raType: string;
-  sct: number | null;
   libraryIndex: string | null;
   state: string;
   defectRelated: boolean;
