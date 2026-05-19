@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { Risk, User } from "@/types";
+import { useRouter } from "next/navigation";
 
 const stateStyle: Record<string, string> = {
   DRAFT: "bg-zinc-100 text-zinc-600 whitespace-nowrap",
@@ -34,6 +35,8 @@ export default function RiskTable({
     defectRelated: "",
     sct: "",
   });
+
+  const router = useRouter();
 
   const isAdmin = currentUser?.role === "ADMIN";
   const isManager = currentUser?.role === "MANAGER";
@@ -76,7 +79,7 @@ export default function RiskTable({
       if (filters.isClone === "no" && r.cloneOf) return false;
       if (filters.defectRelated === "yes" && !r.defectRelated) return false;
       if (filters.defectRelated === "no" && r.defectRelated) return false;
-      if (filters.sct && r.sct !== Number(filters.sct)) return false;
+      if (filters.sct && getSctCount(r) !== Number(filters.sct)) return false;
       return true;
     });
   }, [risks, filters]);
@@ -104,6 +107,11 @@ export default function RiskTable({
       sct: "",
     });
 
+  const getSctCount = (r: Risk) =>
+    r.assessmentRows?.filter(
+      (row: { sct: string }) => row.sct && row.sct !== "",
+    ).length ?? 0;
+
   return (
     <div className="min-h-screen bg-white dark:bg-zinc-950 text-zinc-900 dark:text-white px-6 md:px-10 py-10 font-sans">
       {/* Header */}
@@ -120,7 +128,10 @@ export default function RiskTable({
           </p>
         </div>
         {isAdmin && (
-          <button className="px-5 py-2.5 bg-[#0F6E56] text-[#E1F5EE] rounded-lg text-sm hover:bg-[#085041] transition-colors">
+          <button
+            onClick={() => router.push("/dashboard/risks/new")}
+            className="px-5 py-2.5 bg-[#0F6E56] text-[#E1F5EE] rounded-lg text-sm hover:bg-[#085041] transition-colors"
+          >
             + New Assessment
           </button>
         )}
@@ -305,7 +316,7 @@ export default function RiskTable({
                     <td className="px-4 py-3 whitespace-nowrap">
                       {raTypeLabel[r.raType]}
                     </td>
-                    <td className="px-4 py-3">{r.sct ?? "—"}</td>
+                    <td className="px-4 py-3">{getSctCount(r)}</td>
                     <td className="px-4 py-3 max-w-45 truncate text-zinc-500">
                       {r.libraryIndex ?? "—"}
                     </td>

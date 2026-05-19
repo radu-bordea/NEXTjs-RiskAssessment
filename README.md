@@ -2,6 +2,18 @@
 
 # libraries
 - npm install @clerk/nextjs
+- npm install react-hook-form @hookform/resolvers zod
+- npx shadcn@latest init
+- npx shadcn@latest add sonner
+- npx shadcn@latest add form
+- npx shadcn@latest add label
+- npx shadcn@latest add input
+- npx shadcn@latest add textarea
+- npx shadcn@latest add select
+- npx shadcn@latest add button
+- npx shadcn@latest add calendar
+- npx shadcn@latest add popover
+- npx shadcn@latest add date-picker
 
 
 # prisma

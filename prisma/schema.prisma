@@ -58,7 +58,6 @@ model Risk {
   updatedAt DateTime @updatedAt
 
   assessmentRows      RiskAssessmentRow[]
-  supportingDocuments SupportingDocument[]
   teamMembers         TeamMember[]
 
   @@index([ref])
@@ -86,7 +85,6 @@ model RiskAssessmentRow {
   sct              String? // the dropdown value
   c                Int? // consequence 1-6
   f                Int? // frequency 1-6
-  rf               Int? // auto calculated C x F
   order            Int     @default(0)
 
   additionalMeasures AdditionalMeasure[]
@@ -98,20 +96,9 @@ model AdditionalMeasure {
   row   RiskAssessmentRow @relation(fields: [rowId], references: [id])
 
   furtherAction String?
-  sct           String?
   c             Int?
   f             Int?
-  rf            Int?
   order         Int     @default(0)
-}
-
-model SupportingDocument {
-  id       String @id @default(cuid())
-  riskId   String
-  risk     Risk   @relation(fields: [riskId], references: [id])
-  title    String
-  fileUrl  String // stored URL after upload
-  fileName String
 }
 
 model TeamMember {

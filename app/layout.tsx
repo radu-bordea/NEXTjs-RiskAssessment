@@ -21,6 +21,8 @@ import { ModeToggle } from "@/components/mode-toggle";
 import { getUserRole } from "./actions/getUIserRole";
 import { log } from "console";
 
+import { Toaster } from "@/components/ui/sonner";
+
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -121,6 +123,8 @@ export default async function RootLayout({
 
             {children}
           </ThemeProvider>
+          // inside body:
+          <Toaster position="top-right" />
         </body>
       </html>
     </ClerkProvider>

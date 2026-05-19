@@ -1,7 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import prisma from "@/lib/prisma";
-import RiskTable from "./components/RiskTable";
+import RiskTable from "./_components/RiskTable";
 
 export default async function DashboardPage() {
   const { userId } = await auth();
@@ -12,6 +12,13 @@ export default async function DashboardPage() {
     include: {
       createdBy: { select: { name: true, email: true } },
       stateUpdatedBy: { select: { name: true } },
+
+      // ✅ REQUIRED for SCT calculation
+      assessmentRows: {
+        select: {
+          sct: true,
+        },
+      },
     },
   });
 

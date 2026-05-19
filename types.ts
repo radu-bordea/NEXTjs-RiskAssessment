@@ -1,4 +1,5 @@
 export type Risk = {
+  assessmentRows: any;
   id: string;
   ref: string;
   cloneOf: string | null;
