@@ -15,6 +15,8 @@ import { Geist, Geist_Mono } from "next/font/google";
 
 import "./globals.css";
 
+import Image from "next/image";
+
 import { syncUser } from "./actions/syncUsers";
 import Link from "next/link";
 import { ModeToggle } from "@/components/mode-toggle";
@@ -64,12 +66,17 @@ export default async function RootLayout({
           >
             <header className="flex justify-between items-center px-2 md:px-16 h-16 border-b border-zinc-100 dark:border-zinc-800">
               {/* Logo */}
-              <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-[#1D9E75]" />
-
-                <span className="font-bold tracking-wide text-sm">
-                  <Link href="/">MarineGuard</Link>
-                </span>
+              <div className="flex items-center gap-3">
+                <Link href="/">
+                  <Image
+                    src="/assets/images/logo1.jpg"
+                    alt="MarineGuard"
+                    width={40}
+                    height={40}
+                    className="object-cover object-top rounded-full w-10 h-10"
+                    priority
+                  />
+                </Link>
                 <ModeToggle />
               </div>
 
