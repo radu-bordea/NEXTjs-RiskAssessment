@@ -87,6 +87,9 @@ export default function RiskTable({
   const vessels = [
     ...new Set(risks.map((r) => r.vesselDepartment).filter(Boolean)),
   ];
+  const libraryIndex = [
+    ...new Set(risks.map((r) => r.libraryIndex).filter(Boolean)),
+  ];
   const fleets = [...new Set(risks.map((r) => r.fleet).filter(Boolean))];
 
   const set = (key: string, value: string) =>
@@ -104,7 +107,6 @@ export default function RiskTable({
       isClone: "",
       defectRelated: "",
     });
-
 
   return (
     <div className="min-h-screen bg-white dark:bg-zinc-950 text-zinc-900 dark:text-white px-6 md:px-10 py-10 font-sans">
@@ -143,7 +145,7 @@ export default function RiskTable({
             { key: "ref", placeholder: "Ref" },
             { key: "workActivity", placeholder: "Work Activity" },
             { key: "initiator", placeholder: "Initiator" },
-            { key: "libraryIndex", placeholder: "Library Index" },
+            // { key: "libraryIndex", placeholder: "Library Index" },
           ].map(({ key, placeholder }) => (
             <input
               key={key}
@@ -154,6 +156,18 @@ export default function RiskTable({
               className="px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-950 text-sm"
             />
           ))}
+          <select
+            value={filters.libraryIndex}
+            onChange={(e) => set("libraryIndex", e.target.value)}
+            className="px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-950 text-sm"
+          >
+            <option value="">library index</option>
+            {libraryIndex.map((v) => (
+              <option key={v!} value={v!}>
+                {v}
+              </option>
+            ))}
+          </select>
         </div>
 
         {/* Row 2 — dropdowns */}
@@ -311,7 +325,9 @@ export default function RiskTable({
                       <div className="flex items-center gap-2">
                         <Button
                           title="Preview"
-                           onClick={() => router.push(`/dashboard/risks/${r.id}`)}
+                          onClick={() =>
+                            router.push(`/dashboard/risks/${r.id}`)
+                          }
                           className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-400 hover:text-zinc-700 transition-colors"
                         >
                           👁

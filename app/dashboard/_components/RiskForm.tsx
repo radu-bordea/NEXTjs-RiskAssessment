@@ -29,31 +29,6 @@ const SCT_OPTIONS = [
   { value: "YES_VIOLATION", label: "Yes, violation" },
 ];
 
-const LIBRARY_OPTIONS = [
-  "NAVIGATION:Navigation in Kiel Canal",
-  "NAVIGATION:STS At Night",
-  "NAVIGATION:Anchoring in deep waters",
-  "NAVIGATION:Sailing with Hull Damage",
-  "NAVIGATION:Navigation in Areas with Limited Navigational Aids",
-  "CARGO:Loading in Adverse Weather Conditions",
-  "ENGINEERING:Enclosed Space Entry Post Incident",
-  "SAFETY:Fire Drill and Muster Station Procedures",
-  "OPERATIONS:Bunkering Procedures at Major Port",
-  "CARGO/BUNKERING OPERATIONS",
-  "BALLASTING/DE-BALLASTING OPERATIONS",
-  "MOORING/DOCKING OPERATIONS",
-  "DECK MAINTENANCE",
-  "ENGINE MAINTENANCE",
-  "FIRE/SAFETY EQUIPMENT MAINTENANCE",
-  "CYBER SECURITY",
-  "DRILLS & EXERCISES",
-  "HYGIENE",
-  "PROCEDURAL",
-  "SHIP SECURITY ACTIVITIES",
-  "VARIOUS",
-  "OHSAS",
-];
-
 export default function RiskForm({ currentUser }: { currentUser: User }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -86,6 +61,7 @@ export default function RiskForm({ currentUser }: { currentUser: User }) {
         },
       ],
       teamMembers: [],
+      responsiblePersons: [],
     },
   });
 
@@ -100,6 +76,12 @@ export default function RiskForm({ currentUser }: { currentUser: User }) {
     append: appendTeam,
     remove: removeTeam,
   } = useFieldArray({ control, name: "teamMembers" });
+
+  const {
+    fields: responsibleFields,
+    append: appendResponsible,
+    remove: removeResponsible,
+  } = useFieldArray({ control, name: "responsiblePersons" });
 
   const alternativeWays = watch("alternativeWays");
 
@@ -130,6 +112,7 @@ export default function RiskForm({ currentUser }: { currentUser: User }) {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+
       {/* Section 1 — Basic Info */}
       <div className={sectionClass}>
         <h2 className="text-sm font-bold uppercase tracking-widest text-zinc-400 mb-5">
@@ -187,14 +170,10 @@ export default function RiskForm({ currentUser }: { currentUser: User }) {
 
           <div>
             <label className={labelClass}>Library Index</label>
-            <select {...register("libraryIndex")} className={inputClass}>
-              <option value="">— Select —</option>
-              {LIBRARY_OPTIONS.map((opt) => (
-                <option key={opt} value={opt}>
-                  {opt}
-                </option>
-              ))}
-            </select>
+            <Input
+              {...register("libraryIndex")}
+              placeholder="e.g. NAVIGATION:STS At Night"
+            />
           </div>
 
           <div>
@@ -302,8 +281,10 @@ export default function RiskForm({ currentUser }: { currentUser: User }) {
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
-              setValue("alternativeWays", true, { shouldDirty: false, shouldValidate: false })
-              
+              setValue("alternativeWays", true, {
+                shouldDirty: false,
+                shouldValidate: false,
+              });
             }}
             className={
               alternativeWays
@@ -319,7 +300,10 @@ export default function RiskForm({ currentUser }: { currentUser: User }) {
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
-              setValue("alternativeWays", false, { shouldDirty: false, shouldValidate: false });
+              setValue("alternativeWays", false, {
+                shouldDirty: false,
+                shouldValidate: false,
+              });
             }}
             className={
               !alternativeWays
@@ -368,6 +352,39 @@ export default function RiskForm({ currentUser }: { currentUser: User }) {
           className="mt-4 border-[#1D9E75] text-[#1D9E75] hover:bg-[#E1F5EE] hover:text-[#0F6E56]"
         >
           + Add team representative
+        </Button>
+      </div>
+
+      {/* Section 5 — Responsible Persons */}
+      <div className={sectionClass}>
+        <h2 className="text-sm font-bold uppercase tracking-widest text-zinc-400 mb-5">
+          Responsible Persons
+        </h2>
+        <div className="space-y-3">
+          {responsibleFields.map((field, index) => (
+            <div key={field.id} className="flex items-center gap-3">
+              <Input
+                {...register(`responsiblePersons.${index}.name`)}
+                placeholder="Person name"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => removeResponsible(index)}
+                className="border-red-200 text-red-500 hover:bg-red-50 hover:text-red-600 whitespace-nowrap"
+              >
+                Remove
+              </Button>
+            </div>
+          ))}
+        </div>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => appendResponsible({ name: "" })}
+          className="mt-4 border-[#1D9E75] text-[#1D9E75] hover:bg-[#E1F5EE] hover:text-[#0F6E56]"
+        >
+          + Add responsible person
         </Button>
       </div>
 

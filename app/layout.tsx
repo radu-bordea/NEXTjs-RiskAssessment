@@ -130,7 +130,6 @@ export default async function RootLayout({
 
             {children}
           </ThemeProvider>
-          // inside body:
           <Toaster position="top-right" />
         </body>
       </html>

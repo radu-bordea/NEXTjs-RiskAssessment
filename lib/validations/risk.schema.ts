@@ -31,6 +31,11 @@ const teamMemberSchema = z.object({
   name: z.string().min(1, "Team member name is required"),
 });
 
+const responsiblePersonsSchema = z.object({
+  id: z.string().optional(),
+  name: z.string().min(1, "Responsible person name is required"),
+});
+
 // Full validation for Submit
 export const riskSchema = z.object({
   ref: z.string().min(1, "Ref is required"),
@@ -48,11 +53,11 @@ export const riskSchema = z.object({
   initiatorComment: z.string().optional(),
   alternativeWays: z.boolean().default(false),
   alternativeWaysText: z.string().optional(),
-
   assessmentRows: z
-    .array(assessmentRowSchema)
-    .min(1, "At least one assessment row is required"),
+  .array(assessmentRowSchema)
+  .min(1, "At least one assessment row is required"),
   teamMembers: z.array(teamMemberSchema).default([]),
+  responsiblePersons: z.array(responsiblePersonsSchema).default([]),
 });
 
 // Relaxed validation for Draft — almost everything optional

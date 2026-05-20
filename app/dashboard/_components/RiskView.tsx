@@ -37,7 +37,7 @@ export default function RiskView({ risk }: RiskViewProps) {
   const fieldClass   = "rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-950 px-3 py-2 text-sm min-h-[38px] w-full"
 
   return (
-    <div className="w-full px-3 md:px-8 py-6 space-y-4 max-w-[1600px] mx-auto">
+    <div className="w-full px-3 md:px-8 py-6 space-y-4 max-w-400 mx-auto">
 
       {/* Page header */}
       <div className="flex items-start justify-between flex-wrap gap-3 mb-2">
@@ -99,17 +99,17 @@ export default function RiskView({ risk }: RiskViewProps) {
 
         {/* Desktop table header — hidden on mobile */}
         <div className="hidden md:flex bg-[#0F6E56] border-b border-[#085041]">
-          <div className="w-8 flex-shrink-0 bg-[#085041]" />
+          <div className="w-8 shrink-0 bg-[#085041]" />
           <div className="flex flex-1 min-w-0">
-            <div className="flex-1 min-w-[100px] px-3 py-2.5 text-xs font-bold uppercase tracking-wide text-white border-r border-[#085041]">Hazard</div>
-            <div className="flex-1 min-w-[100px] px-3 py-2.5 text-xs font-bold uppercase tracking-wide text-white border-r border-[#085041]">Impact</div>
-            <div className="flex-1 min-w-[100px] px-3 py-2.5 text-xs font-bold uppercase tracking-wide text-white border-r border-[#085041]">Existing Controls</div>
-            <div className="w-32 flex-shrink-0 px-3 py-2.5 text-xs font-bold uppercase tracking-wide text-white border-r border-[#085041]">SCT</div>
-            <div className="w-10 flex-shrink-0 px-2 py-2.5 text-xs font-bold uppercase tracking-wide text-white border-r border-[#085041] text-center">C</div>
-            <div className="w-10 flex-shrink-0 px-2 py-2.5 text-xs font-bold uppercase tracking-wide text-white border-r border-[#085041] text-center">F</div>
-            <div className="w-14 flex-shrink-0 px-2 py-2.5 text-xs font-bold uppercase tracking-wide text-white border-r border-[#085041] text-center">RF</div>
+            <div className="flex-1 min-w-25 px-3 py-2.5 text-xs font-bold uppercase tracking-wide text-white border-r border-[#085041]">Hazard</div>
+            <div className="flex-1 min-w-25 px-3 py-2.5 text-xs font-bold uppercase tracking-wide text-white border-r border-[#085041]">Impact</div>
+            <div className="flex-1 min-w-25 px-3 py-2.5 text-xs font-bold uppercase tracking-wide text-white border-r border-[#085041]">Existing Controls</div>
+            <div className="w-32 shrink-0 px-3 py-2.5 text-xs font-bold uppercase tracking-wide text-white border-r border-[#085041]">SCT</div>
+            <div className="w-10 shrink-0 px-2 py-2.5 text-xs font-bold uppercase tracking-wide text-white border-r border-[#085041] text-center">C</div>
+            <div className="w-10 shrink-0 px-2 py-2.5 text-xs font-bold uppercase tracking-wide text-white border-r border-[#085041] text-center">F</div>
+            <div className="w-14 shrink-0 px-2 py-2.5 text-xs font-bold uppercase tracking-wide text-white border-r border-[#085041] text-center">RF</div>
           </div>
-          <div className="w-[360px] flex-shrink-0 px-3 py-2.5 text-xs font-bold uppercase tracking-wide text-white bg-[#085041]">
+          <div className="w-90 shrink-0 px-3 py-2.5 text-xs font-bold uppercase tracking-wide text-white bg-[#085041]">
             Additional Control Measures
           </div>
         </div>
@@ -198,31 +198,31 @@ export default function RiskView({ risk }: RiskViewProps) {
               {/* Desktop layout */}
               <div className="hidden md:flex">
                 {/* Row number */}
-                <div className="w-8 flex-shrink-0 flex items-start justify-center pt-3.5 text-xs text-zinc-300 dark:text-zinc-600 font-bold border-r border-zinc-100 dark:border-zinc-800">
+                <div className="w-8 shrink-0 flex items-start justify-center pt-3.5 text-xs text-zinc-300 dark:text-zinc-600 font-bold border-r border-zinc-100 dark:border-zinc-800">
                   {index + 1}
                 </div>
 
                 {/* Main columns */}
                 <div className="flex flex-1 min-w-0 divide-x divide-zinc-100 dark:divide-zinc-800">
-                  <div className="flex-1 min-w-[100px] px-3 py-3 text-sm text-zinc-900 dark:text-white whitespace-pre-wrap">
+                  <div className="flex-1 min-w-25 px-3 py-3 text-sm text-zinc-900 dark:text-white whitespace-pre-wrap">
                     {row.hazard}
                   </div>
-                  <div className="flex-1 min-w-[100px] px-3 py-3 text-sm text-zinc-900 dark:text-white whitespace-pre-wrap">
+                  <div className="flex-1 min-w-25 px-3 py-3 text-sm text-zinc-900 dark:text-white whitespace-pre-wrap">
                     {row.impact}
                   </div>
-                  <div className="flex-1 min-w-[100px] px-3 py-3 text-sm text-zinc-500 dark:text-zinc-400 whitespace-pre-wrap">
+                  <div className="flex-1 min-w-25 px-3 py-3 text-sm text-zinc-500 dark:text-zinc-400 whitespace-pre-wrap">
                     {row.existingControls ?? "—"}
                   </div>
-                  <div className="w-32 flex-shrink-0 px-3 py-3 text-xs text-zinc-600 dark:text-zinc-400">
+                  <div className="w-32 shrink-0 px-3 py-3 text-xs text-zinc-600 dark:text-zinc-400">
                     {row.sct ?? "—"}
                   </div>
-                  <div className="w-10 flex-shrink-0 px-2 py-3 text-sm text-center text-zinc-700 dark:text-zinc-300 font-medium">
+                  <div className="w-10 shrink-0 px-2 py-3 text-sm text-center text-zinc-700 dark:text-zinc-300 font-medium">
                     {row.c ?? "—"}
                   </div>
-                  <div className="w-10 flex-shrink-0 px-2 py-3 text-sm text-center text-zinc-700 dark:text-zinc-300 font-medium">
+                  <div className="w-10 shrink-0 px-2 py-3 text-sm text-center text-zinc-700 dark:text-zinc-300 font-medium">
                     {row.f ?? "—"}
                   </div>
-                  <div className="w-14 flex-shrink-0 px-2 py-3 flex items-start justify-center">
+                  <div className="w-14 shrink-0 px-2 py-3 flex items-start justify-center">
                     <div className={`w-9 h-9 flex items-center justify-center rounded-lg font-bold text-sm ${getRFColorClass(row.rfColor)}`}>
                       {row.rf ?? "—"}
                     </div>
@@ -230,7 +230,7 @@ export default function RiskView({ risk }: RiskViewProps) {
                 </div>
 
                 {/* Additional measures — right panel */}
-                <div className="w-[360px] flex-shrink-0 border-l border-zinc-100 dark:border-zinc-800 divide-y divide-zinc-100 dark:divide-zinc-800">
+                <div className="w-90 shrink-0 border-l border-zinc-100 dark:border-zinc-800 divide-y divide-zinc-100 dark:divide-zinc-800">
                   {!row.additionalMeasures?.length ? (
                     <div className="px-3 py-3 text-xs text-zinc-300 dark:text-zinc-600">—</div>
                   ) : (
@@ -293,6 +293,27 @@ export default function RiskView({ risk }: RiskViewProps) {
                 className="text-sm px-3 py-1.5 rounded-full border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 bg-white dark:bg-zinc-950"
               >
                 {m.name}
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+
+         {/* Responsible Persons */}
+      <div className={sectionClass}>
+        <h2 className="text-xs font-bold uppercase tracking-widest text-zinc-400 mb-3">
+          Responsible Persons
+        </h2>
+        {!risk.responsiblePersons?.length ? (
+          <p className="text-sm text-zinc-400">No responsible persons.</p>
+        ) : (
+          <div className="flex flex-wrap gap-2">
+            {risk.responsiblePersons?.map((p: any) => (
+              <span
+                key={p.id}
+                className="text-sm px-3 py-1.5 rounded-full border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 bg-white dark:bg-zinc-950"
+              >
+                {p.name}
               </span>
             ))}
           </div>

@@ -79,6 +79,12 @@ export async function createRisk(data: RiskFormValues) {
             name: member.name,
           })),
         },
+
+        responsiblePersons: {
+          create: values.responsiblePersons.map((person) => ({
+            name: person.name,
+          })),
+        },
       },
     });
 
@@ -108,6 +114,7 @@ export async function getRiskById(id: string) {
         orderBy: { order: "asc" },
       },
       teamMembers: true,
+      responsiblePersons: true,
       createdBy: true,
     },
   });

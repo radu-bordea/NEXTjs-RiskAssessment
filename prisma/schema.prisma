@@ -58,6 +58,7 @@ model Risk {
 
   assessmentRows RiskAssessmentRow[]
   teamMembers    TeamMember[]
+  responsiblePersons    ResponsiblePersons[]
 
   @@index([ref])
   @@index([state])
@@ -104,6 +105,13 @@ model AdditionalMeasure {
 }
 
 model TeamMember {
+  id     String @id @default(cuid())
+  riskId String
+  risk   Risk   @relation(fields: [riskId], references: [id])
+  name   String
+}
+
+model ResponsiblePersons {
   id     String @id @default(cuid())
   riskId String
   risk   Risk   @relation(fields: [riskId], references: [id])
