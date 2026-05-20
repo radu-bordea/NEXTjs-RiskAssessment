@@ -55,6 +55,9 @@ export async function createRisk(data: RiskFormValues) {
             sct: row.sct ? String(row.sct) : null,
             c: row.c ?? null,
             f: row.f ?? null,
+            // in assessmentRows.create map:
+            rf: row.rf ?? null,
+            rfColor: row.rfColor ?? null,
             order: index,
 
             additionalMeasures: {
@@ -62,6 +65,9 @@ export async function createRisk(data: RiskFormValues) {
                 furtherAction: m.furtherAction ?? null,
                 c: m.c ?? null,
                 f: m.f ?? null,
+                // in additionalMeasures.create map:
+                rf: m.rf ?? null,
+                rfColor: m.rfColor ?? null,
                 order: mIndex,
               })),
             },

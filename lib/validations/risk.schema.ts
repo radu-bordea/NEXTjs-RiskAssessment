@@ -1,10 +1,14 @@
 import { z } from "zod";
 
+const rfColorSchema = z.enum(["GREEN", "YELLOW", "RED"]).optional().nullable();
+
 const additionalMeasureSchema = z.object({
   id: z.string().optional(),
   furtherAction: z.string().optional().nullable(),
   c: z.number().int().min(1).max(6).optional().nullable(),
   f: z.number().int().min(1).max(6).optional().nullable(),
+  rf: z.number().int().min(1).max(25).optional().nullable(),
+  rfColor: rfColorSchema,
   order: z.number().int().default(0),
 });
 
@@ -16,6 +20,8 @@ const assessmentRowSchema = z.object({
   sct: z.string().optional().nullable(), // the dropdown value
   c: z.number().int().min(1).max(6).optional().nullable(),
   f: z.number().int().min(1).max(6).optional().nullable(),
+  rf: z.number().int().min(1).max(25).optional().nullable(),
+  rfColor: rfColorSchema,
   order: z.number().int().default(0),
   additionalMeasures: z.array(additionalMeasureSchema).default([]),
 });

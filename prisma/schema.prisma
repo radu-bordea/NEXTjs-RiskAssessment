@@ -36,7 +36,7 @@ model Risk {
   vesselDepartment String? // e.g. "Company-TMS Tankers Ltd - Office"
   raType           RAType    @default(NON_ROUTINE)
   libraryIndex     String? // e.g. "NAVIGATION:Navigation in Kiel Canal"
-  state            RiskState @default(DRAFT)
+  state            RiskState @default(IN_PROGRESS)
   notes            String? // any extra notes
 
   fleet         String? // e.g. "TMS Tankers"
@@ -56,8 +56,8 @@ model Risk {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  assessmentRows      RiskAssessmentRow[]
-  teamMembers         TeamMember[]
+  assessmentRows RiskAssessmentRow[]
+  teamMembers    TeamMember[]
 
   @@index([ref])
   @@index([state])
@@ -83,7 +83,9 @@ model RiskAssessmentRow {
   sct              String? // the dropdown value
   c                Int? // consequence 1-6
   f                Int? // frequency 1-6
-  order            Int     @default(0)
+  rf               Int? // manual 1-25
+  rfColor          RFColor? // manual color choice
+  order            Int      @default(0)
 
   additionalMeasures AdditionalMeasure[]
 }
@@ -96,7 +98,9 @@ model AdditionalMeasure {
   furtherAction String?
   c             Int?
   f             Int?
-  order         Int     @default(0)
+  rf            Int? // manual 1-25
+  rfColor       RFColor? // manual color choice
+  order         Int      @default(0)
 }
 
 model TeamMember {
@@ -122,4 +126,10 @@ enum RiskState {
   IN_PROGRESS
   COMPLETED
   CANCELLED
+}
+
+enum RFColor {
+  GREEN
+  YELLOW
+  RED
 }

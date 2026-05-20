@@ -1,23 +1,23 @@
-"use client"
+"use client";
 
-import { useForm, useFieldArray, type Resolver } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { riskSchema, RiskFormValues } from "@/lib/validations/risk.schema"
-import { createRisk } from "@/app/actions/risk.actions"
-import { useRouter } from "next/navigation"
-import { toast } from "sonner"
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import AssessmentRowField from "./AssessmentRowField"
+import { useForm, useFieldArray, type Resolver } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { riskSchema, RiskFormValues } from "@/lib/validations/risk.schema";
+import { createRisk } from "@/app/actions/risk.actions";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import AssessmentRowField from "./AssessmentRowField";
 
 type User = {
-  id: string
-  name: string | null
-  email: string
-  role: string
-}
+  id: string;
+  name: string | null;
+  email: string;
+  role: string;
+};
 
 const SCT_OPTIONS = [
   { value: "", label: "— Select —" },
@@ -27,7 +27,7 @@ const SCT_OPTIONS = [
   { value: "YES_MISTAKE_RULE", label: "Yes, mistake rule based" },
   { value: "YES_MISTAKE_KNOWLEDGE", label: "Yes, mistake knowledge based" },
   { value: "YES_VIOLATION", label: "Yes, violation" },
-]
+];
 
 const LIBRARY_OPTIONS = [
   "NAVIGATION:Navigation in Kiel Canal",
@@ -52,11 +52,11 @@ const LIBRARY_OPTIONS = [
   "SHIP SECURITY ACTIVITIES",
   "VARIOUS",
   "OHSAS",
-]
+];
 
 export default function RiskForm({ currentUser }: { currentUser: User }) {
-  const router = useRouter()
-  const [loading, setLoading] = useState(false)
+  const router = useRouter();
+  const [loading, setLoading] = useState(false);
 
   const {
     register,
@@ -87,54 +87,55 @@ export default function RiskForm({ currentUser }: { currentUser: User }) {
       ],
       teamMembers: [],
     },
-  })
+  });
 
   const {
     fields: assessmentFields,
     append: appendRow,
     remove: removeRow,
-  } = useFieldArray({ control, name: "assessmentRows" })
+  } = useFieldArray({ control, name: "assessmentRows" });
 
   const {
     fields: teamFields,
     append: appendTeam,
     remove: removeTeam,
-  } = useFieldArray({ control, name: "teamMembers" })
+  } = useFieldArray({ control, name: "teamMembers" });
 
-  const alternativeWays = watch("alternativeWays")
+  const alternativeWays = watch("alternativeWays");
 
   const onSubmit = async (data: RiskFormValues) => {
-    setLoading(true)
+    setLoading(true);
     try {
-      const result = await createRisk(data)
+      const result = await createRisk(data);
       if (result.success) {
-        toast.success("Risk assessment created successfully!")
-        router.push("/dashboard")
+        toast.success("Risk assessment created successfully!");
+        router.push("/dashboard");
       } else {
-        toast.error(result.error ?? "Something went wrong")
+        toast.error(result.error ?? "Something went wrong");
       }
     } catch {
-      toast.error("Something went wrong")
+      toast.error("Something went wrong");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
-  const inputClass = "px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-950 text-sm w-full focus:outline-none focus:ring-2 focus:ring-[#1D9E75]"
-  const labelClass = "block text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-1"
-  const errorClass = "text-xs text-red-500 mt-1"
-  const sectionClass = "rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 p-6 mb-6"
+  const inputClass =
+    "px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-950 text-sm w-full focus:outline-none focus:ring-2 focus:ring-[#1D9E75]";
+  const labelClass =
+    "block text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-1";
+  const errorClass = "text-xs text-red-500 mt-1";
+  const sectionClass =
+    "rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 p-6 mb-6";
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-
       {/* Section 1 — Basic Info */}
       <div className={sectionClass}>
         <h2 className="text-sm font-bold uppercase tracking-widest text-zinc-400 mb-5">
           Basic Information
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-
           <div>
             <label className={labelClass}>Ref *</label>
             <Input {...register("ref")} placeholder="e.g. RA-N-006" />
@@ -144,7 +145,9 @@ export default function RiskForm({ currentUser }: { currentUser: User }) {
           <div>
             <label className={labelClass}>Initiator *</label>
             <Input {...register("initiator")} />
-            {errors.initiator && <p className={errorClass}>{errors.initiator.message}</p>}
+            {errors.initiator && (
+              <p className={errorClass}>{errors.initiator.message}</p>
+            )}
           </div>
 
           <div>
@@ -152,9 +155,13 @@ export default function RiskForm({ currentUser }: { currentUser: User }) {
             <Input
               type="date"
               defaultValue={new Date().toISOString().split("T")[0]}
-              onChange={(e) => setValue("initiationDate", new Date(e.target.value))}
+              onChange={(e) =>
+                setValue("initiationDate", new Date(e.target.value))
+              }
             />
-            {errors.initiationDate && <p className={errorClass}>{errors.initiationDate.message}</p>}
+            {errors.initiationDate && (
+              <p className={errorClass}>{errors.initiationDate.message}</p>
+            )}
           </div>
 
           <div>
@@ -162,7 +169,10 @@ export default function RiskForm({ currentUser }: { currentUser: User }) {
             <Input
               type="date"
               onChange={(e) =>
-                setValue("reviewDate", e.target.value ? new Date(e.target.value) : null)
+                setValue(
+                  "reviewDate",
+                  e.target.value ? new Date(e.target.value) : null,
+                )
               }
             />
           </div>
@@ -180,39 +190,52 @@ export default function RiskForm({ currentUser }: { currentUser: User }) {
             <select {...register("libraryIndex")} className={inputClass}>
               <option value="">— Select —</option>
               {LIBRARY_OPTIONS.map((opt) => (
-                <option key={opt} value={opt}>{opt}</option>
+                <option key={opt} value={opt}>
+                  {opt}
+                </option>
               ))}
             </select>
           </div>
 
           <div>
             <label className={labelClass}>Vessel / Department</label>
-            <Input {...register("vesselDepartment")} placeholder="e.g. MMI Mobile Marine International" />
+            <Input
+              {...register("vesselDepartment")}
+              placeholder="e.g. MMI Mobile Marine International"
+            />
           </div>
 
           <div>
             <label className={labelClass}>Fleet</label>
-            <Input {...register("fleet")} placeholder="e.g. M/V Mobile Voyager" />
+            <Input
+              {...register("fleet")}
+              placeholder="e.g. M/V Mobile Voyager"
+            />
           </div>
 
           <div>
-            <label className={labelClass}>Is the case related with a defect?</label>
+            <label className={labelClass}>
+              Is the case related with a defect?
+            </label>
             <select
               className={inputClass}
-              onChange={(e) => setValue("defectRelated", e.target.value === "true")}
+              onChange={(e) =>
+                setValue("defectRelated", e.target.value === "true")
+              }
               defaultValue="false"
             >
               <option value="false">No</option>
               <option value="true">Yes</option>
             </select>
           </div>
-
         </div>
 
         <div className="mt-4">
           <label className={labelClass}>Work Activity Being Assessed *</label>
           <Textarea {...register("workActivity")} rows={3} />
-          {errors.workActivity && <p className={errorClass}>{errors.workActivity.message}</p>}
+          {errors.workActivity && (
+            <p className={errorClass}>{errors.workActivity.message}</p>
+          )}
         </div>
 
         <div className="mt-4">
@@ -276,16 +299,33 @@ export default function RiskForm({ currentUser }: { currentUser: User }) {
           <Button
             type="button"
             variant={alternativeWays ? "default" : "outline"}
-            onClick={() => setValue("alternativeWays", true)}
-            className={alternativeWays ? "bg-[#0F6E56] text-[#E1F5EE] hover:bg-[#085041]" : ""}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setValue("alternativeWays", true, { shouldDirty: false, shouldValidate: false })
+              
+            }}
+            className={
+              alternativeWays
+                ? "bg-[#0F6E56] text-[#E1F5EE] hover:bg-[#085041]"
+                : ""
+            }
           >
             Yes
           </Button>
           <Button
             type="button"
             variant={!alternativeWays ? "default" : "outline"}
-            onClick={() => setValue("alternativeWays", false)}
-            className={!alternativeWays ? "bg-[#0F6E56] text-[#E1F5EE] hover:bg-[#085041]" : ""}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setValue("alternativeWays", false, { shouldDirty: false, shouldValidate: false });
+            }}
+            className={
+              !alternativeWays
+                ? "bg-[#0F6E56] text-[#E1F5EE] hover:bg-[#085041]"
+                : ""
+            }
           >
             No
           </Button>
@@ -348,7 +388,6 @@ export default function RiskForm({ currentUser }: { currentUser: User }) {
           Cancel
         </Button>
       </div>
-
     </form>
-  )
+  );
 }
