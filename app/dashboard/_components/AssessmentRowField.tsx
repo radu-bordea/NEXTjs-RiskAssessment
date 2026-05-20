@@ -141,22 +141,22 @@ export default function AssessmentRowField({
         </div>
 
         <div className="w-20">
-          <label className={labelClass}>C (1-6)</label>
+          <label className={labelClass}>C (1-5)</label>
           <input
             type="number"
             min={1}
-            max={6}
+            max={5}
             {...register(`assessmentRows.${index}.c`, { valueAsNumber: true })}
             className={inputClass}
           />
         </div>
 
         <div className="w-20">
-          <label className={labelClass}>F (1-6)</label>
+          <label className={labelClass}>F (1-10)</label>
           <input
             type="number"
             min={1}
-            max={6}
+            max={10}
             {...register(`assessmentRows.${index}.f`, { valueAsNumber: true })}
             className={inputClass}
           />
@@ -235,11 +235,11 @@ export default function AssessmentRowField({
 
                   <div className="flex items-end gap-3 flex-wrap">
                     <div className="w-20">
-                      <label className={labelClass}>C (1-6)</label>
+                      <label className={labelClass}>C (1-5)</label>
                       <input
                         type="number"
                         min={1}
-                        max={6}
+                        max={5}
                         {...register(
                           `assessmentRows.${index}.additionalMeasures.${mIndex}.c`,
                           { valueAsNumber: true },
@@ -249,11 +249,11 @@ export default function AssessmentRowField({
                     </div>
 
                     <div className="w-20">
-                      <label className={labelClass}>F (1-6)</label>
+                      <label className={labelClass}>F (1-10)</label>
                       <input
                         type="number"
                         min={1}
-                        max={6}
+                        max={10}
                         {...register(
                           `assessmentRows.${index}.additionalMeasures.${mIndex}.f`,
                           { valueAsNumber: true },
