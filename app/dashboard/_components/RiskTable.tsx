@@ -184,7 +184,7 @@ export default function RiskTable({
             }}
             className={selectClass}
           >
-            <option value="">Category</option>
+            <option value="">Category Index</option>
             {CATEGORIES.map((cat) => (
               <option key={cat} value={cat}>{cat}</option>
             ))}
