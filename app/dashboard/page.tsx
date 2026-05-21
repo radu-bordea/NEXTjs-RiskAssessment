@@ -8,7 +8,7 @@ export default async function DashboardPage() {
   if (!userId) redirect("/sign-in");
 
   const risks = await prisma.risk.findMany({
-    orderBy: { createdAt: "desc" },
+    orderBy: [{ initiationDate: "desc" }, { createdAt: "desc" }],
     include: {
       createdBy: { select: { name: true, email: true } },
       stateUpdatedBy: { select: { name: true } },

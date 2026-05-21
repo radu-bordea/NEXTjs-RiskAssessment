@@ -64,16 +64,16 @@ export default async function RootLayout({
             enableSystem
             disableTransitionOnChange
           >
-            <header className="flex justify-between items-center px-2 md:px-16 h-16 border-b border-zinc-100 dark:border-zinc-800">
+            <header className="flex justify-between items-center px-2 md:px-16 h-20 border-b border-zinc-100 dark:border-zinc-800">
               {/* Logo */}
               <div className="flex items-center gap-3">
                 <Link href="/">
                   <Image
                     src="/assets/images/logo1.jpg"
                     alt="MarineGuard"
-                    width={40}
-                    height={40}
-                    className="object-cover object-top rounded-full w-10 h-10"
+                    width={60}
+                    height={60}
+                    className="object-cover object-top rounded-full w-16 h-16"
                     priority
                   />
                 </Link>

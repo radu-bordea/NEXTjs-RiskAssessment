@@ -17,6 +17,23 @@ const raTypeLabel: Record<string, string> = {
   NON_ROUTINE: "Non Routine",
 };
 
+const CATEGORIES = [
+  "NAVIGATION",
+  "MOORING/DOCKING OPS",
+  "DECK",
+  "ENGINE",
+  "SAFETY",
+  "SURVEY",
+  "HYGENE",
+  "SECURITY",
+  "CIBERSECURITY",
+  "OTHERS",
+  "PROCEDURES",
+]
+
+const selectClass = "px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-950 text-sm"
+const inputClass  = "px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-950 text-sm"
+
 export default function RiskTable({
   risks,
   currentUser,
@@ -25,56 +42,55 @@ export default function RiskTable({
   currentUser: User;
 }) {
   const [filters, setFilters] = useState({
-    ref: "",
-    workActivity: "",
-    initiator: "",
+    ref:              "",
+    workActivity:     "",
+    initiator:        "",
     vesselDepartment: "",
-    fleet: "",
-    raType: "",
-    libraryIndex: "",
-    isClone: "",
-    defectRelated: "",
+    fleet:            "",
+    raType:           "",
+    libraryCategory:  "",
+    libraryIndex:     "",
+    isClone:          "",
+    defectRelated:    "",
   });
 
   const router = useRouter();
 
-  const isAdmin = currentUser?.role === "ADMIN";
+  const isAdmin   = currentUser?.role === "ADMIN";
   const isManager = currentUser?.role === "MANAGER";
-  const canEdit = isAdmin || isManager;
+  const canEdit   = isAdmin || isManager;
+
+  // Build category → indexes map from actual data
+  const indexesByCategory = useMemo(() => {
+    const map: Record<string, string[]> = {}
+    risks.forEach((r) => {
+      if (!r.libraryCategory || !r.libraryIndex) return
+      if (!map[r.libraryCategory]) map[r.libraryCategory] = []
+      if (!map[r.libraryCategory].includes(r.libraryIndex)) {
+        map[r.libraryCategory].push(r.libraryIndex)
+      }
+    })
+    return map
+  }, [risks])
+
+  // If category selected show only its indexes, else show all
+  const availableIndexes = useMemo(() => {
+    if (filters.libraryCategory) {
+      return indexesByCategory[filters.libraryCategory] ?? []
+    }
+    return [...new Set(risks.map((r) => r.libraryIndex).filter(Boolean))] as string[]
+  }, [filters.libraryCategory, indexesByCategory, risks])
 
   const filtered = useMemo(() => {
     return risks.filter((r) => {
-      if (
-        filters.ref &&
-        !r.ref.toLowerCase().includes(filters.ref.toLowerCase())
-      )
-        return false;
-      if (
-        filters.workActivity &&
-        !r.workActivity
-          .toLowerCase()
-          .includes(filters.workActivity.toLowerCase())
-      )
-        return false;
-      if (
-        filters.initiator &&
-        !r.initiator.toLowerCase().includes(filters.initiator.toLowerCase())
-      )
-        return false;
-      if (
-        filters.vesselDepartment &&
-        r.vesselDepartment !== filters.vesselDepartment
-      )
-        return false;
+      if (filters.ref && !r.ref.toLowerCase().includes(filters.ref.toLowerCase())) return false;
+      if (filters.workActivity && !r.workActivity.toLowerCase().includes(filters.workActivity.toLowerCase())) return false;
+      if (filters.initiator && !r.initiator.toLowerCase().includes(filters.initiator.toLowerCase())) return false;
+      if (filters.vesselDepartment && r.vesselDepartment !== filters.vesselDepartment) return false;
       if (filters.fleet && r.fleet !== filters.fleet) return false;
       if (filters.raType && r.raType !== filters.raType) return false;
-      if (
-        filters.libraryIndex &&
-        !r.libraryIndex
-          ?.toLowerCase()
-          .includes(filters.libraryIndex.toLowerCase())
-      )
-        return false;
+      if (filters.libraryCategory && r.libraryCategory !== filters.libraryCategory) return false;
+      if (filters.libraryIndex && r.libraryIndex !== filters.libraryIndex) return false;
       if (filters.isClone === "yes" && !r.cloneOf) return false;
       if (filters.isClone === "no" && r.cloneOf) return false;
       if (filters.defectRelated === "yes" && !r.defectRelated) return false;
@@ -83,33 +99,29 @@ export default function RiskTable({
     });
   }, [risks, filters]);
 
-  // Unique values for dropdowns
-  const vessels = [
-    ...new Set(risks.map((r) => r.vesselDepartment).filter(Boolean)),
-  ];
-  const libraryIndex = [
-    ...new Set(risks.map((r) => r.libraryIndex).filter(Boolean)),
-  ];
-  const fleets = [...new Set(risks.map((r) => r.fleet).filter(Boolean))];
+  const vessels = [...new Set(risks.map((r) => r.vesselDepartment).filter(Boolean))];
+  const fleets  = [...new Set(risks.map((r) => r.fleet).filter(Boolean))];
 
   const set = (key: string, value: string) =>
     setFilters((prev) => ({ ...prev, [key]: value }));
 
   const reset = () =>
     setFilters({
-      ref: "",
-      workActivity: "",
-      initiator: "",
+      ref:              "",
+      workActivity:     "",
+      initiator:        "",
       vesselDepartment: "",
-      fleet: "",
-      raType: "",
-      libraryIndex: "",
-      isClone: "",
-      defectRelated: "",
+      fleet:            "",
+      raType:           "",
+      libraryCategory:  "",
+      libraryIndex:     "",
+      isClone:          "",
+      defectRelated:    "",
     });
 
   return (
     <div className="min-h-screen bg-white dark:bg-zinc-950 text-zinc-900 dark:text-white px-6 md:px-10 py-10 font-sans">
+
       {/* Header */}
       <div className="flex items-center justify-between mb-8 flex-wrap gap-4">
         <div>
@@ -139,33 +151,61 @@ export default function RiskTable({
           Filters
         </p>
 
-        {/* Row 1 — text inputs */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
-          {[
-            { key: "ref", placeholder: "Ref" },
-            { key: "workActivity", placeholder: "Work Activity" },
-            { key: "initiator", placeholder: "Initiator" },
-            // { key: "libraryIndex", placeholder: "Library Index" },
-          ].map(({ key, placeholder }) => (
-            <input
-              key={key}
-              type="text"
-              placeholder={placeholder}
-              value={filters[key as keyof typeof filters]}
-              onChange={(e) => set(key, e.target.value)}
-              className="px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-950 text-sm"
-            />
-          ))}
+        {/* Row 1 — text inputs + category + index */}
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-3">
+          <input
+            type="text"
+            placeholder="Ref"
+            value={filters.ref}
+            onChange={(e) => set("ref", e.target.value)}
+            className={inputClass}
+          />
+          <input
+            type="text"
+            placeholder="Work Activity"
+            value={filters.workActivity}
+            onChange={(e) => set("workActivity", e.target.value)}
+            className={inputClass}
+          />
+          <input
+            type="text"
+            placeholder="Initiator"
+            value={filters.initiator}
+            onChange={(e) => set("initiator", e.target.value)}
+            className={inputClass}
+          />
+
+          {/* Category — pick first, filters the index dropdown */}
+          <select
+            value={filters.libraryCategory}
+            onChange={(e) => {
+              set("libraryCategory", e.target.value)
+              set("libraryIndex", "") // reset index when category changes
+            }}
+            className={selectClass}
+          >
+            <option value="">Category</option>
+            {CATEGORIES.map((cat) => (
+              <option key={cat} value={cat}>{cat}</option>
+            ))}
+          </select>
+
+          {/* Library Index — filtered by selected category */}
           <select
             value={filters.libraryIndex}
             onChange={(e) => set("libraryIndex", e.target.value)}
-            className="px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-950 text-sm"
+            className={selectClass}
+            disabled={availableIndexes.length === 0}
           >
-            <option value="">library index</option>
-            {libraryIndex.map((v) => (
-              <option key={v!} value={v!}>
-                {v}
-              </option>
+            <option value="">
+              {filters.libraryCategory
+                ? availableIndexes.length === 0
+                  ? "No indexes found"
+                  : `Index (${filters.libraryCategory})`
+                : "Library Index"}
+            </option>
+            {availableIndexes.map((idx) => (
+              <option key={idx} value={idx}>{idx}</option>
             ))}
           </select>
         </div>
@@ -175,33 +215,29 @@ export default function RiskTable({
           <select
             value={filters.vesselDepartment}
             onChange={(e) => set("vesselDepartment", e.target.value)}
-            className="px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-950 text-sm"
+            className={selectClass}
           >
             <option value="">Vessel/Dept</option>
             {vessels.map((v) => (
-              <option key={v!} value={v!}>
-                {v}
-              </option>
+              <option key={v!} value={v!}>{v}</option>
             ))}
           </select>
 
           <select
             value={filters.fleet}
             onChange={(e) => set("fleet", e.target.value)}
-            className="px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-950 text-sm"
+            className={selectClass}
           >
             <option value="">Fleet</option>
             {fleets.map((f) => (
-              <option key={f!} value={f!}>
-                {f}
-              </option>
+              <option key={f!} value={f!}>{f}</option>
             ))}
           </select>
 
           <select
             value={filters.raType}
             onChange={(e) => set("raType", e.target.value)}
-            className="px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-950 text-sm"
+            className={selectClass}
           >
             <option value="">RA Type</option>
             <option value="ROUTINE">Routine</option>
@@ -211,7 +247,7 @@ export default function RiskTable({
           <select
             value={filters.isClone}
             onChange={(e) => set("isClone", e.target.value)}
-            className="px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-950 text-sm"
+            className={selectClass}
           >
             <option value="">Is Clone</option>
             <option value="yes">Yes</option>
@@ -221,7 +257,7 @@ export default function RiskTable({
           <select
             value={filters.defectRelated}
             onChange={(e) => set("defectRelated", e.target.value)}
-            className="px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-950 text-sm"
+            className={selectClass}
           >
             <option value="">Defect Related</option>
             <option value="yes">Yes</option>
@@ -252,6 +288,7 @@ export default function RiskTable({
                   "Review Date",
                   "Vessel/Dept",
                   "RA Type",
+                  "Category",
                   "Library Index",
                   "State",
                   "State Updated By",
@@ -270,7 +307,7 @@ export default function RiskTable({
               {filtered.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={1}
+                    colSpan={13}
                     className="px-4 py-10 text-center text-zinc-400 text-sm"
                   >
                     No risks found matching your filters.
@@ -308,6 +345,9 @@ export default function RiskTable({
                     <td className="px-4 py-3 whitespace-nowrap">
                       {raTypeLabel[r.raType]}
                     </td>
+                    <td className="px-4 py-3 whitespace-nowrap text-zinc-500">
+                      {r.libraryCategory ?? "—"}
+                    </td>
                     <td className="px-4 py-3 max-w-45 truncate text-zinc-500">
                       {r.libraryIndex ?? "—"}
                     </td>
@@ -325,17 +365,20 @@ export default function RiskTable({
                       <div className="flex items-center gap-2">
                         <Button
                           title="Preview"
-                          onClick={() =>
-                            router.push(`/dashboard/risks/${r.id}`)
-                          }
-                          className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-400 hover:text-zinc-700 transition-colors"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => router.push(`/dashboard/risks/${r.id}`)}
+                          className="p-1.5 text-zinc-400 hover:text-zinc-700"
                         >
                           👁
                         </Button>
                         {canEdit && (
                           <Button
                             title="Edit"
-                            className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-400 hover:text-zinc-700 transition-colors"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => router.push(`/dashboard/risks/${r.id}/edit`)}
+                            className="p-1.5 text-zinc-400 hover:text-zinc-700"
                           >
                             ✏️
                           </Button>

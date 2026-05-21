@@ -35,6 +35,7 @@ model Risk {
   reviewDate       DateTime?
   vesselDepartment String? // e.g. "Company-TMS Tankers Ltd - Office"
   raType           RAType    @default(NON_ROUTINE)
+  libraryCategory   String? // e.g. "Navigation"
   libraryIndex     String? // e.g. "NAVIGATION:Navigation in Kiel Canal"
   state            RiskState @default(IN_PROGRESS)
   notes            String? // any extra notes

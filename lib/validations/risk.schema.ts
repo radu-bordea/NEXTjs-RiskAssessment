@@ -48,6 +48,7 @@ export const riskSchema = z.object({
   vesselDepartment: z.string().optional(),
   fleet: z.string().optional(),
   raType: z.enum(["ROUTINE", "NON_ROUTINE"]),
+  libraryCategory: z.string().optional(),
   libraryIndex: z.string().optional(),
   defectRelated: z.boolean().default(false),
   initiatorComment: z.string().optional(),

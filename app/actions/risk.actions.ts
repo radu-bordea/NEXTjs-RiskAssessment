@@ -40,6 +40,7 @@ export async function createRisk(data: RiskFormValues) {
         fleet: values.fleet ?? null,
         raType: values.raType,
         libraryIndex: values.libraryIndex ?? null,
+        libraryCategory: values.libraryCategory ?? null,
         defectRelated: values.defectRelated,
         initiatorComment: values.initiatorComment ?? null,
         alternativeWays: values.alternativeWays,

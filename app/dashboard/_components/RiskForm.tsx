@@ -29,6 +29,20 @@ const SCT_OPTIONS = [
   { value: "YES_VIOLATION", label: "Yes, violation" },
 ];
 
+const CATEGORIES = [
+  "NAVIGATION",
+  "MOORING/DOCKING OPS",
+  "DECK",
+  "ENGINE",
+  "SAFETY",
+  "SURVEY",
+  "HYGENE",
+  "SECURITY",
+  "CIBERSECURITY",
+  "OTHERS",
+  "PROCEDURES",
+];
+
 export default function RiskForm({ currentUser }: { currentUser: User }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -112,7 +126,6 @@ export default function RiskForm({ currentUser }: { currentUser: User }) {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-
       {/* Section 1 — Basic Info */}
       <div className={sectionClass}>
         <h2 className="text-sm font-bold uppercase tracking-widest text-zinc-400 mb-5">
@@ -169,10 +182,22 @@ export default function RiskForm({ currentUser }: { currentUser: User }) {
           </div>
 
           <div>
+            <label className={labelClass}>Category</label>
+            <select {...register("libraryCategory")} className={inputClass}>
+              <option value="">— Select —</option>
+              {CATEGORIES.map((cat) => (
+                <option key={cat} value={cat}>
+                  {cat}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
             <label className={labelClass}>Library Index</label>
             <Input
               {...register("libraryIndex")}
-              placeholder="e.g. NAVIGATION:STS At Night"
+              placeholder="e.g. Access to deck in adverse weather"
             />
           </div>
 
