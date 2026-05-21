@@ -18,17 +18,17 @@ const raTypeLabel: Record<string, string> = {
 };
 
 const CATEGORIES = [
-  "NAVIGATION",
-  "MOORING/DOCKING OPS",
+  "CIBERSECURITY",
   "DECK",
   "ENGINE",
-  "SAFETY",
-  "SURVEY",
   "HYGENE",
-  "SECURITY",
-  "CIBERSECURITY",
+  "MOORING/DOCKING OPS",
+  "NAVIGATION",
   "OTHERS",
   "PROCEDURES",
+  "SAFETY",
+  "SECURITY",
+  "SURVEY",
 ]
 
 const selectClass = "px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-950 text-sm"
@@ -74,12 +74,15 @@ export default function RiskTable({
   }, [risks])
 
   // If category selected show only its indexes, else show all
-  const availableIndexes = useMemo(() => {
-    if (filters.libraryCategory) {
-      return indexesByCategory[filters.libraryCategory] ?? []
-    }
-    return [...new Set(risks.map((r) => r.libraryIndex).filter(Boolean))] as string[]
-  }, [filters.libraryCategory, indexesByCategory, risks])
+const availableIndexes = useMemo(() => {
+  let indexes: string[]
+  if (filters.libraryCategory) {
+    indexes = indexesByCategory[filters.libraryCategory] ?? []
+  } else {
+    indexes = [...new Set(risks.map((r) => r.libraryIndex).filter(Boolean))] as string[]
+  }
+  return indexes.sort((a, b) => a.localeCompare(b))
+}, [filters.libraryCategory, indexesByCategory, risks])
 
   const filtered = useMemo(() => {
     return risks.filter((r) => {

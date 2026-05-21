@@ -347,7 +347,40 @@ export default function RiskForm({ currentUser }: { currentUser: User }) {
         )}
       </div>
 
-      {/* Section 4 — Risk Assessment Team */}
+            {/* Section 4 — Responsible Persons */}
+      <div className={sectionClass}>
+        <h2 className="text-sm font-bold uppercase tracking-widest text-zinc-400 mb-5">
+          Responsible Persons
+        </h2>
+        <div className="space-y-3">
+          {responsibleFields.map((field, index) => (
+            <div key={field.id} className="flex items-center gap-3">
+              <Input
+                {...register(`responsiblePersons.${index}.name`)}
+                placeholder="Person name"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => removeResponsible(index)}
+                className="border-red-200 text-red-500 hover:bg-red-50 hover:text-red-600 whitespace-nowrap"
+              >
+                Remove
+              </Button>
+            </div>
+          ))}
+        </div>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => appendResponsible({ name: "" })}
+          className="mt-4 border-[#1D9E75] text-[#1D9E75] hover:bg-[#E1F5EE] hover:text-[#0F6E56]"
+        >
+          + Add responsible person
+        </Button>
+      </div>
+
+      {/* Section 5 — Risk Assessment Team */}
       <div className={sectionClass}>
         <h2 className="text-sm font-bold uppercase tracking-widest text-zinc-400 mb-5">
           Risk Assessment Team
@@ -380,38 +413,7 @@ export default function RiskForm({ currentUser }: { currentUser: User }) {
         </Button>
       </div>
 
-      {/* Section 5 — Responsible Persons */}
-      <div className={sectionClass}>
-        <h2 className="text-sm font-bold uppercase tracking-widest text-zinc-400 mb-5">
-          Responsible Persons
-        </h2>
-        <div className="space-y-3">
-          {responsibleFields.map((field, index) => (
-            <div key={field.id} className="flex items-center gap-3">
-              <Input
-                {...register(`responsiblePersons.${index}.name`)}
-                placeholder="Person name"
-              />
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => removeResponsible(index)}
-                className="border-red-200 text-red-500 hover:bg-red-50 hover:text-red-600 whitespace-nowrap"
-              >
-                Remove
-              </Button>
-            </div>
-          ))}
-        </div>
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => appendResponsible({ name: "" })}
-          className="mt-4 border-[#1D9E75] text-[#1D9E75] hover:bg-[#E1F5EE] hover:text-[#0F6E56]"
-        >
-          + Add responsible person
-        </Button>
-      </div>
+
 
       {/* Submit */}
       <div className="flex items-center gap-4 pb-10">

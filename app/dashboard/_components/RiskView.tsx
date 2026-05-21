@@ -388,27 +388,6 @@ export default function RiskView({ risk }: RiskViewProps) {
         )}
       </div>
 
-      {/* Team */}
-      <div className={sectionClass}>
-        <h2 className="text-xs font-bold uppercase tracking-widest text-zinc-400 mb-3">
-          Risk Assessment Team
-        </h2>
-        {!risk.teamMembers?.length ? (
-          <p className="text-sm text-zinc-400">No team members.</p>
-        ) : (
-          <div className="flex flex-wrap gap-2">
-            {risk.teamMembers?.map((m: any) => (
-              <span
-                key={m.id}
-                className="text-sm px-3 py-1.5 rounded-full border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 bg-white dark:bg-zinc-950"
-              >
-                {m.name}
-              </span>
-            ))}
-          </div>
-        )}
-      </div>
-
       {/* Responsible Persons */}
       <div className={sectionClass}>
         <h2 className="text-xs font-bold uppercase tracking-widest text-zinc-400 mb-3">
@@ -424,6 +403,27 @@ export default function RiskView({ risk }: RiskViewProps) {
                 className="text-sm px-3 py-1.5 rounded-full border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 bg-white dark:bg-zinc-950"
               >
                 {p.name}
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Team */}
+      <div className={sectionClass}>
+        <h2 className="text-xs font-bold uppercase tracking-widest text-zinc-400 mb-3">
+          Risk Assessment Team
+        </h2>
+        {!risk.teamMembers?.length ? (
+          <p className="text-sm text-zinc-400">No team members.</p>
+        ) : (
+          <div className="flex flex-wrap gap-2">
+            {risk.teamMembers?.map((m: any) => (
+              <span
+                key={m.id}
+                className="text-sm px-3 py-1.5 rounded-full border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 bg-white dark:bg-zinc-950"
+              >
+                {m.name}
               </span>
             ))}
           </div>
