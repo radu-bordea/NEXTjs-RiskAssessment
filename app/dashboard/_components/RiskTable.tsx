@@ -17,26 +17,21 @@ import { useState, useMemo } from "react";
 import { Risk, User } from "@/types";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-
 import Image from "next/image";
 import Link from "next/link";
 
 // ─── State badge styles ───────────────────────────────────────────────────────
 /** Visual badge colors for each risk state — light and dark mode */
 const stateStyle: Record<string, string> = {
-  DRAFT:
-    "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300 whitespace-nowrap",
-  IN_PROGRESS:
-    "bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 whitespace-nowrap",
-  COMPLETED:
-    "bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-400 whitespace-nowrap",
-  CANCELLED:
-    "bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-400 whitespace-nowrap",
+  DRAFT:       "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300 whitespace-nowrap",
+  IN_PROGRESS: "bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 whitespace-nowrap",
+  COMPLETED:   "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 whitespace-nowrap",
+  CANCELLED:   "bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-400 whitespace-nowrap",
 };
 
 // ─── RA Type human-readable labels ───────────────────────────────────────────
 const raTypeLabel: Record<string, string> = {
-  ROUTINE: "Routine",
+  ROUTINE:     "Routine",
   NON_ROUTINE: "Non Routine",
 };
 
@@ -61,11 +56,11 @@ const CATEGORIES = [
 // ─── Shared Tailwind classes ──────────────────────────────────────────────────
 /** Shared class for all filter dropdowns */
 const selectClass =
-  "px-3 py-2 rounded-lg border border-[#B8D0E8] dark:border-slate-700 bg-white dark:bg-slate-900 text-sm text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-[#1B6CA8] transition-colors";
+  "px-3 py-2 rounded-lg border border-[#A8D5B5] dark:border-slate-700 bg-white dark:bg-slate-900 text-sm text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-[#1A7A4A] transition-colors";
 
 /** Shared class for all filter text inputs */
 const inputClass =
-  "px-3 py-2 rounded-lg border border-[#B8D0E8] dark:border-slate-700 bg-white dark:bg-slate-900 text-sm text-slate-700 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-[#1B6CA8] transition-colors";
+  "px-3 py-2 rounded-lg border border-[#A8D5B5] dark:border-slate-700 bg-white dark:bg-slate-900 text-sm text-slate-700 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-[#1A7A4A] transition-colors";
 
 // ─── Component ────────────────────────────────────────────────────────────────
 export default function RiskTable({
@@ -80,24 +75,24 @@ export default function RiskTable({
    * Each key maps to a column in the risk table.
    */
   const [filters, setFilters] = useState({
-    ref: "",
-    workActivity: "",
-    initiator: "",
+    ref:              "",
+    workActivity:     "",
+    initiator:        "",
     vesselDepartment: "",
-    fleet: "",
-    raType: "",
-    libraryCategory: "",
-    libraryIndex: "",
-    isClone: "",
-    defectRelated: "",
+    fleet:            "",
+    raType:           "",
+    libraryCategory:  "",
+    libraryIndex:     "",
+    isClone:          "",
+    defectRelated:    "",
   });
 
   const router = useRouter();
 
   /** Role checks derived from currentUser */
-  const isAdmin = currentUser?.role === "ADMIN";
+  const isAdmin   = currentUser?.role === "ADMIN";
   const isManager = currentUser?.role === "MANAGER";
-  const canEdit = isAdmin || isManager;
+  const canEdit   = isAdmin || isManager;
 
   /**
    * indexesByCategory
@@ -142,37 +137,14 @@ export default function RiskTable({
    */
   const filtered = useMemo(() => {
     return risks.filter((r) => {
-      if (
-        filters.ref &&
-        !r.ref.toLowerCase().includes(filters.ref.toLowerCase())
-      )
-        return false;
-      if (
-        filters.workActivity &&
-        !r.workActivity
-          .toLowerCase()
-          .includes(filters.workActivity.toLowerCase())
-      )
-        return false;
-      if (
-        filters.initiator &&
-        !r.initiator.toLowerCase().includes(filters.initiator.toLowerCase())
-      )
-        return false;
-      if (
-        filters.vesselDepartment &&
-        r.vesselDepartment !== filters.vesselDepartment
-      )
-        return false;
+      if (filters.ref && !r.ref.toLowerCase().includes(filters.ref.toLowerCase())) return false;
+      if (filters.workActivity && !r.workActivity.toLowerCase().includes(filters.workActivity.toLowerCase())) return false;
+      if (filters.initiator && !r.initiator.toLowerCase().includes(filters.initiator.toLowerCase())) return false;
+      if (filters.vesselDepartment && r.vesselDepartment !== filters.vesselDepartment) return false;
       if (filters.fleet && r.fleet !== filters.fleet) return false;
       if (filters.raType && r.raType !== filters.raType) return false;
-      if (
-        filters.libraryCategory &&
-        r.libraryCategory !== filters.libraryCategory
-      )
-        return false;
-      if (filters.libraryIndex && r.libraryIndex !== filters.libraryIndex)
-        return false;
+      if (filters.libraryCategory && r.libraryCategory !== filters.libraryCategory) return false;
+      if (filters.libraryIndex && r.libraryIndex !== filters.libraryIndex) return false;
       if (filters.isClone === "yes" && !r.cloneOf) return false;
       if (filters.isClone === "no" && r.cloneOf) return false;
       if (filters.defectRelated === "yes" && !r.defectRelated) return false;
@@ -182,9 +154,7 @@ export default function RiskTable({
   }, [risks, filters]);
 
   /** Unique vessel/department values from data for dropdown */
-  const vessels = [
-    ...new Set(risks.map((r) => r.vesselDepartment).filter(Boolean)),
-  ];
+  const vessels = [...new Set(risks.map((r) => r.vesselDepartment).filter(Boolean))];
 
   /** Unique fleet values from data for dropdown */
   const fleets = [...new Set(risks.map((r) => r.fleet).filter(Boolean))];
@@ -196,21 +166,22 @@ export default function RiskTable({
   /** Resets all filters to empty state */
   const reset = () =>
     setFilters({
-      ref: "",
-      workActivity: "",
-      initiator: "",
+      ref:              "",
+      workActivity:     "",
+      initiator:        "",
       vesselDepartment: "",
-      fleet: "",
-      raType: "",
-      libraryCategory: "",
-      libraryIndex: "",
-      isClone: "",
-      defectRelated: "",
+      fleet:            "",
+      raType:           "",
+      libraryCategory:  "",
+      libraryIndex:     "",
+      isClone:          "",
+      defectRelated:    "",
     });
 
   // ─── Render ───────────────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-[#EEF4FA] dark:bg-slate-950 text-slate-900 dark:text-slate-100 px-6 md:px-10 py-10 font-sans">
+    <div className="min-h-screen bg-[#EEF5F0] dark:bg-slate-950 text-slate-900 dark:text-slate-100 px-6 md:px-10 py-10 font-sans">
+
       {/* ── Page Header ───────────────────────────────────────────────────── */}
       <div className="flex items-center justify-between mb-8 flex-wrap gap-4">
         <Link href="/">
@@ -225,11 +196,9 @@ export default function RiskTable({
         </Link>
 
         <div>
-          {/* <p className="text-xs uppercase tracking-widest text-[#1B6CA8] dark:text-[#5BA3D9] font-medium mb-2">
-            Maritime Risk Dashboard
-          </p> */}
           <h1 className="text-4xl font-extrabold tracking-tight text-slate-700 dark:text-white">
-            Mobile Marine <span className="text-slate-500"> Fleet Risk Assessments Portal</span>
+            Mobile Marine{" "}
+            <span className="text-slate-500">Fleet Risk Assessments Portal</span>
           </h1>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-2">
             Displaying {filtered.length} of {risks.length} assessments
@@ -240,7 +209,7 @@ export default function RiskTable({
         {isAdmin && (
           <button
             onClick={() => router.push("/dashboard/risks/new")}
-            className="px-5 py-2.5 bg-[#1B6CA8] hover:bg-[#155a8a] dark:bg-[#1B6CA8] dark:hover:bg-[#155a8a] text-white rounded-lg text-sm font-medium transition-colors shadow-sm shadow-[#1B6CA8]/20"
+            className="px-5 py-2.5 bg-[#1A7A4A] hover:bg-[#145f39] text-white rounded-lg text-sm font-medium transition-colors shadow-sm shadow-[#1A7A4A]/20"
           >
             + New Assessment
           </button>
@@ -248,13 +217,14 @@ export default function RiskTable({
       </div>
 
       {/* ── Filters Panel ─────────────────────────────────────────────────── */}
-      <div className="rounded-xl border border-[#C5D9ED] dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm p-5 mb-6">
-        <p className="text-xs font-semibold text-[#1B6CA8] dark:text-[#5BA3D9] uppercase tracking-widest mb-4">
+      <div className="rounded-xl border border-[#A8D5B5] dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm p-5 mb-6">
+        <p className="text-xs font-semibold text-[#1A7A4A] dark:text-emerald-400 uppercase tracking-widest mb-4">
           Filters
         </p>
 
         {/* Row 1 — text inputs + category + index */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-3">
+
           {/* Ref — partial text match */}
           <input
             type="text"
@@ -293,9 +263,7 @@ export default function RiskTable({
           >
             <option value="">Category Index</option>
             {CATEGORIES.map((cat) => (
-              <option key={cat} value={cat}>
-                {cat}
-              </option>
+              <option key={cat} value={cat}>{cat}</option>
             ))}
           </select>
 
@@ -314,15 +282,14 @@ export default function RiskTable({
                 : "Library Index"}
             </option>
             {availableIndexes.map((idx) => (
-              <option key={idx} value={idx}>
-                {idx}
-              </option>
+              <option key={idx} value={idx}>{idx}</option>
             ))}
           </select>
         </div>
 
         {/* Row 2 — dropdown filters */}
         <div className="grid grid-cols-2 md:grid-cols-6 gap-3 mb-4">
+
           {/* Vessel/Department — unique values from actual data */}
           <select
             value={filters.vesselDepartment}
@@ -331,9 +298,7 @@ export default function RiskTable({
           >
             <option value="">Vessel/Dept</option>
             {vessels.map((v) => (
-              <option key={v!} value={v!}>
-                {v}
-              </option>
+              <option key={v!} value={v!}>{v}</option>
             ))}
           </select>
 
@@ -345,9 +310,7 @@ export default function RiskTable({
           >
             <option value="">Fleet</option>
             {fleets.map((f) => (
-              <option key={f!} value={f!}>
-                {f}
-              </option>
+              <option key={f!} value={f!}>{f}</option>
             ))}
           </select>
 
@@ -388,18 +351,19 @@ export default function RiskTable({
         {/* Reset all filters button */}
         <button
           onClick={reset}
-          className="text-xs px-4 py-2 rounded-lg border border-[#B8D0E8] dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:bg-[#EEF4FA] dark:hover:bg-slate-800 transition-colors"
+          className="text-xs px-4 py-2 rounded-lg border border-[#A8D5B5] dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:bg-[#EEF5F0] dark:hover:bg-slate-800 transition-colors"
         >
           Reset filters
         </button>
       </div>
 
       {/* ── Risk Table ────────────────────────────────────────────────────── */}
-      <div className="rounded-xl overflow-hidden border border-[#C5D9ED] dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
+      <div className="rounded-xl overflow-hidden border border-[#A8D5B5] dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            {/* Table header — blue background matching reference image */}
-            <thead className="bg-[#1B6CA8] dark:bg-[#0f3d5e] border-b border-[#155a8a] dark:border-[#0a2a42]">
+
+            {/* Table header — deep green background */}
+            <thead className="bg-[#1A7A4A] dark:bg-[#0d4a2b] border-b border-[#145f39] dark:border-[#0a3520]">
               <tr>
                 {[
                   "Ref",
@@ -441,15 +405,15 @@ export default function RiskTable({
                 filtered.map((r, index) => (
                   <tr
                     key={r.id}
-                    className={`border-b border-[#E2EDF5] dark:border-slate-800 hover:bg-[#EEF4FA] dark:hover:bg-slate-800/60 transition-colors ${
+                    className={`border-b border-[#D4EAD9] dark:border-slate-800 hover:bg-[#EEF5F0] dark:hover:bg-slate-800/60 transition-colors ${
                       index % 2 === 0
                         ? "bg-white dark:bg-slate-900"
-                        : "bg-[#F5F9FD] dark:bg-slate-900/50"
+                        : "bg-[#F5FAF6] dark:bg-slate-900/50"
                     }`}
                   >
                     {/* Ref — clickable, navigates to view page */}
                     <td
-                      className="px-4 py-3 font-medium text-[#1B6CA8] dark:text-[#5BA3D9] whitespace-nowrap cursor-pointer hover:underline"
+                      className="px-4 py-3 font-medium text-[#1A7A4A] dark:text-emerald-400 whitespace-nowrap cursor-pointer hover:underline"
                       onClick={() => router.push(`/dashboard/risks/${r.id}`)}
                     >
                       {r.ref}
@@ -495,9 +459,7 @@ export default function RiskTable({
 
                     {/* State badge */}
                     <td className="px-4 py-3">
-                      <span
-                        className={`text-xs px-2 py-1 rounded-full font-medium ${stateStyle[r.state]}`}
-                      >
+                      <span className={`text-xs px-2 py-1 rounded-full font-medium ${stateStyle[r.state]}`}>
                         {r.state.replace("_", " ")}
                       </span>
                     </td>
@@ -514,10 +476,8 @@ export default function RiskTable({
                           title="View"
                           variant="ghost"
                           size="sm"
-                          onClick={() =>
-                            router.push(`/dashboard/risks/${r.id}`)
-                          }
-                          className="p-1.5 text-slate-400 hover:text-[#1B6CA8] dark:hover:text-[#5BA3D9] hover:bg-[#EEF4FA] dark:hover:bg-slate-800"
+                          onClick={() => router.push(`/dashboard/risks/${r.id}`)}
+                          className="p-1.5 text-slate-400 hover:text-[#1A7A4A] dark:hover:text-emerald-400 hover:bg-[#EEF5F0] dark:hover:bg-slate-800"
                         >
                           👁
                         </Button>
@@ -528,10 +488,8 @@ export default function RiskTable({
                             title="Edit"
                             variant="ghost"
                             size="sm"
-                            onClick={() =>
-                              router.push(`/dashboard/risks/${r.id}/edit`)
-                            }
-                            className="p-1.5 text-slate-400 hover:text-[#1B6CA8] dark:hover:text-[#5BA3D9] hover:bg-[#EEF4FA] dark:hover:bg-slate-800"
+                            onClick={() => router.push(`/dashboard/risks/${r.id}/edit`)}
+                            className="p-1.5 text-slate-400 hover:text-[#1A7A4A] dark:hover:text-emerald-400 hover:bg-[#EEF5F0] dark:hover:bg-slate-800"
                           >
                             ✏️
                           </Button>
