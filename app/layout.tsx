@@ -73,11 +73,11 @@ export default async function RootLayout({
                 <ModeToggle />
               </div>
 
-              <div>
+              <Link href="/" className="flex items-center gap-3">
                 <h2 className="text-2xl font-bold tracking-tight text-slate-600 dark:text-white">
                   Sustainable Maritime Excellence
                 </h2>
-              </div>
+              </Link>
 
               {/* Auth */}
               <div className="flex items-center gap-3">
