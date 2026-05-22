@@ -1,22 +1,49 @@
 "use client";
 
+/**
+ * RiskTable — Main dashboard component
+ *
+ * Displays all risk assessments in a filterable table.
+ * Roles:
+ *  - ADMIN   → can create, view, edit
+ *  - MANAGER → can view and edit
+ *  - MEMBER  → view only
+ *
+ * Data is fetched server-side in dashboard/page.tsx and passed as props.
+ * All filtering is done client-side using useMemo for performance.
+ */
+
 import { useState, useMemo } from "react";
 import { Risk, User } from "@/types";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 
+import Image from "next/image";
+import Link from "next/link";
+
+// ─── State badge styles ───────────────────────────────────────────────────────
+/** Visual badge colors for each risk state — light and dark mode */
 const stateStyle: Record<string, string> = {
-  DRAFT: "bg-zinc-100 text-zinc-600 whitespace-nowrap",
-  IN_PROGRESS: "bg-amber-50 text-amber-700 whitespace-nowrap",
-  COMPLETED: "bg-green-50 text-green-700 whitespace-nowrap",
-  CANCELLED: "bg-red-50 text-red-700 whitespace-nowrap",
+  DRAFT:
+    "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300 whitespace-nowrap",
+  IN_PROGRESS:
+    "bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 whitespace-nowrap",
+  COMPLETED:
+    "bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-400 whitespace-nowrap",
+  CANCELLED:
+    "bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-400 whitespace-nowrap",
 };
 
+// ─── RA Type human-readable labels ───────────────────────────────────────────
 const raTypeLabel: Record<string, string> = {
   ROUTINE: "Routine",
   NON_ROUTINE: "Non Routine",
 };
 
+/**
+ * Fixed category list — agreed with client.
+ * To add a new category, append it to this array.
+ */
 const CATEGORIES = [
   "CIBERSECURITY",
   "DECK",
@@ -29,11 +56,18 @@ const CATEGORIES = [
   "SAFETY",
   "SECURITY",
   "SURVEY",
-]
+];
 
-const selectClass = "px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-950 text-sm"
-const inputClass  = "px-3 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-950 text-sm"
+// ─── Shared Tailwind classes ──────────────────────────────────────────────────
+/** Shared class for all filter dropdowns */
+const selectClass =
+  "px-3 py-2 rounded-lg border border-[#B8D0E8] dark:border-slate-700 bg-white dark:bg-slate-900 text-sm text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-[#1B6CA8] transition-colors";
 
+/** Shared class for all filter text inputs */
+const inputClass =
+  "px-3 py-2 rounded-lg border border-[#B8D0E8] dark:border-slate-700 bg-white dark:bg-slate-900 text-sm text-slate-700 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-[#1B6CA8] transition-colors";
+
+// ─── Component ────────────────────────────────────────────────────────────────
 export default function RiskTable({
   risks,
   currentUser,
@@ -41,59 +75,104 @@ export default function RiskTable({
   risks: Risk[];
   currentUser: User;
 }) {
+  /**
+   * Filter state — all filters start empty (no filter applied).
+   * Each key maps to a column in the risk table.
+   */
   const [filters, setFilters] = useState({
-    ref:              "",
-    workActivity:     "",
-    initiator:        "",
+    ref: "",
+    workActivity: "",
+    initiator: "",
     vesselDepartment: "",
-    fleet:            "",
-    raType:           "",
-    libraryCategory:  "",
-    libraryIndex:     "",
-    isClone:          "",
-    defectRelated:    "",
+    fleet: "",
+    raType: "",
+    libraryCategory: "",
+    libraryIndex: "",
+    isClone: "",
+    defectRelated: "",
   });
 
   const router = useRouter();
 
-  const isAdmin   = currentUser?.role === "ADMIN";
+  /** Role checks derived from currentUser */
+  const isAdmin = currentUser?.role === "ADMIN";
   const isManager = currentUser?.role === "MANAGER";
-  const canEdit   = isAdmin || isManager;
+  const canEdit = isAdmin || isManager;
 
-  // Build category → indexes map from actual data
+  /**
+   * indexesByCategory
+   * Builds a map of { category: [index1, index2, ...] }
+   * from actual risk data — index dropdown only shows
+   * indexes that exist in the selected category.
+   */
   const indexesByCategory = useMemo(() => {
-    const map: Record<string, string[]> = {}
+    const map: Record<string, string[]> = {};
     risks.forEach((r) => {
-      if (!r.libraryCategory || !r.libraryIndex) return
-      if (!map[r.libraryCategory]) map[r.libraryCategory] = []
+      if (!r.libraryCategory || !r.libraryIndex) return;
+      if (!map[r.libraryCategory]) map[r.libraryCategory] = [];
       if (!map[r.libraryCategory].includes(r.libraryIndex)) {
-        map[r.libraryCategory].push(r.libraryIndex)
+        map[r.libraryCategory].push(r.libraryIndex);
       }
-    })
-    return map
-  }, [risks])
+    });
+    return map;
+  }, [risks]);
 
-  // If category selected show only its indexes, else show all
-const availableIndexes = useMemo(() => {
-  let indexes: string[]
-  if (filters.libraryCategory) {
-    indexes = indexesByCategory[filters.libraryCategory] ?? []
-  } else {
-    indexes = [...new Set(risks.map((r) => r.libraryIndex).filter(Boolean))] as string[]
-  }
-  return indexes.sort((a, b) => a.localeCompare(b))
-}, [filters.libraryCategory, indexesByCategory, risks])
+  /**
+   * availableIndexes
+   * If category selected → show only its indexes.
+   * If no category → show all indexes.
+   * Always sorted alphabetically.
+   */
+  const availableIndexes = useMemo(() => {
+    let indexes: string[];
+    if (filters.libraryCategory) {
+      indexes = indexesByCategory[filters.libraryCategory] ?? [];
+    } else {
+      indexes = [
+        ...new Set(risks.map((r) => r.libraryIndex).filter(Boolean)),
+      ] as string[];
+    }
+    return indexes.sort((a, b) => a.localeCompare(b));
+  }, [filters.libraryCategory, indexesByCategory, risks]);
 
+  /**
+   * filtered
+   * Applies all active filters to the risks array.
+   * Client-side with useMemo — recalculates only when risks or filters change.
+   */
   const filtered = useMemo(() => {
     return risks.filter((r) => {
-      if (filters.ref && !r.ref.toLowerCase().includes(filters.ref.toLowerCase())) return false;
-      if (filters.workActivity && !r.workActivity.toLowerCase().includes(filters.workActivity.toLowerCase())) return false;
-      if (filters.initiator && !r.initiator.toLowerCase().includes(filters.initiator.toLowerCase())) return false;
-      if (filters.vesselDepartment && r.vesselDepartment !== filters.vesselDepartment) return false;
+      if (
+        filters.ref &&
+        !r.ref.toLowerCase().includes(filters.ref.toLowerCase())
+      )
+        return false;
+      if (
+        filters.workActivity &&
+        !r.workActivity
+          .toLowerCase()
+          .includes(filters.workActivity.toLowerCase())
+      )
+        return false;
+      if (
+        filters.initiator &&
+        !r.initiator.toLowerCase().includes(filters.initiator.toLowerCase())
+      )
+        return false;
+      if (
+        filters.vesselDepartment &&
+        r.vesselDepartment !== filters.vesselDepartment
+      )
+        return false;
       if (filters.fleet && r.fleet !== filters.fleet) return false;
       if (filters.raType && r.raType !== filters.raType) return false;
-      if (filters.libraryCategory && r.libraryCategory !== filters.libraryCategory) return false;
-      if (filters.libraryIndex && r.libraryIndex !== filters.libraryIndex) return false;
+      if (
+        filters.libraryCategory &&
+        r.libraryCategory !== filters.libraryCategory
+      )
+        return false;
+      if (filters.libraryIndex && r.libraryIndex !== filters.libraryIndex)
+        return false;
       if (filters.isClone === "yes" && !r.cloneOf) return false;
       if (filters.isClone === "no" && r.cloneOf) return false;
       if (filters.defectRelated === "yes" && !r.defectRelated) return false;
@@ -102,60 +181,81 @@ const availableIndexes = useMemo(() => {
     });
   }, [risks, filters]);
 
-  const vessels = [...new Set(risks.map((r) => r.vesselDepartment).filter(Boolean))];
-  const fleets  = [...new Set(risks.map((r) => r.fleet).filter(Boolean))];
+  /** Unique vessel/department values from data for dropdown */
+  const vessels = [
+    ...new Set(risks.map((r) => r.vesselDepartment).filter(Boolean)),
+  ];
 
+  /** Unique fleet values from data for dropdown */
+  const fleets = [...new Set(risks.map((r) => r.fleet).filter(Boolean))];
+
+  /** Helper to update a single filter key */
   const set = (key: string, value: string) =>
     setFilters((prev) => ({ ...prev, [key]: value }));
 
+  /** Resets all filters to empty state */
   const reset = () =>
     setFilters({
-      ref:              "",
-      workActivity:     "",
-      initiator:        "",
+      ref: "",
+      workActivity: "",
+      initiator: "",
       vesselDepartment: "",
-      fleet:            "",
-      raType:           "",
-      libraryCategory:  "",
-      libraryIndex:     "",
-      isClone:          "",
-      defectRelated:    "",
+      fleet: "",
+      raType: "",
+      libraryCategory: "",
+      libraryIndex: "",
+      isClone: "",
+      defectRelated: "",
     });
 
+  // ─── Render ───────────────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-white dark:bg-zinc-950 text-zinc-900 dark:text-white px-6 md:px-10 py-10 font-sans">
-
-      {/* Header */}
+    <div className="min-h-screen bg-[#EEF4FA] dark:bg-slate-950 text-slate-900 dark:text-slate-100 px-6 md:px-10 py-10 font-sans">
+      {/* ── Page Header ───────────────────────────────────────────────────── */}
       <div className="flex items-center justify-between mb-8 flex-wrap gap-4">
+        <Link href="/">
+          <Image
+            src="/assets/images/logo1.jpg"
+            alt="MarineGuard"
+            width={60}
+            height={60}
+            className="object-cover object-top rounded-full w-16 h-16"
+            priority
+          />
+        </Link>
+
         <div>
-          <p className="text-xs uppercase tracking-widest text-[#1D9E75] font-medium mb-2">
+          {/* <p className="text-xs uppercase tracking-widest text-[#1B6CA8] dark:text-[#5BA3D9] font-medium mb-2">
             Maritime Risk Dashboard
-          </p>
-          <h1 className="text-4xl font-extrabold tracking-tight">
-            Fleet Risk Assessments
+          </p> */}
+          <h1 className="text-4xl font-extrabold tracking-tight text-slate-700 dark:text-white">
+            Mobile Marine <span className="text-slate-500"> Fleet Risk Assessments Portal</span>
           </h1>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-2">
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-2">
             Displaying {filtered.length} of {risks.length} assessments
           </p>
         </div>
+
+        {/* New Assessment button — ADMIN only */}
         {isAdmin && (
           <button
             onClick={() => router.push("/dashboard/risks/new")}
-            className="px-5 py-2.5 bg-[#0F6E56] text-[#E1F5EE] rounded-lg text-sm hover:bg-[#085041] transition-colors"
+            className="px-5 py-2.5 bg-[#1B6CA8] hover:bg-[#155a8a] dark:bg-[#1B6CA8] dark:hover:bg-[#155a8a] text-white rounded-lg text-sm font-medium transition-colors shadow-sm shadow-[#1B6CA8]/20"
           >
             + New Assessment
           </button>
         )}
       </div>
 
-      {/* Filters */}
-      <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 p-5 mb-6">
-        <p className="text-xs font-medium text-zinc-400 uppercase tracking-widest mb-4">
+      {/* ── Filters Panel ─────────────────────────────────────────────────── */}
+      <div className="rounded-xl border border-[#C5D9ED] dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm p-5 mb-6">
+        <p className="text-xs font-semibold text-[#1B6CA8] dark:text-[#5BA3D9] uppercase tracking-widest mb-4">
           Filters
         </p>
 
         {/* Row 1 — text inputs + category + index */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-3">
+          {/* Ref — partial text match */}
           <input
             type="text"
             placeholder="Ref"
@@ -163,6 +263,8 @@ const availableIndexes = useMemo(() => {
             onChange={(e) => set("ref", e.target.value)}
             className={inputClass}
           />
+
+          {/* Work Activity — partial text match */}
           <input
             type="text"
             placeholder="Work Activity"
@@ -170,6 +272,8 @@ const availableIndexes = useMemo(() => {
             onChange={(e) => set("workActivity", e.target.value)}
             className={inputClass}
           />
+
+          {/* Initiator — partial text match */}
           <input
             type="text"
             placeholder="Initiator"
@@ -178,22 +282,24 @@ const availableIndexes = useMemo(() => {
             className={inputClass}
           />
 
-          {/* Category — pick first, filters the index dropdown */}
+          {/* Category — selecting this resets the index filter */}
           <select
             value={filters.libraryCategory}
             onChange={(e) => {
-              set("libraryCategory", e.target.value)
-              set("libraryIndex", "") // reset index when category changes
+              set("libraryCategory", e.target.value);
+              set("libraryIndex", ""); // reset dependent filter
             }}
             className={selectClass}
           >
             <option value="">Category Index</option>
             {CATEGORIES.map((cat) => (
-              <option key={cat} value={cat}>{cat}</option>
+              <option key={cat} value={cat}>
+                {cat}
+              </option>
             ))}
           </select>
 
-          {/* Library Index — filtered by selected category */}
+          {/* Library Index — dynamically filtered by selected category */}
           <select
             value={filters.libraryIndex}
             onChange={(e) => set("libraryIndex", e.target.value)}
@@ -208,13 +314,16 @@ const availableIndexes = useMemo(() => {
                 : "Library Index"}
             </option>
             {availableIndexes.map((idx) => (
-              <option key={idx} value={idx}>{idx}</option>
+              <option key={idx} value={idx}>
+                {idx}
+              </option>
             ))}
           </select>
         </div>
 
-        {/* Row 2 — dropdowns */}
+        {/* Row 2 — dropdown filters */}
         <div className="grid grid-cols-2 md:grid-cols-6 gap-3 mb-4">
+          {/* Vessel/Department — unique values from actual data */}
           <select
             value={filters.vesselDepartment}
             onChange={(e) => set("vesselDepartment", e.target.value)}
@@ -222,10 +331,13 @@ const availableIndexes = useMemo(() => {
           >
             <option value="">Vessel/Dept</option>
             {vessels.map((v) => (
-              <option key={v!} value={v!}>{v}</option>
+              <option key={v!} value={v!}>
+                {v}
+              </option>
             ))}
           </select>
 
+          {/* Fleet — unique values from actual data */}
           <select
             value={filters.fleet}
             onChange={(e) => set("fleet", e.target.value)}
@@ -233,10 +345,13 @@ const availableIndexes = useMemo(() => {
           >
             <option value="">Fleet</option>
             {fleets.map((f) => (
-              <option key={f!} value={f!}>{f}</option>
+              <option key={f!} value={f!}>
+                {f}
+              </option>
             ))}
           </select>
 
+          {/* RA Type */}
           <select
             value={filters.raType}
             onChange={(e) => set("raType", e.target.value)}
@@ -247,6 +362,7 @@ const availableIndexes = useMemo(() => {
             <option value="NON_ROUTINE">Non Routine</option>
           </select>
 
+          {/* Is Clone — filters risks cloned from a template */}
           <select
             value={filters.isClone}
             onChange={(e) => set("isClone", e.target.value)}
@@ -257,6 +373,7 @@ const availableIndexes = useMemo(() => {
             <option value="no">No</option>
           </select>
 
+          {/* Defect Related */}
           <select
             value={filters.defectRelated}
             onChange={(e) => set("defectRelated", e.target.value)}
@@ -268,19 +385,21 @@ const availableIndexes = useMemo(() => {
           </select>
         </div>
 
+        {/* Reset all filters button */}
         <button
           onClick={reset}
-          className="text-xs px-4 py-2 rounded-lg border border-zinc-200 dark:border-zinc-700 text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+          className="text-xs px-4 py-2 rounded-lg border border-[#B8D0E8] dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:bg-[#EEF4FA] dark:hover:bg-slate-800 transition-colors"
         >
           Reset filters
         </button>
       </div>
 
-      {/* Table */}
-      <div className="rounded-xl overflow-hidden border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900">
+      {/* ── Risk Table ────────────────────────────────────────────────────── */}
+      <div className="rounded-xl overflow-hidden border border-[#C5D9ED] dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="bg-zinc-50 dark:bg-zinc-950 border-b border-zinc-100 dark:border-zinc-800">
+            {/* Table header — blue background matching reference image */}
+            <thead className="bg-[#1B6CA8] dark:bg-[#0f3d5e] border-b border-[#155a8a] dark:border-[#0a2a42]">
               <tr>
                 {[
                   "Ref",
@@ -299,61 +418,82 @@ const availableIndexes = useMemo(() => {
                 ].map((h) => (
                   <th
                     key={h}
-                    className="text-left px-4 py-3 font-medium text-zinc-500 dark:text-zinc-400 whitespace-nowrap text-xs uppercase tracking-wide"
+                    className="text-left px-4 py-3 font-semibold text-white whitespace-nowrap text-xs uppercase tracking-wide"
                   >
                     {h}
                   </th>
                 ))}
               </tr>
             </thead>
+
             <tbody>
+              {/* Empty state */}
               {filtered.length === 0 ? (
                 <tr>
                   <td
                     colSpan={13}
-                    className="px-4 py-10 text-center text-zinc-400 text-sm"
+                    className="px-4 py-10 text-center text-slate-400 text-sm"
                   >
                     No risks found matching your filters.
                   </td>
                 </tr>
               ) : (
-                filtered.map((r) => (
+                filtered.map((r, index) => (
                   <tr
                     key={r.id}
-                    className="border-b border-zinc-100 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800/40"
+                    className={`border-b border-[#E2EDF5] dark:border-slate-800 hover:bg-[#EEF4FA] dark:hover:bg-slate-800/60 transition-colors ${
+                      index % 2 === 0
+                        ? "bg-white dark:bg-slate-900"
+                        : "bg-[#F5F9FD] dark:bg-slate-900/50"
+                    }`}
                   >
-                    <td className="px-4 py-3 font-medium text-[#0F6E56] whitespace-nowrap">
+                    {/* Ref — clickable, navigates to view page */}
+                    <td
+                      className="px-4 py-3 font-medium text-[#1B6CA8] dark:text-[#5BA3D9] whitespace-nowrap cursor-pointer hover:underline"
+                      onClick={() => router.push(`/dashboard/risks/${r.id}`)}
+                    >
                       {r.ref}
                     </td>
-                    <td className="px-4 py-3 text-zinc-400 whitespace-nowrap">
+
+                    <td className="px-4 py-3 text-slate-400 dark:text-slate-500 whitespace-nowrap">
                       {r.cloneOf ?? "—"}
                     </td>
-                    <td className="px-4 py-3 max-w-50 truncate">
+
+                    <td className="px-4 py-3 max-w-50 truncate text-slate-700 dark:text-slate-300">
                       {r.workActivity}
                     </td>
-                    <td className="px-4 py-3 whitespace-nowrap">
+
+                    <td className="px-4 py-3 whitespace-nowrap text-slate-700 dark:text-slate-300">
                       {r.initiator}
                     </td>
-                    <td className="px-4 py-3 whitespace-nowrap">
+
+                    <td className="px-4 py-3 whitespace-nowrap text-slate-600 dark:text-slate-400">
                       {new Date(r.initiationDate).toLocaleDateString("en-GB")}
                     </td>
-                    <td className="px-4 py-3 whitespace-nowrap">
+
+                    <td className="px-4 py-3 whitespace-nowrap text-slate-600 dark:text-slate-400">
                       {r.reviewDate
                         ? new Date(r.reviewDate).toLocaleDateString("en-GB")
                         : "—"}
                     </td>
-                    <td className="px-4 py-3 whitespace-nowrap text-zinc-500">
+
+                    <td className="px-4 py-3 whitespace-nowrap text-slate-500 dark:text-slate-400">
                       {r.vesselDepartment ?? "—"}
                     </td>
-                    <td className="px-4 py-3 whitespace-nowrap">
+
+                    <td className="px-4 py-3 whitespace-nowrap text-slate-700 dark:text-slate-300">
                       {raTypeLabel[r.raType]}
                     </td>
-                    <td className="px-4 py-3 whitespace-nowrap text-zinc-500">
+
+                    <td className="px-4 py-3 whitespace-nowrap text-slate-500 dark:text-slate-400">
                       {r.libraryCategory ?? "—"}
                     </td>
-                    <td className="px-4 py-3 max-w-45 truncate text-zinc-500">
+
+                    <td className="px-4 py-3 max-w-45 truncate text-slate-500 dark:text-slate-400">
                       {r.libraryIndex ?? "—"}
                     </td>
+
+                    {/* State badge */}
                     <td className="px-4 py-3">
                       <span
                         className={`text-xs px-2 py-1 rounded-full font-medium ${stateStyle[r.state]}`}
@@ -361,27 +501,37 @@ const availableIndexes = useMemo(() => {
                         {r.state.replace("_", " ")}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-zinc-400 whitespace-nowrap">
+
+                    <td className="px-4 py-3 text-slate-400 dark:text-slate-500 whitespace-nowrap">
                       {r.stateUpdatedBy?.name ?? "—"}
                     </td>
+
+                    {/* Action buttons */}
                     <td className="px-4 py-3">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1">
+                        {/* View — all roles */}
                         <Button
-                          title="Preview"
+                          title="View"
                           variant="ghost"
                           size="sm"
-                          onClick={() => router.push(`/dashboard/risks/${r.id}`)}
-                          className="p-1.5 text-zinc-400 hover:text-zinc-700"
+                          onClick={() =>
+                            router.push(`/dashboard/risks/${r.id}`)
+                          }
+                          className="p-1.5 text-slate-400 hover:text-[#1B6CA8] dark:hover:text-[#5BA3D9] hover:bg-[#EEF4FA] dark:hover:bg-slate-800"
                         >
                           👁
                         </Button>
+
+                        {/* Edit — ADMIN and MANAGER only */}
                         {canEdit && (
                           <Button
                             title="Edit"
                             variant="ghost"
                             size="sm"
-                            onClick={() => router.push(`/dashboard/risks/${r.id}/edit`)}
-                            className="p-1.5 text-zinc-400 hover:text-zinc-700"
+                            onClick={() =>
+                              router.push(`/dashboard/risks/${r.id}/edit`)
+                            }
+                            className="p-1.5 text-slate-400 hover:text-[#1B6CA8] dark:hover:text-[#5BA3D9] hover:bg-[#EEF4FA] dark:hover:bg-slate-800"
                           >
                             ✏️
                           </Button>

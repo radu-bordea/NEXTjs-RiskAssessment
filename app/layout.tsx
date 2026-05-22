@@ -21,6 +21,7 @@ import { syncUser } from "./actions/syncUsers";
 import Link from "next/link";
 import { ModeToggle } from "@/components/mode-toggle";
 import { getUserRole } from "./actions/getUIserRole";
+import { currentUser } from "@clerk/nextjs/server";
 import { log } from "console";
 
 import { Toaster } from "@/components/ui/sonner";
@@ -51,6 +52,8 @@ export default async function RootLayout({
   // Get user role and pass it down via context (optional, can also be done in individual pages)
   const user = await getUserRole();
   log("User role in layout:", user);
+  // inside the layout function, after syncUser():
+  const clerkUser = await currentUser();
 
   return (
     <ClerkProvider>
@@ -67,17 +70,13 @@ export default async function RootLayout({
             <header className="flex justify-between items-center px-2 md:px-16 h-20 border-b border-zinc-100 dark:border-zinc-800">
               {/* Logo */}
               <div className="flex items-center gap-3">
-                <Link href="/">
-                  <Image
-                    src="/assets/images/logo1.jpg"
-                    alt="MarineGuard"
-                    width={60}
-                    height={60}
-                    className="object-cover object-top rounded-full w-16 h-16"
-                    priority
-                  />
-                </Link>
                 <ModeToggle />
+              </div>
+
+              <div>
+                <h2 className="text-2xl font-bold tracking-tight text-slate-600 dark:text-white">
+                  Sustainable Maritime Excellence
+                </h2>
               </div>
 
               {/* Auth */}
@@ -116,13 +115,21 @@ export default async function RootLayout({
                       />
                     )}
 
-                    <UserButton
-                      appearance={{
-                        elements: {
-                          avatarBox: "w-9 h-9",
-                        },
-                      }}
-                    />
+                    <div className="flex items-center gap-3">
+                      {/* Show user's first name */}
+                      {clerkUser?.firstName && (
+                        <span className="font-bold tracking-tight text-slate-600 dark:text-white">
+                         Vessel: {clerkUser.firstName} {clerkUser.lastName}
+                        </span>
+                      )}
+                      <UserButton
+                        appearance={{
+                          elements: {
+                            avatarBox: "w-9 h-9",
+                          },
+                        }}
+                      />
+                    </div>
                   </div>
                 </Show>
               </div>
