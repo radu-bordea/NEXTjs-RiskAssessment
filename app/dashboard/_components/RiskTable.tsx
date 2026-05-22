@@ -382,7 +382,7 @@ export default function RiskTable({
                 ].map((h) => (
                   <th
                     key={h}
-                    className="text-left px-4 py-3 font-semibold text-white whitespace-nowrap text-xs uppercase tracking-wide"
+                    className="text-left px-4 py-3 font-semibold text-white  text-xs uppercase tracking-wide"
                   >
                     {h}
                   </th>
@@ -423,7 +423,7 @@ export default function RiskTable({
                       {r.cloneOf ?? "—"}
                     </td>
 
-                    <td className="px-4 py-3 max-w-50 truncate text-slate-700 dark:text-slate-300">
+                    <td className="px-4 py-3  text-slate-700 dark:text-slate-300">
                       {r.workActivity}
                     </td>
 
@@ -441,7 +441,7 @@ export default function RiskTable({
                         : "—"}
                     </td>
 
-                    <td className="px-4 py-3 whitespace-nowrap text-slate-500 dark:text-slate-400">
+                    <td className="px-4 py-3 text-slate-500 dark:text-slate-400">
                       {r.vesselDepartment ?? "—"}
                     </td>
 
@@ -449,7 +449,7 @@ export default function RiskTable({
                       {raTypeLabel[r.raType]}
                     </td>
 
-                    <td className="px-4 py-3 whitespace-nowrap text-slate-500 dark:text-slate-400">
+                    <td className="px-4 py-3 text-slate-500 dark:text-slate-400">
                       {r.libraryCategory ?? "—"}
                     </td>
 
@@ -464,7 +464,7 @@ export default function RiskTable({
                       </span>
                     </td>
 
-                    <td className="px-4 py-3 text-slate-400 dark:text-slate-500 whitespace-nowrap">
+                    <td className="px-4 py-3 text-slate-400 dark:text-slate-500 ">
                       {r.stateUpdatedBy?.name ?? "—"}
                     </td>
 
