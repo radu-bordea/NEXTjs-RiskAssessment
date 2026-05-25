@@ -22,7 +22,7 @@ export async function syncUser() {
     },
     update: {
       email,
-      name: `${clerkUser.firstName ?? ""} ${clerkUser.lastName ?? ""}`.trim(),
+      name: `${clerkUser.firstName ?? ""} ${clerkUser.lastName ?? ""}`.trim() || email,
     },
     create: {
       id: userId,

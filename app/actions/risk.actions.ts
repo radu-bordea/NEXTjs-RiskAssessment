@@ -4,7 +4,6 @@ import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import prisma from "@/lib/prisma";
 import { riskSchema, RiskFormValues } from "@/lib/validations/risk.schema";
-import { success } from "zod";
 
 export async function createRisk(data: RiskFormValues) {
   const { userId } = await auth();
