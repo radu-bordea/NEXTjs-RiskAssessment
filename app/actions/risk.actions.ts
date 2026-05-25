@@ -196,7 +196,6 @@ export async function saveDraft(data: Partial<RiskFormValues>) {
                 order: mIndex,
               })),
             },
-            
           })),
         },
 
@@ -218,5 +217,37 @@ export async function saveDraft(data: Partial<RiskFormValues>) {
   } catch (error) {
     console.error("saveDraft error:", error);
     return { success: false, error: "Failed to save draft" };
+  }
+}
+
+/**
+ * deleteRisk - Permanently delete a risk assesment by Id
+ *
+ * Cascade delete handle all related records automaticaly
+ * RiskAssesmentRow, AdditionaløMeasure, TeamMember and ResponsiblePerson
+ *
+ * Only ADMIN can delete
+ *
+ * @param id - The cuid of the risk to delete
+ * @returns {success: true} of {success: false, error: string}
+ */
+export async function deleteRisk(id: string) {
+  // 1. Check authentication
+  const { userId } = await auth();
+  if (!userId) redirect("/sign-in");
+
+  // 2. Check role - only ADMIN can delete
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user || user.role !== "ADMIN") {
+    return { success: false, error: "Unauthorized" };
+  }
+
+  try {
+    // Cascade handles all related records automaticaly
+    await prisma.risk.delete({ where: { id } });
+    return { success: true };
+  } catch (error) {
+    console.error("deleteRisk error:", error);
+    return { success: false, error: "Failed to delete risk assessment" };
   }
 }
