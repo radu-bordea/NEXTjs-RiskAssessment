@@ -2,8 +2,12 @@
 
 import { useForm, useFieldArray, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { riskSchema, RiskFormValues } from "@/lib/validations/risk.schema";
-import { createRisk } from "@/app/actions/risk.actions";
+import {
+  riskSchema,
+  riskDraftSchema,
+  RiskFormValues,
+} from "@/lib/validations/risk.schema";
+import { createRisk, saveDraft } from "@/app/actions/risk.actions";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useState } from "react";
@@ -46,6 +50,8 @@ const CATEGORIES = [
 export default function RiskForm({ currentUser }: { currentUser: User }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  /** Separate loading state for draft — prevents submit and draft firing together */
+  const [draftLoading, setDraftLoading] = useState(false);
 
   const {
     register,
@@ -53,6 +59,7 @@ export default function RiskForm({ currentUser }: { currentUser: User }) {
     control,
     watch,
     setValue,
+    getValues,
     formState: { errors },
   } = useForm<RiskFormValues, unknown, RiskFormValues>({
     resolver: zodResolver(riskSchema) as Resolver<RiskFormValues>,
@@ -113,6 +120,28 @@ export default function RiskForm({ currentUser }: { currentUser: User }) {
       toast.error("Something went wrong");
     } finally {
       setLoading(false);
+    }
+  };
+  /**
+   * onSaveDraft — saves current form state as DRAFT
+   * Uses getValues() to read form without triggering validation
+   * so partially filled forms can be saved.
+   */
+  const onSaveDraft = async () => {
+    setDraftLoading(true);
+    try {
+      const data = getValues(); // reads form without validation
+      const result = await saveDraft(data);
+      if (result.success) {
+        toast.success("Draft saved!");
+        router.push("/dashboard");
+      } else {
+        toast.error(result.error ?? "Failed to save draft");
+      }
+    } catch {
+      toast.error("Something went wrong");
+    } finally {
+      setDraftLoading(false);
     }
   };
 
@@ -347,7 +376,7 @@ export default function RiskForm({ currentUser }: { currentUser: User }) {
         )}
       </div>
 
-            {/* Section 4 — Responsible Persons */}
+      {/* Section 4 — Responsible Persons */}
       <div className={sectionClass}>
         <h2 className="text-sm font-bold uppercase tracking-widest text-zinc-400 mb-5">
           Responsible Persons
@@ -413,21 +442,34 @@ export default function RiskForm({ currentUser }: { currentUser: User }) {
         </Button>
       </div>
 
-
-
-      {/* Submit */}
-      <div className="flex items-center gap-4 pb-10">
+      {/* ── Submit / Save Draft / Cancel ──────────────────────────────────── */}
+      <div className="flex items-center gap-4 pb-10 flex-wrap">
+        {/* Submit — full Zod validation, sets state to IN_PROGRESS */}
         <Button
           type="submit"
-          disabled={loading}
-          className="px-8 py-3 bg-[#0F6E56] text-[#E1F5EE] hover:bg-[#085041]"
+          disabled={loading || draftLoading}
+          className="px-8 py-3 bg-[#1A7A4A] text-white hover:bg-[#145f39] shadow-sm shadow-[#1A7A4A]/20"
         >
           {loading ? "Submitting..." : "Submit"}
         </Button>
+
+        {/* Save Draft — relaxed validation, sets state to DRAFT */}
+        <Button
+          type="button"
+          disabled={loading || draftLoading}
+          onClick={onSaveDraft}
+          className="px-8 py-3 bg-amber-500 text-white hover:bg-amber-600 shadow-sm"
+        >
+          {draftLoading ? "Saving..." : "Save Draft"}
+        </Button>
+
+        {/* Cancel — returns to dashboard without saving */}
         <Button
           type="button"
           variant="outline"
+          disabled={loading || draftLoading}
           onClick={() => router.push("/dashboard")}
+          className="border-[#A8D5B5] text-slate-600 hover:bg-[#EEF5F0]"
         >
           Cancel
         </Button>
