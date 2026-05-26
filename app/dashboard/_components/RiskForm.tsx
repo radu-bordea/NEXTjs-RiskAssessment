@@ -7,7 +7,12 @@ import {
   riskDraftSchema,
   RiskFormValues,
 } from "@/lib/validations/risk.schema";
-import { createRisk, saveDraft } from "@/app/actions/risk.actions";
+import {
+  createRisk,
+  saveDraft,
+  updateRisk,
+  deleteRisk,
+} from "@/app/actions/risk.actions";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useState } from "react";
@@ -15,12 +20,23 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import AssessmentRowField from "./AssessmentRowField";
+import type { Risk, User } from "@/types";
 
-type User = {
-  id: string;
-  name: string | null;
-  email: string;
-  role: string;
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+
+type Props = {
+  currentUser: User;
+  risk?: Risk;
 };
 
 const SCT_OPTIONS = [
@@ -47,7 +63,9 @@ const CATEGORIES = [
   "PROCEDURES",
 ];
 
-export default function RiskForm({ currentUser }: { currentUser: User }) {
+export default function RiskForm({ currentUser, risk }: Props) {
+  /** True when editing existing risk, false when creating new */
+  const isEditMode = !!risk;
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   /** Separate loading state for draft — prevents submit and draft firing together */
@@ -64,12 +82,46 @@ export default function RiskForm({ currentUser }: { currentUser: User }) {
   } = useForm<RiskFormValues, unknown, RiskFormValues>({
     resolver: zodResolver(riskSchema) as Resolver<RiskFormValues>,
     defaultValues: {
-      initiator: currentUser?.name ?? currentUser?.email ?? "",
-      initiationDate: new Date(),
-      raType: "NON_ROUTINE",
-      defectRelated: false,
-      alternativeWays: false,
-      assessmentRows: [
+      initiator:
+        risk?.initiator ?? currentUser?.name ?? currentUser?.email ?? "",
+      initiationDate: risk?.initiationDate ?? new Date(),
+      raType: risk?.raType ?? "NON_ROUTINE",
+      defectRelated: risk?.defectRelated ?? false,
+      alternativeWays: risk?.alternativeWays ?? false,
+      alternativeWaysText: risk?.alternativeWaysText ?? "",
+      ref: risk?.ref ?? "",
+      workActivity: risk?.workActivity ?? "",
+      initiatorComment: risk?.initiatorComment ?? "",
+      vesselDepartment: risk?.vesselDepartment ?? "",
+      fleet: risk?.fleet ?? "",
+      libraryIndex: risk?.libraryIndex ?? "",
+      libraryCategory: risk?.libraryCategory ?? "",
+      reviewDate: risk?.reviewDate ?? null,
+
+      // Pre-fill assessment rows with existing data
+      assessmentRows: risk?.assessmentRows?.map((row) => ({
+        id: row.id,
+        hazard: row.hazard,
+        impact: row.impact,
+        existingControls: row.existingControls ?? "",
+        sct: row.sct ?? null,
+        c: row.c ?? null,
+        f: row.f ?? null,
+        rf: row.rf ?? null,
+        rfColor: (row.rfColor as "GREEN" | "YELLOW" | "RED" | null) ?? null,
+        order: row.order,
+        additionalMeasures:
+          row.additionalMeasures?.map((m) => ({
+            id: m.id,
+            furtherAction: m.furtherAction ?? "",
+            sct: m.sct ?? null,
+            c: m.c ?? null,
+            f: m.f ?? null,
+            rf: m.rf ?? null,
+            rfColor: (m.rfColor as "GREEN" | "YELLOW" | "RED" | null) ?? null,
+            order: m.order,
+          })) ?? [],
+      })) ?? [
         {
           hazard: "",
           impact: "",
@@ -77,12 +129,24 @@ export default function RiskForm({ currentUser }: { currentUser: User }) {
           sct: null,
           c: null,
           f: null,
+          rf: null,
+          rfColor: null,
           order: 0,
           additionalMeasures: [],
         },
       ],
-      teamMembers: [],
-      responsiblePersons: [],
+
+      teamMembers:
+        risk?.teamMembers?.map((m) => ({
+          id: m.id,
+          name: m.name,
+        })) ?? [],
+
+      responsiblePersons:
+        risk?.responsiblePersons?.map((p) => ({
+          id: p.id,
+          name: p.name,
+        })) ?? [],
     },
   });
 
@@ -109,9 +173,17 @@ export default function RiskForm({ currentUser }: { currentUser: User }) {
   const onSubmit = async (data: RiskFormValues) => {
     setLoading(true);
     try {
-      const result = await createRisk(data);
+      // Edit mode → updateRisk, Create mode → createRisk
+      const result = isEditMode
+        ? await updateRisk(risk!.id, data, "IN_PROGRESS")
+        : await createRisk(data);
+
       if (result.success) {
-        toast.success("Risk assessment created successfully!");
+        toast.success(
+          isEditMode
+            ? "Risk assessment updated successfully!"
+            : "Risk assessment created successfully!",
+        );
         router.push("/dashboard");
       } else {
         toast.error(result.error ?? "Something went wrong");
@@ -122,6 +194,7 @@ export default function RiskForm({ currentUser }: { currentUser: User }) {
       setLoading(false);
     }
   };
+
   /**
    * onSaveDraft — saves current form state as DRAFT
    * Uses getValues() to read form without triggering validation
@@ -130,8 +203,13 @@ export default function RiskForm({ currentUser }: { currentUser: User }) {
   const onSaveDraft = async () => {
     setDraftLoading(true);
     try {
-      const data = getValues(); // reads form without validation
-      const result = await saveDraft(data);
+      const data = getValues();
+
+      // Edit mode → updateRisk with DRAFT, Create mode → saveDraft
+      const result = isEditMode
+        ? await updateRisk(risk!.id, data, "DRAFT")
+        : await saveDraft(data);
+
       if (result.success) {
         toast.success("Draft saved!");
         router.push("/dashboard");
@@ -175,11 +253,16 @@ export default function RiskForm({ currentUser }: { currentUser: User }) {
             )}
           </div>
 
+          {/* Initiation Date */}
           <div>
             <label className={labelClass}>Initiation Date *</label>
             <Input
               type="date"
-              defaultValue={new Date().toISOString().split("T")[0]}
+              defaultValue={
+                risk?.initiationDate
+                  ? new Date(risk.initiationDate).toISOString().split("T")[0]
+                  : new Date().toISOString().split("T")[0]
+              }
               onChange={(e) =>
                 setValue("initiationDate", new Date(e.target.value))
               }
@@ -189,10 +272,16 @@ export default function RiskForm({ currentUser }: { currentUser: User }) {
             )}
           </div>
 
+          {/* Review Date */}
           <div>
             <label className={labelClass}>Review Date</label>
             <Input
               type="date"
+              defaultValue={
+                risk?.reviewDate
+                  ? new Date(risk.reviewDate).toISOString().split("T")[0]
+                  : ""
+              }
               onChange={(e) =>
                 setValue(
                   "reviewDate",
@@ -255,7 +344,7 @@ export default function RiskForm({ currentUser }: { currentUser: User }) {
               onChange={(e) =>
                 setValue("defectRelated", e.target.value === "true")
               }
-              defaultValue="false"
+              defaultValue={risk?.defectRelated ? "true" : "false"}
             >
               <option value="false">No</option>
               <option value="true">Yes</option>
@@ -442,38 +531,106 @@ export default function RiskForm({ currentUser }: { currentUser: User }) {
         </Button>
       </div>
 
-      {/* ── Submit / Save Draft / Cancel ──────────────────────────────────── */}
-      <div className="flex items-center gap-4 pb-10 flex-wrap">
-        {/* Submit — full Zod validation, sets state to IN_PROGRESS */}
-        <Button
-          type="submit"
-          disabled={loading || draftLoading}
-          className="px-8 py-3 bg-[#1A7A4A] text-white hover:bg-[#145f39] shadow-sm shadow-[#1A7A4A]/20"
-        >
-          {loading ? "Submitting..." : "Submit"}
-        </Button>
+      {/* ── Submit / Save Draft / Cancel / Delete ─────────────────────────── */}
+      <div className="flex items-center justify-between flex-wrap gap-4 pb-10">
+        <div className="flex items-center gap-4 flex-wrap">
+          {/* Submit */}
+          <Button
+            type="submit"
+            disabled={loading || draftLoading}
+            className="px-8 py-3 bg-[#1A7A4A] text-white hover:bg-[#145f39] shadow-sm shadow-[#1A7A4A]/20"
+          >
+            {loading ? "Submitting..." : "Submit"}
+          </Button>
 
-        {/* Save Draft — relaxed validation, sets state to DRAFT */}
-        <Button
-          type="button"
-          disabled={loading || draftLoading}
-          onClick={onSaveDraft}
-          className="px-8 py-3 bg-amber-500 text-white hover:bg-amber-600 shadow-sm"
-        >
-          {draftLoading ? "Saving..." : "Save Draft"}
-        </Button>
+          {/* Save Draft */}
+          <Button
+            type="button"
+            disabled={loading || draftLoading}
+            onClick={onSaveDraft}
+            className="px-8 py-3 bg-amber-500 text-white hover:bg-amber-600 shadow-sm"
+          >
+            {draftLoading ? "Saving..." : "Save Draft"}
+          </Button>
 
-        {/* Cancel — returns to dashboard without saving */}
+          {/* Cancel */}
+          <Button
+            type="button"
+            variant="outline"
+            disabled={loading || draftLoading}
+            onClick={() => router.push("/dashboard")}
+            className="border-[#A8D5B5] text-slate-600 hover:bg-[#EEF5F0]"
+          >
+            Cancel
+          </Button>
+        </div>
+
+        {/* Delete — ADMIN only, edit mode only */}
+        {isEditMode && currentUser?.role === "ADMIN" && (
+          <DeleteRiskButton riskId={risk!.id} />
+        )}
+      </div>
+    </form>
+  );
+}
+
+/**
+ * DeleteRiskButton — Confirmation dialog before deleting a risk
+ *
+ * Uses shadcn AlertDialog to prevent accidental deletion.
+ * Only rendered for ADMIN users in edit mode.
+ */
+function DeleteRiskButton({ riskId }: { riskId: string }) {
+  const router = useRouter();
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDelete = async () => {
+    setDeleting(true);
+    try {
+      const result = await deleteRisk(riskId);
+      if (result.success) {
+        toast.success("Risk assessment deleted.");
+        router.push("/dashboard");
+      } else {
+        toast.error(result.error ?? "Failed to delete");
+      }
+    } catch {
+      toast.error("Something went wrong");
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  return (
+    <AlertDialog>
+      <AlertDialogTrigger asChild>
         <Button
           type="button"
           variant="outline"
-          disabled={loading || draftLoading}
-          onClick={() => router.push("/dashboard")}
-          className="border-[#A8D5B5] text-slate-600 hover:bg-[#EEF5F0]"
+          className="border-red-200 text-red-500 hover:bg-red-50 hover:text-red-600"
         >
-          Cancel
+          Delete Risk
         </Button>
-      </div>
-    </form>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Delete Risk Assessment?</AlertDialogTitle>
+          <AlertDialogDescription>
+            This action cannot be undone. The risk assessment and all its data
+            will be permanently deleted.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction
+            onClick={handleDelete}
+            disabled={deleting}
+            className="bg-red-500 hover:bg-red-600 text-white"
+          >
+            {deleting ? "Deleting..." : "Yes, delete"}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }

@@ -3,7 +3,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import prisma from "@/lib/prisma";
-import { riskSchema, RiskFormValues } from "@/lib/validations/risk.schema";
+import { riskSchema, RiskFormValues, riskDraftSchema } from "@/lib/validations/risk.schema";
 
 export async function createRisk(data: RiskFormValues) {
   const { userId } = await auth();
@@ -248,5 +248,120 @@ export async function deleteRisk(id: string) {
   } catch (error) {
     console.error("deleteRisk error:", error);
     return { success: false, error: "Failed to delete risk assessment" };
+  }
+}
+
+/**
+ * updateRisk — Updates an existing risk assessment
+ *
+ * Used for both:
+ *  - Submitting a DRAFT risk (state → IN_PROGRESS)
+ *  - Editing an existing IN_PROGRESS risk (state stays IN_PROGRESS)
+ *  - Saving an edit as draft (state → DRAFT)
+ *
+ * Deletes existing nested records and recreates them from form data.
+ * Cascade handles cleanup automatically.
+ *
+ * @param id - The cuid of the risk to update
+ * @param data - Full form values
+ * @param state - Target state: "DRAFT" or "IN_PROGRESS"
+ */
+export async function updateRisk(
+  id: string,
+  data: RiskFormValues,
+  state: "DRAFT" | "IN_PROGRESS"
+) {
+  // 1. Check authentication
+  const { userId } = await auth()
+  if (!userId) redirect("/sign-in")
+
+  // 2. Check role — ADMIN and MANAGER can edit
+  const user = await prisma.user.findUnique({ where: { id: userId } })
+  if (!user || (user.role !== "ADMIN" && user.role !== "MANAGER")) {
+    return { success: false, error: "Unauthorized" }
+  }
+
+  // 3. Validate — use full schema for submit, draft schema for draft
+  const schema = state === "DRAFT" ? riskDraftSchema : riskSchema
+  const validated = schema.safeParse(data)
+  if (!validated.success) {
+    return {
+      success: false,
+      error:  "Validation failed",
+      fields: validated.error.flatten().fieldErrors,
+    }
+  }
+
+  const values = validated.data
+
+  try {
+    // 4. Delete existing nested records — cascade handles additionalMeasures
+    await prisma.riskAssessmentRow.deleteMany({ where: { riskId: id } })
+    await prisma.teamMember.deleteMany({ where: { riskId: id } })
+    await prisma.responsiblePersons.deleteMany({ where: { riskId: id } })
+
+    // 5. Update the risk with new data and recreate nested records
+    const risk = await prisma.risk.update({
+      where: { id },
+      data: {
+        ref:              values.ref!,
+        workActivity:     values.workActivity    ?? "",
+        initiator:        values.initiator!,
+        initiationDate:   values.initiationDate!,
+        reviewDate:       values.reviewDate      ?? null,
+        vesselDepartment: values.vesselDepartment ?? null,
+        fleet:            values.fleet           ?? null,
+        raType:           values.raType!,
+        libraryIndex:     values.libraryIndex    ?? null,
+        libraryCategory:  values.libraryCategory ?? null,
+        defectRelated:    values.defectRelated   ?? false,
+        initiatorComment: values.initiatorComment ?? null,
+        alternativeWays:     values.alternativeWays     ?? false,
+        alternativeWaysText: values.alternativeWaysText ?? null,
+        state,
+        stateUpdatedById: userId,
+
+        assessmentRows: {
+          create: (values.assessmentRows ?? []).map((row, index) => ({
+            hazard:           row.hazard           ?? "",
+            impact:           row.impact           ?? "",
+            existingControls: row.existingControls ?? "",
+            sct:              row.sct              ?? null,
+            c:                row.c                ?? null,
+            f:                row.f                ?? null,
+            rf:               row.rf               ?? null,
+            rfColor:          row.rfColor          ?? null,
+            order:            index,
+            additionalMeasures: {
+              create: (row.additionalMeasures ?? []).map((m, mIndex) => ({
+                furtherAction: m.furtherAction ?? null,
+                c:             m.c             ?? null,
+                f:             m.f             ?? null,
+                rf:            m.rf            ?? null,
+                rfColor:       m.rfColor       ?? null,
+                order:         mIndex,
+              })),
+            },
+          })),
+        },
+
+        teamMembers: {
+          create: (values.teamMembers ?? []).map((member) => ({
+            name: member.name,
+          })),
+        },
+
+        responsiblePersons: {
+          create: (values.responsiblePersons ?? []).map((p) => ({
+            name: p.name,
+          })),
+        },
+      },
+    })
+
+    return { success: true, id: risk.id }
+  } catch (error) {
+    console.error("updateRisk error:", error)
+    return { success: false, error: "Failed to update risk assessment" }
   }
 }

@@ -14,6 +14,7 @@
 - npx shadcn@latest add calendar
 - npx shadcn@latest add popover
 - npx shadcn@latest add date-picker
+- npx shadcn@latest add alert-dialog
 
 
 # prisma
