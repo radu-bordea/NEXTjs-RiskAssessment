@@ -7,7 +7,7 @@ export type AdditionalMeasure = {
   c: number | null;
   f: number | null;
   rf: number | null;
-  rfColor: string | null;
+  rfColor: "GREEN" | "YELLOW" | "RED" | null; // ← make sure this exists
   order: number;
 };
 
@@ -20,7 +20,7 @@ export type AssessmentRow = {
   c: number | null;
   f: number | null;
   rf: number | null;
-  rfColor: string | null;
+  rfColor: "GREEN" | "YELLOW" | "RED" | null; // ← make sure this exists
   order: number;
   additionalMeasures: AdditionalMeasure[];
 };

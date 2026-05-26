@@ -13,6 +13,8 @@ export default async function DashboardPage() {
       createdBy: { select: { name: true, email: true } },
       stateUpdatedBy: { select: { name: true } },
       assessmentRows: true,
+      teamMembers: true, // ← add
+      responsiblePersons: true, // ← add
     },
   });
 
@@ -20,5 +22,5 @@ export default async function DashboardPage() {
     where: { id: userId },
   });
 
-  return <RiskTable risks={risks} currentUser={user} />;
+  return <RiskTable risks={risks as any} currentUser={user} />;
 }
