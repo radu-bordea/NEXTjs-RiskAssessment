@@ -1,7 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { redirect, notFound } from "next/navigation";
 import prisma from "@/lib/prisma";
-import RiskForm from "../../../_components/RiskForm"
+import RiskForm from "../../../_components/RiskForm";
 
 /**
  * EditRiskPage — Edit an existing risk assessment
@@ -44,6 +44,8 @@ export default async function EditRiskPage({
       },
       teamMembers: true,
       responsiblePersons: true,
+      createdBy: { select: { name: true, email: true } }, // ← add
+      stateUpdatedBy: { select: { name: true } }, // ← add
     },
   });
 
