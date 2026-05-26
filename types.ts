@@ -1,68 +1,68 @@
 // types/index.ts
 
 export type AdditionalMeasure = {
-  id:            string
-  furtherAction: string | null
-  sct:           string | null
-  c:             number | null
-  f:             number | null
-  rf:            number | null
-  rfColor:       string | null
-  order:         number
-}
+  id: string;
+  furtherAction: string | null;
+  sct: string | null;
+  c: number | null;
+  f: number | null;
+  rf: number | null;
+  rfColor: string | null;
+  order: number;
+};
 
 export type AssessmentRow = {
-  id:               string
-  hazard:           string
-  impact:           string
-  existingControls: string | null
-  sct:              string | null
-  c:                number | null
-  f:                number | null
-  rf:               number | null
-  rfColor:          string | null
-  order:            number
-  additionalMeasures: AdditionalMeasure[]
-}
+  id: string;
+  hazard: string;
+  impact: string;
+  existingControls: string | null;
+  sct: string | null;
+  c: number | null;
+  f: number | null;
+  rf: number | null;
+  rfColor: string | null;
+  order: number;
+  additionalMeasures: AdditionalMeasure[];
+};
 
 export type ResponsiblePerson = {
-  id:   string
-  name: string
-}
+  id: string;
+  name: string;
+};
 
 export type TeamMember = {
-  id:   string
-  name: string
-}
+  id: string;
+  name: string;
+};
 
 export type Risk = {
-  id:               string
-  ref:              string
-  cloneOf:          string | null
-  workActivity:     string
-  initiator:        string
-  initiationDate:   Date
-  reviewDate:       Date | null
-  vesselDepartment: string | null
-  fleet:            string | null
-  raType:           string
-  libraryCategory:  string | null
-  libraryIndex:     string | null
-  state:            string
-  defectRelated:    boolean
-  alternativeWays:     boolean
-  alternativeWaysText: string | null
-  initiatorComment:    string | null
-  createdBy:        { name: string | null; email: string }
-  stateUpdatedBy:   { name: string | null } | null
-  assessmentRows:   AssessmentRow[]
-  teamMembers:      TeamMember[]
-  responsiblePersons: ResponsiblePerson[]
-}
+  id: string;
+  ref: string;
+  cloneOf: string | null;
+  workActivity: string;
+  initiator: string;
+  initiationDate: Date;
+  reviewDate: Date | null;
+  vesselDepartment: string | null;
+  fleet: string | null;
+  raType: "ROUTINE" | "NON_ROUTINE";
+  libraryCategory: string | null;
+  libraryIndex: string | null;
+  state: "DRAFT" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED";
+  defectRelated: boolean;
+  alternativeWays: boolean;
+  alternativeWaysText: string | null;
+  initiatorComment: string | null;
+  createdBy: { name: string | null; email: string };
+  stateUpdatedBy: { name: string | null } | null;
+  assessmentRows: AssessmentRow[];
+  teamMembers: TeamMember[];
+  responsiblePersons: ResponsiblePerson[];
+};
 
 export type User = {
-  id:    string
-  role:  string
-  name:  string | null
-  email: string
-} | null
+  id: string;
+  role: string;
+  name: string | null;
+  email: string;
+} | null;

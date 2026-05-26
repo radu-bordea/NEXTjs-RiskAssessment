@@ -3,18 +3,8 @@
 # libraries
 - npm install @clerk/nextjs
 - npm install react-hook-form @hookform/resolvers zod
-- npx shadcn@latest init
-- npx shadcn@latest add sonner
-- npx shadcn@latest add form
-- npx shadcn@latest add label
-- npx shadcn@latest add input
-- npx shadcn@latest add textarea
-- npx shadcn@latest add select
-- npx shadcn@latest add button
-- npx shadcn@latest add calendar
-- npx shadcn@latest add popover
-- npx shadcn@latest add date-picker
-- npx shadcn@latest add alert-dialog
+- npm install @react-pdf/renderer
+
 
 
 # prisma
@@ -31,9 +21,21 @@
 - npx prisma db seed
 
 # shadcn
+- npx shadcn@latest init
 - npx shadcn@latest init --preset [CODE] --template next
 - npx shadcn@latest add button
 - npx shadcn@latest add dropdown-menu
+- npx shadcn@latest add sonner
+- npx shadcn@latest add form
+- npx shadcn@latest add label
+- npx shadcn@latest add input
+- npx shadcn@latest add textarea
+- npx shadcn@latest add select
+- npx shadcn@latest add button
+- npx shadcn@latest add calendar
+- npx shadcn@latest add popover
+- npx shadcn@latest add date-picker
+- npx shadcn@latest add alert-dialog
 
 # dark mode
 - npm install next-themes
