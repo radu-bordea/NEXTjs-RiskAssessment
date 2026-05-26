@@ -114,7 +114,6 @@ export default function RiskForm({ currentUser, risk }: Props) {
           row.additionalMeasures?.map((m) => ({
             id: m.id,
             furtherAction: m.furtherAction ?? "",
-            sct: m.sct ?? null,
             c: m.c ?? null,
             f: m.f ?? null,
             rf: m.rf ?? null,

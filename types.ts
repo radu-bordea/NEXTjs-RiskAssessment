@@ -3,7 +3,6 @@
 export type AdditionalMeasure = {
   id: string;
   furtherAction: string | null;
-  sct: string | null;
   c: number | null;
   f: number | null;
   rf: number | null;
