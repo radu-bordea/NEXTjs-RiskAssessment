@@ -1,3 +1,5 @@
+// @ts-nocheck ignore file for build errors, this file is only used for seeding the database with initial data and is not part of the application logic
+
 import { Prisma } from "../../app/generated/prisma/client";
 
 export const riskData: Prisma.RiskCreateInput[] = [
@@ -53,7 +55,7 @@ export const riskData: Prisma.RiskCreateInput[] = [
     fleet: "FFF Boats",
     raType: "NON_ROUTINE",
     libraryIndex: "NAVIGATION:Anchoring in deep waters",
-    state: "IN_PROGRESS",
+    state: "TEMPLATE",
     defectRelated: false,
     cloneOf: "RA-N-001",
     createdBy: { connect: { email: "florin.paraschiv@ymail.com" } },

@@ -3,7 +3,11 @@
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import prisma from "@/lib/prisma";
-import { riskSchema, RiskFormValues, riskDraftSchema } from "@/lib/validations/risk.schema";
+import {
+  riskSchema,
+  RiskFormValues,
+  riskDraftSchema,
+} from "@/lib/validations/risk.schema";
 
 export async function createRisk(data: RiskFormValues) {
   const { userId } = await auth();
@@ -44,8 +48,9 @@ export async function createRisk(data: RiskFormValues) {
         initiatorComment: values.initiatorComment ?? null,
         alternativeWays: values.alternativeWays,
         alternativeWaysText: values.alternativeWaysText ?? null,
-        state: "IN_PROGRESS",
+        state: "TEMPLATE",
         createdById: userId, // ⚠️ important fix
+        approvedBy: values.approvedBy ?? null,
 
         assessmentRows: {
           create: values.assessmentRows.map((row, index) => ({
@@ -121,63 +126,173 @@ export async function getRiskById(id: string) {
 }
 
 /**
- * saveDraft — Saves a risk assessment as DRAFT state
+ * createDraftFromTemplate — Creates a DRAFT copy from a TEMPLATE risk
  *
- * Uses relaxed riskDraftSchema validation — only ref, initiator,
- * initiationDate and raType are required. Everything else is optional.
- * This allows saving incomplete forms for later completion.
+ * Clones all data from the template into a new risk with state: DRAFT
+ * The original template is never modified.
+ * cloneOf field stores the template's ref for traceability.
  *
- * @param data - Partial risk form values
+ * All roles can create a draft from a template.
+ *
+ * @param templateId - The id of the TEMPLATE risk to clone from
  * @returns { success: true, id: string } or { success: false, error: string }
  */
-export async function saveDraft(data: Partial<RiskFormValues>) {
-  // 1. Check authentication
+
+export async function createDraftFromTemplate(templateId: string) {
   const { userId } = await auth();
   if (!userId) redirect("/sign-in");
 
-  // 2. Check role - only ADMIN can create/draft
   const user = await prisma.user.findUnique({ where: { id: userId } });
-  if (!user || user.role !== "ADMIN") {
-    return { success: false, error: "Unhorized" };
-  }
+  if (!user) return { success: false, error: "User not found" };
 
-  // 3. Validate with relaxed schema
+  try {
+    // Fetch the template with all nested data
+    const template = await prisma.risk.findUnique({
+      where: { id: templateId },
+      include: {
+        assessmentRows: {
+          orderBy: { order: "asc" },
+          include: {
+            additionalMeasures: { orderBy: { order: "asc" } },
+          },
+        },
+        teamMembers: true,
+        responsiblePersons: true,
+      },
+    });
+
+    if (!template) return { success: false, error: "Template not found" };
+    if (template.state !== "TEMPLATE") {
+      return { success: false, error: "Only templates can be cloned" };
+    }
+
+    // Create today's date string for ref e.g. "RA-N-001 - 31/05/2026"
+    const today = new Date().toLocaleDateString("en-GB").replace(/\//g, "/");
+    const draftRef = `${template.ref} - ${today}`;
+
+    // Create the draft as a clone of the template
+    const draft = await prisma.risk.create({
+      data: {
+        ref: draftRef,
+        cloneOf: template.ref,
+        workActivity: template.workActivity,
+        initiator: user.name ?? user.email,
+        initiationDate: new Date(),
+        reviewDate: template.reviewDate,
+        vesselDepartment: template.vesselDepartment,
+        fleet: template.fleet,
+        raType: template.raType,
+        libraryIndex: template.libraryIndex,
+        libraryCategory: template.libraryCategory,
+        defectRelated: template.defectRelated,
+        initiatorComment: template.initiatorComment,
+        alternativeWays: template.alternativeWays,
+        alternativeWaysText: template.alternativeWaysText,
+        state: "DRAFT",
+        createdById: userId,
+
+        // Clone all assessment rows
+        assessmentRows: {
+          create: template.assessmentRows.map((row, index) => ({
+            hazard: row.hazard,
+            impact: row.impact,
+            existingControls: row.existingControls,
+            sct: row.sct,
+            c: row.c,
+            f: row.f,
+            rf: row.rf,
+            rfColor: row.rfColor,
+            order: index,
+            additionalMeasures: {
+              create: row.additionalMeasures.map((m, mIndex) => ({
+                furtherAction: m.furtherAction,
+                c: m.c,
+                f: m.f,
+                rf: m.rf,
+                rfColor: m.rfColor,
+                order: mIndex,
+              })),
+            },
+          })),
+        },
+
+        // Clone team members
+        teamMembers: {
+          create: template.teamMembers.map((m) => ({ name: m.name })),
+        },
+
+        // Clone responsible persons
+        responsiblePersons: {
+          create: template.responsiblePersons.map((p) => ({ name: p.name })),
+        },
+      },
+    });
+
+    return { success: true, id: draft.id };
+  } catch (error) {
+    console.error("createDraftFromTemplate error:", error);
+    return { success: false, error: "Failed to create draft" };
+  }
+}
+
+/**
+ * submitDraft — Changes a DRAFT risk to COMPLETED
+ *
+ * Updates the draft in place — same row, state changes to COMPLETED.
+ * The original template is never touched.
+ * All roles can submit a draft.
+ *
+ * @param id - The id of the DRAFT risk to complete
+ * @param data - Updated form values
+ * @returns { success: true, id: string } or { success: false, error: string }
+ */
+
+export async function submitDraft(id: string, data: RiskFormValues) {
+  const { userId } = await auth();
+  if (!userId) redirect("/sign-in");
+
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user) return { success: false, error: "User not found" };
+
+  // Validate with full schema
   const validated = riskSchema.safeParse(data);
   if (!validated.success) {
-    return {
-      success: false,
-      error: "validation failed",
-      fields: validated.error.flatten().fieldErrors,
-    };
+    return { success: false, error: "Validation failed" };
   }
 
   const values = validated.data;
 
   try {
-    const risk = await prisma.risk.create({
-      data: {
-        ref: values.ref!,
-        workActivity: values.workActivity ?? "",
-        initiator: values.initiator!,
-        initiationDate: values.initiationDate!,
-        reviewDate: values.reviewDate ?? null,
-        vesselDepartment: values.vesselDepartment ?? null,
-        fleet: values.fleet ?? null,
-        raType: values.raType!,
-        libraryIndex: values.libraryIndex ?? null,
-        libraryCategory: values.libraryCategory ?? null,
-        defectRelated: values.defectRelated ?? false,
-        initiatorComment: values.initiatorComment ?? null,
-        alternativeWays: values.alternativeWays ?? false,
-        alternativeWaysText: values.alternativeWaysText ?? null,
-        state: "DRAFT", // ← key difference from createRisk
-        createdById: userId,
+    // Check it's actually a draft
+    const existing = await prisma.risk.findUnique({ where: { id } });
+    if (!existing) return { success: false, error: "Risk not found" };
+    if (existing.state !== "DRAFT") {
+      return { success: false, error: "Only drafts can be submitted" };
+    }
 
-        // Assessment rows — create if provided, skip if empty
+    // Delete existing nested records and recreate from form data
+    await prisma.riskAssessmentRow.deleteMany({ where: { riskId: id } });
+    await prisma.teamMember.deleteMany({ where: { riskId: id } });
+    await prisma.responsiblePersons.deleteMany({ where: { riskId: id } });
+
+    // Update draft → COMPLETED
+    const risk = await prisma.risk.update({
+      where: { id },
+      data: {
+        workActivity: values.workActivity,
+        initiationDate: values.initiationDate,
+        reviewDate: values.reviewDate ?? null,
+        initiatorComment: values.initiatorComment ?? null,
+        alternativeWays: values.alternativeWays,
+        alternativeWaysText: values.alternativeWaysText ?? null,
+        approvedBy: values.approvedBy ?? null,
+        state: "COMPLETED",
+        stateUpdatedById: userId,
+
         assessmentRows: {
-          create: (values.assessmentRows ?? []).map((row, index) => ({
-            hazard: row.hazard ?? "",
-            impact: row.impact ?? "",
+          create: values.assessmentRows.map((row, index) => ({
+            hazard: row.hazard,
+            impact: row.impact,
             existingControls: row.existingControls ?? "",
             sct: row.sct ?? null,
             c: row.c ?? null,
@@ -199,9 +314,7 @@ export async function saveDraft(data: Partial<RiskFormValues>) {
         },
 
         teamMembers: {
-          create: (values.teamMembers ?? []).map((member) => ({
-            name: member.name,
-          })),
+          create: (values.teamMembers ?? []).map((m) => ({ name: m.name })),
         },
 
         responsiblePersons: {
@@ -214,40 +327,57 @@ export async function saveDraft(data: Partial<RiskFormValues>) {
 
     return { success: true, id: risk.id };
   } catch (error) {
-    console.error("saveDraft error:", error);
-    return { success: false, error: "Failed to save draft" };
+    console.error("submitDraft error:", error);
+    return { success: false, error: "Failed to submit draft" };
   }
 }
 
 /**
- * deleteRisk - Permanently delete a risk assesment by Id
+ * deleteRisk — Permanently deletes a risk assessment
  *
- * Cascade delete handle all related records automaticaly
- * RiskAssesmentRow, AdditionaløMeasure, TeamMember and ResponsiblePerson
+ * Permission rules:
+ *  - TEMPLATE state → ADMIN only can delete
+ *  - DRAFT / COMPLETED state → ADMIN and MANAGER can delete
+ *  - MEMBER → cannot delete anything
  *
- * Only ADMIN can delete
+ * Cascade delete handles all related records automatically:
+ * RiskAssessmentRow, AdditionalMeasure, TeamMember, ResponsiblePerson
  *
  * @param id - The cuid of the risk to delete
- * @returns {success: true} of {success: false, error: string}
+ * @returns { success: true } or { success: false, error: string }
  */
+
 export async function deleteRisk(id: string) {
   // 1. Check authentication
-  const { userId } = await auth();
-  if (!userId) redirect("/sign-in");
+  const { userId } = await auth()
+  if (!userId) redirect("/sign-in")
 
-  // 2. Check role - only ADMIN can delete
-  const user = await prisma.user.findUnique({ where: { id: userId } });
-  if (!user || user.role !== "ADMIN") {
-    return { success: false, error: "Unauthorized" };
+  // 2. Get current user
+  const user = await prisma.user.findUnique({ where: { id: userId } })
+  if (!user) return { success: false, error: "User not found" }
+
+  // 3. Members cannot delete anything
+  if (user.role === "MEMBER") {
+    return { success: false, error: "Unauthorized" }
   }
 
   try {
-    // Cascade handles all related records automaticaly
-    await prisma.risk.delete({ where: { id } });
-    return { success: true };
+    // 4. Fetch the risk to check its state
+    const existing = await prisma.risk.findUnique({ where: { id } })
+    if (!existing) return { success: false, error: "Risk not found" }
+
+    // 5. Templates — ADMIN only
+    if (existing.state === "TEMPLATE" && user.role !== "ADMIN") {
+      return { success: false, error: "Only Admin can delete templates" }
+    }
+
+    // 6. Cascade handles all related records automatically
+    await prisma.risk.delete({ where: { id } })
+    return { success: true }
+
   } catch (error) {
-    console.error("deleteRisk error:", error);
-    return { success: false, error: "Failed to delete risk assessment" };
+    console.error("deleteRisk error:", error)
+    return { success: false, error: "Failed to delete risk assessment" }
   }
 }
 
@@ -266,30 +396,31 @@ export async function deleteRisk(id: string) {
  * @param data - Full form values
  * @param state - Target state: "DRAFT" or "IN_PROGRESS"
  */
-export async function updateRisk(
-  id: string,
-  data: RiskFormValues,
-  state: "DRAFT" | "IN_PROGRESS"
-) {
+/**
+ * updateRisk — Updates an existing DRAFT risk assessment
+ *
+ * Always saves as DRAFT state — for saving progress while editing.
+ * To submit a draft as COMPLETED use submitDraft instead.
+ * All roles can update a draft.
+ *
+ * @param id - The cuid of the risk to update
+ * @param data - Form values
+ * @returns { success: true, id: string } or { success: false, error: string }
+ */
+
+export async function updateRisk(id: string, data: RiskFormValues) {
   // 1. Check authentication
   const { userId } = await auth()
   if (!userId) redirect("/sign-in")
 
-  // 2. Check role — ADMIN and MANAGER can edit
+  // 2. Get current user — all roles can update
   const user = await prisma.user.findUnique({ where: { id: userId } })
-  if (!user || (user.role !== "ADMIN" && user.role !== "MANAGER")) {
-    return { success: false, error: "Unauthorized" }
-  }
+  if (!user) return { success: false, error: "User not found" }
 
-  // 3. Validate — use full schema for submit, draft schema for draft
-  const schema = state === "DRAFT" ? riskDraftSchema : riskSchema
-  const validated = schema.safeParse(data)
+  // 3. Validate with draft schema — relaxed validation for saving progress
+  const validated = riskDraftSchema.safeParse(data)
   if (!validated.success) {
-    return {
-      success: false,
-      error:  "Validation failed",
-      fields: validated.error.flatten().fieldErrors,
-    }
+    return { success: false, error: "Validation failed" }
   }
 
   const values = validated.data
@@ -300,25 +431,26 @@ export async function updateRisk(
     await prisma.teamMember.deleteMany({ where: { riskId: id } })
     await prisma.responsiblePersons.deleteMany({ where: { riskId: id } })
 
-    // 5. Update the risk with new data and recreate nested records
+    // 5. Update the risk — always keeps DRAFT state
     const risk = await prisma.risk.update({
       where: { id },
       data: {
         ref:              values.ref!,
-        workActivity:     values.workActivity    ?? "",
+        workActivity:     values.workActivity     ?? "",
         initiator:        values.initiator!,
         initiationDate:   values.initiationDate!,
-        reviewDate:       values.reviewDate      ?? null,
+        reviewDate:       values.reviewDate       ?? null,
         vesselDepartment: values.vesselDepartment ?? null,
-        fleet:            values.fleet           ?? null,
+        fleet:            values.fleet            ?? null,
         raType:           values.raType!,
-        libraryIndex:     values.libraryIndex    ?? null,
-        libraryCategory:  values.libraryCategory ?? null,
-        defectRelated:    values.defectRelated   ?? false,
-        initiatorComment: values.initiatorComment ?? null,
+        libraryIndex:     values.libraryIndex     ?? null,
+        libraryCategory:  values.libraryCategory  ?? null,
+        defectRelated:    values.defectRelated     ?? false,
+        initiatorComment: values.initiatorComment  ?? null,
         alternativeWays:     values.alternativeWays     ?? false,
         alternativeWaysText: values.alternativeWaysText ?? null,
-        state,
+        approvedBy:       values.approvedBy       ?? null,
+        state:            "DRAFT", // always DRAFT when saving progress
         stateUpdatedById: userId,
 
         assessmentRows: {
@@ -346,15 +478,11 @@ export async function updateRisk(
         },
 
         teamMembers: {
-          create: (values.teamMembers ?? []).map((member) => ({
-            name: member.name,
-          })),
+          create: (values.teamMembers ?? []).map((m) => ({ name: m.name })),
         },
 
         responsiblePersons: {
-          create: (values.responsiblePersons ?? []).map((p) => ({
-            name: p.name,
-          })),
+          create: (values.responsiblePersons ?? []).map((p) => ({ name: p.name })),
         },
       },
     })
@@ -362,6 +490,154 @@ export async function updateRisk(
     return { success: true, id: risk.id }
   } catch (error) {
     console.error("updateRisk error:", error)
-    return { success: false, error: "Failed to update risk assessment" }
+    return { success: false, error: "Failed to update risk" }
   }
 }
+
+/**
+ * updateCompleted — Updates only the dates on a COMPLETED risk
+ *
+ * COMPLETED risks are mostly locked — only initiationDate and
+ * reviewDate can be modified. All roles can do this.
+ *
+ * @param id - The cuid of the COMPLETED risk
+ * @param initiationDate - New initiation date
+ * @param reviewDate - New review date (optional)
+ * @returns { success: true } or { success: false, error: string }
+ */
+export async function updateCompleted(
+  id: string,
+  initiationDate: Date,
+  reviewDate: Date | null,
+) {
+  // 1. Check authentication
+  const { userId } = await auth()
+  if (!userId) redirect("/sign-in")
+
+  const user = await prisma.user.findUnique({ where: { id: userId } })
+  if (!user) return { success: false, error: "User not found" }
+
+  try {
+    // 2. Verify risk exists and is COMPLETED
+    const existing = await prisma.risk.findUnique({ where: { id } })
+    if (!existing) return { success: false, error: "Risk not found" }
+    if (existing.state !== "COMPLETED") {
+      return { success: false, error: "Only completed risks can be updated this way" }
+    }
+
+    // 3. Only update the two date fields — everything else stays locked
+    await prisma.risk.update({
+      where: { id },
+      data: {
+        initiationDate,
+        reviewDate:      reviewDate ?? null,
+        stateUpdatedById: userId,
+      },
+    })
+
+    return { success: true }
+  } catch (error) {
+    console.error("updateCompleted error:", error)
+    return { success: false, error: "Failed to update completed risk" }
+  }
+}
+
+// /**
+//  * saveDraft — Saves a risk assessment as DRAFT state
+//  *
+//  * Uses relaxed riskDraftSchema validation — only ref, initiator,
+//  * initiationDate and raType are required. Everything else is optional.
+//  * This allows saving incomplete forms for later completion.
+//  *
+//  * @param data - Partial risk form values
+//  * @returns { success: true, id: string } or { success: false, error: string }
+//  */
+// export async function saveDraft(data: Partial<RiskFormValues>) {
+//   // 1. Check authentication
+//   const { userId } = await auth();
+//   if (!userId) redirect("/sign-in");
+
+//   // 2. Check role - only ADMIN can create/draft
+//   const user = await prisma.user.findUnique({ where: { id: userId } });
+//   if (!user || user.role !== "ADMIN") {
+//     return { success: false, error: "Unhorized" };
+//   }
+
+//   // 3. Validate with relaxed schema
+//   const validated = riskSchema.safeParse(data);
+//   if (!validated.success) {
+//     return {
+//       success: false,
+//       error: "validation failed",
+//       fields: validated.error.flatten().fieldErrors,
+//     };
+//   }
+
+//   const values = validated.data;
+
+//   try {
+//     const risk = await prisma.risk.create({
+//       data: {
+//         ref: values.ref!,
+//         workActivity: values.workActivity ?? "",
+//         initiator: values.initiator!,
+//         initiationDate: values.initiationDate!,
+//         reviewDate: values.reviewDate ?? null,
+//         vesselDepartment: values.vesselDepartment ?? null,
+//         fleet: values.fleet ?? null,
+//         raType: values.raType!,
+//         libraryIndex: values.libraryIndex ?? null,
+//         libraryCategory: values.libraryCategory ?? null,
+//         defectRelated: values.defectRelated ?? false,
+//         initiatorComment: values.initiatorComment ?? null,
+//         alternativeWays: values.alternativeWays ?? false,
+//         alternativeWaysText: values.alternativeWaysText ?? null,
+//         state: "DRAFT", // ← key difference from createRisk
+//         createdById: userId,
+//         approvedBy: values.approvedBy ?? null,
+
+//         // Assessment rows — create if provided, skip if empty
+//         assessmentRows: {
+//           create: (values.assessmentRows ?? []).map((row, index) => ({
+//             hazard: row.hazard ?? "",
+//             impact: row.impact ?? "",
+//             existingControls: row.existingControls ?? "",
+//             sct: row.sct ?? null,
+//             c: row.c ?? null,
+//             f: row.f ?? null,
+//             rf: row.rf ?? null,
+//             rfColor: row.rfColor ?? null,
+//             order: index,
+//             additionalMeasures: {
+//               create: (row.additionalMeasures ?? []).map((m, mIndex) => ({
+//                 furtherAction: m.furtherAction ?? null,
+//                 c: m.c ?? null,
+//                 f: m.f ?? null,
+//                 rf: m.rf ?? null,
+//                 rfColor: m.rfColor ?? null,
+//                 order: mIndex,
+//               })),
+//             },
+//           })),
+//         },
+
+//         teamMembers: {
+//           create: (values.teamMembers ?? []).map((member) => ({
+//             name: member.name,
+//           })),
+//         },
+
+//         responsiblePersons: {
+//           create: (values.responsiblePersons ?? []).map((p) => ({
+//             name: p.name,
+//           })),
+//         },
+//       },
+//     });
+
+//     return { success: true, id: risk.id };
+//   } catch (error) {
+//     console.error("saveDraft error:", error);
+//     return { success: false, error: "Failed to save draft" };
+//   }
+// }

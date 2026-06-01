@@ -47,13 +47,14 @@ export type Risk = {
   raType: "ROUTINE" | "NON_ROUTINE";
   libraryCategory: string | null;
   libraryIndex: string | null;
-  state: "DRAFT" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED";
+  state: "TEMPLATE" | "DRAFT" | "COMPLETED";
   defectRelated: boolean;
   alternativeWays: boolean;
   alternativeWaysText: string | null;
   initiatorComment: string | null;
   createdBy: { name: string | null; email: string };
   stateUpdatedBy: { name: string | null } | null;
+  approvedBy: string | null
   assessmentRows: AssessmentRow[];
   teamMembers: TeamMember[];
   responsiblePersons: ResponsiblePerson[];

@@ -57,6 +57,7 @@ export const riskSchema = z.object({
   assessmentRows: z
   .array(assessmentRowSchema)
   .min(1, "At least one assessment row is required"),
+  approvedBy: z.string().optional().nullable(),
   teamMembers: z.array(teamMemberSchema).default([]),
   responsiblePersons: z.array(responsiblePersonsSchema).default([]),
 });
@@ -69,6 +70,7 @@ export const riskDraftSchema = riskSchema.partial().extend({
     message: "Initiation date is required",
   }),
   raType: z.enum(["ROUTINE", "NON_ROUTINE"]),
+  approvedBy: z.string().optional().nullable(),
 });
 
 export type RiskFormValues = z.infer<typeof riskSchema>;
