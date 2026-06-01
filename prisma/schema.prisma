@@ -37,7 +37,7 @@ model Risk {
   raType           RAType    @default(NON_ROUTINE)
   libraryCategory   String? // e.g. "Navigation"
   libraryIndex     String? // e.g. "NAVIGATION:Navigation in Kiel Canal"
-  state            RiskState @default(IN_PROGRESS)
+  state            RiskState @default(TEMPLATE)
   notes            String? // any extra notes
 
   fleet         String? // e.g. "TMS Tankers"
@@ -53,6 +53,8 @@ model Risk {
 
   stateUpdatedById String?
   stateUpdatedBy   User?   @relation("StateUpdatedBy", fields: [stateUpdatedById], references: [id])
+
+  approvedBy String? // "Approved by the office"
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -131,10 +133,9 @@ enum RAType {
 }
 
 enum RiskState {
+  TEMPLATE
   DRAFT
-  IN_PROGRESS
   COMPLETED
-  CANCELLED
 }
 
 enum RFColor {
