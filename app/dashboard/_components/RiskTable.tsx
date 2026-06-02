@@ -23,12 +23,6 @@ import { toast } from "sonner";
 import { createDraftFromTemplate } from "@/app/actions/risk.actions";
 
 // ─── State badge styles ───────────────────────────────────────────────────────
-/**
- * Visual badge colors for each risk state — light and dark mode
- * TEMPLATE → blue (master record)
- * DRAFT    → amber (work in progress)
- * COMPLETED → green (finalized)
- */
 const stateStyle: Record<string, string> = {
   TEMPLATE:
     "bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 whitespace-nowrap",
@@ -90,7 +84,6 @@ export default function RiskTable({
     raType: "",
     libraryCategory: "",
     libraryIndex: "",
-    isClone: "",
     defectRelated: "",
   });
 
@@ -101,7 +94,6 @@ export default function RiskTable({
 
   /** Role checks derived from currentUser */
   const isAdmin = currentUser?.role === "ADMIN";
-  const isManager = currentUser?.role === "MANAGER";
 
   /**
    * indexesByCategory
@@ -177,8 +169,6 @@ export default function RiskTable({
         return false;
       if (filters.libraryIndex && r.libraryIndex !== filters.libraryIndex)
         return false;
-      if (filters.isClone === "yes" && !r.cloneOf) return false;
-      if (filters.isClone === "no" && r.cloneOf) return false;
       if (filters.defectRelated === "yes" && !r.defectRelated) return false;
       if (filters.defectRelated === "no" && r.defectRelated) return false;
       return true;
@@ -208,7 +198,6 @@ export default function RiskTable({
       raType: "",
       libraryCategory: "",
       libraryIndex: "",
-      isClone: "",
       defectRelated: "",
     });
 
@@ -226,7 +215,6 @@ export default function RiskTable({
         router.refresh();
       } else {
         toast.error(result.error ?? "Failed to create draft");
-        // If draft already exists — redirect to it
         if ("existingDraftId" in result && result.existingDraftId) {
           router.push(`/dashboard/risks/${result.existingDraftId}/edit`);
         }
@@ -272,7 +260,7 @@ export default function RiskTable({
             onClick={() => router.push("/dashboard/risks/new")}
             className="px-5 py-2.5 bg-[#1A7A4A] hover:bg-[#145f39] text-white rounded-lg text-sm font-medium transition-colors shadow-sm shadow-[#1A7A4A]/20"
           >
-            + New Template
+            + New Risk Assessment
           </button>
         )}
       </div>
@@ -385,16 +373,6 @@ export default function RiskTable({
           </select>
 
           <select
-            value={filters.isClone}
-            onChange={(e) => set("isClone", e.target.value)}
-            className={selectClass}
-          >
-            <option value="">Is Clone</option>
-            <option value="yes">Yes</option>
-            <option value="no">No</option>
-          </select>
-
-          <select
             value={filters.defectRelated}
             onChange={(e) => set("defectRelated", e.target.value)}
             className={selectClass}
@@ -422,7 +400,6 @@ export default function RiskTable({
               <tr>
                 {[
                   "Ref",
-                  "Clone of",
                   "Work Activity",
                   "Initiator",
                   "Initiation Date",
@@ -449,7 +426,7 @@ export default function RiskTable({
               {filtered.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={13}
+                    colSpan={12}
                     className="px-4 py-10 text-center text-slate-400 text-sm"
                   >
                     No risks found matching your filters.
@@ -467,26 +444,13 @@ export default function RiskTable({
                   >
                     {/* Ref — clickable, navigates to view page */}
                     <td
-                      className="px-4 py-3 font-medium text-[#1A7A4A] dark:text-emerald-400 whitespace-nowrap cursor-pointer hover:underline"
+                      className="px-4 py-3 font-medium text-[#1A7A4A] dark:text-emerald-400 cursor-pointer min-w-40 hover:underline"
                       onClick={() => router.push(`/dashboard/risks/${r.id}`)}
                     >
                       {r.ref}
                     </td>
 
-                    {/* Clone of — shows template ref for drafts */}
-                    <td className="px-4 py-3 whitespace-nowrap">
-                      {r.cloneOf ? (
-                        <span className="text-xs px-2 py-1 rounded-full bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 font-medium">
-                          {r.cloneOf}
-                        </span>
-                      ) : (
-                        <span className="text-slate-300 dark:text-slate-600">
-                          —
-                        </span>
-                      )}
-                    </td>
-
-                    <td className="px-4 py-3 text-slate-700 dark:text-slate-300 max-w-50 truncate">
+                    <td className="px-4 py-3 text-slate-700 dark:text-slate-300 max-w-35 truncate">
                       {r.workActivity}
                     </td>
 
@@ -504,7 +468,7 @@ export default function RiskTable({
                         : "—"}
                     </td>
 
-                    <td className="px-4 py-3 text-slate-500 dark:text-slate-400 whitespace-nowrap">
+                    <td className="px-4 py-3 text-slate-500 dark:text-slate-400 max-w-35 truncate">
                       {r.vesselDepartment ?? "—"}
                     </td>
 
@@ -512,11 +476,11 @@ export default function RiskTable({
                       {raTypeLabel[r.raType]}
                     </td>
 
-                    <td className="px-4 py-3 text-slate-500 dark:text-slate-400 whitespace-nowrap">
+                    <td className="px-4 py-3 text-slate-500 dark:text-slate-400 max-w-35 truncate">
                       {r.libraryCategory ?? "—"}
                     </td>
 
-                    <td className="px-4 py-3 max-w-45 truncate text-slate-500 dark:text-slate-400">
+                    <td className="px-4 py-3 text-slate-500 dark:text-slate-400 max-w-35 truncate">
                       {r.libraryIndex ?? "—"}
                     </td>
 

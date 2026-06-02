@@ -122,6 +122,7 @@ export async function getRiskById(id: string) {
       teamMembers: true,
       responsiblePersons: true,
       createdBy: true,
+      stateUpdatedBy: true, // ← was missing, caused "—" in view
     },
   });
 }
@@ -168,6 +169,7 @@ export async function updateTemplate(id: string, data: RiskFormValues) {
         initiatorComment: values.initiatorComment ?? null,
         alternativeWays: values.alternativeWays ?? false,
         alternativeWaysText: values.alternativeWaysText ?? null,
+        approvedBy: values.approvedBy ?? null,   // ← add this
         state: "TEMPLATE", // always stays TEMPLATE
         stateUpdatedById: userId,
 
@@ -277,18 +279,39 @@ export async function createDraftFromTemplate(templateId: string): Promise<{
       };
     }
 
-    // Create today's date string for ref e.g. "RA-N-001 - 31/05/2026"
-    // Instead of just date, add time too
-    const now = new Date();
-    const dateStr = now.toLocaleDateString("en-GB"); // 01/06/2026
-    const timeStr = now
-      .toLocaleTimeString("en-GB", {
-        hour: "2-digit",
-        minute: "2-digit",
-      })
+    // ── Build ref using the SOURCE's initiationDate, not today ───────────
+    //
+    // The client wants the ref date to reflect when the original work
+    // assessment was initiated, not when the draft was created.
+    //
+    // Example: template initiated on 15/03/2026
+    //   First draft that day  → "RA-N-001 - 15/03/2026"
+    //   Second draft same day → "RA-N-001 - 15/03/2026/1"
+    //   Third draft same day  → "RA-N-001 - 15/03/2026/2"
+    //   Draft on a new date   → "RA-N-001 - 02/06/2026"  (no counter)
 
-    const draftRef = `${template.ref} - ${dateStr} ${timeStr}`;
-    // Result: "RA-N-001 - 01/06/2026 14h30"
+    const initiationDateStr = new Date(
+      template.initiationDate,
+    ).toLocaleDateString("en-GB"); // e.g. "15/03/2026"
+
+    const baseRef = `${template.ref} - ${initiationDateStr}`;
+
+    // Count how many risks already exist with this exact base ref
+    // (covers both DRAFT and COMPLETED so the counter stays accurate)
+    const existingWithSameBase = await prisma.risk.count({
+      where: {
+        ref: {
+          startsWith: baseRef,
+        },
+      },
+    });
+
+    // If none exist → use base ref as-is (clean, no counter)
+    // If one or more exist → append /N where N starts at 1
+    const draftRef =
+      existingWithSameBase === 0
+        ? baseRef
+        : `${baseRef}/${existingWithSameBase}`;
 
     // Create the draft as a clone of the template
     const draft = await prisma.risk.create({
