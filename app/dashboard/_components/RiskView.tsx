@@ -120,6 +120,7 @@ export default function RiskView({ risk }: RiskViewProps) {
             { label: "Clone of",         value: risk.cloneOf ?? "—" },
             { label: "Created By",       value: risk.createdBy?.name ?? risk.createdBy?.email ?? "—" },
             { label: "State Updated By", value: risk.stateUpdatedBy?.name ?? "—" },
+            { label: "Approved By", value: risk.approvedBy ?? "—" },
           ].map(({ label, value }) => (
             <div key={label}>
               <span className={labelClass}>{label}</span>

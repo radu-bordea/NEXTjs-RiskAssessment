@@ -3,6 +3,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import prisma from "@/lib/prisma";
+import { revalidatePath } from "next/cache";
 import {
   riskSchema,
   RiskFormValues,
@@ -126,6 +127,94 @@ export async function getRiskById(id: string) {
 }
 
 /**
+ * updateTemplate — Updates a TEMPLATE risk
+ * Admin only — templates are master records
+ */
+export async function updateTemplate(id: string, data: RiskFormValues) {
+  const { userId } = await auth();
+  if (!userId) redirect("/sign-in");
+
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user || user.role !== "ADMIN") {
+    return { success: false, error: "Unauthorized" };
+  }
+
+  const validated = riskSchema.safeParse(data);
+  if (!validated.success) {
+    return { success: false, error: "Validation failed" };
+  }
+
+  const values = validated.data;
+
+  try {
+    await prisma.riskAssessmentRow.deleteMany({ where: { riskId: id } });
+    await prisma.teamMember.deleteMany({ where: { riskId: id } });
+    await prisma.responsiblePersons.deleteMany({ where: { riskId: id } });
+
+    const risk = await prisma.risk.update({
+      where: { id },
+      data: {
+        ref: values.ref!,
+        workActivity: values.workActivity ?? "",
+        initiator: values.initiator!,
+        initiationDate: values.initiationDate!,
+        reviewDate: values.reviewDate ?? null,
+        vesselDepartment: values.vesselDepartment ?? null,
+        fleet: values.fleet ?? null,
+        raType: values.raType!,
+        libraryIndex: values.libraryIndex ?? null,
+        libraryCategory: values.libraryCategory ?? null,
+        defectRelated: values.defectRelated ?? false,
+        initiatorComment: values.initiatorComment ?? null,
+        alternativeWays: values.alternativeWays ?? false,
+        alternativeWaysText: values.alternativeWaysText ?? null,
+        state: "TEMPLATE", // always stays TEMPLATE
+        stateUpdatedById: userId,
+
+        assessmentRows: {
+          create: (values.assessmentRows ?? []).map((row, index) => ({
+            hazard: row.hazard ?? "",
+            impact: row.impact ?? "",
+            existingControls: row.existingControls ?? "",
+            sct: row.sct ?? null,
+            c: row.c ?? null,
+            f: row.f ?? null,
+            rf: row.rf ?? null,
+            rfColor: row.rfColor ?? null,
+            order: index,
+            additionalMeasures: {
+              create: (row.additionalMeasures ?? []).map((m, mIndex) => ({
+                furtherAction: m.furtherAction ?? null,
+                c: m.c ?? null,
+                f: m.f ?? null,
+                rf: m.rf ?? null,
+                rfColor: m.rfColor ?? null,
+                order: mIndex,
+              })),
+            },
+          })),
+        },
+
+        teamMembers: {
+          create: (values.teamMembers ?? []).map((m) => ({ name: m.name })),
+        },
+
+        responsiblePersons: {
+          create: (values.responsiblePersons ?? []).map((p) => ({
+            name: p.name,
+          })),
+        },
+      },
+    });
+
+    return { success: true, id: risk.id };
+  } catch (error) {
+    console.error("updateTemplate error:", error);
+    return { success: false, error: "Failed to update template" };
+  }
+}
+
+/**
  * createDraftFromTemplate — Creates a DRAFT copy from a TEMPLATE risk
  *
  * Clones all data from the template into a new risk with state: DRAFT
@@ -138,7 +227,12 @@ export async function getRiskById(id: string) {
  * @returns { success: true, id: string } or { success: false, error: string }
  */
 
-export async function createDraftFromTemplate(templateId: string) {
+export async function createDraftFromTemplate(templateId: string): Promise<{
+  success: boolean;
+  error?: string;
+  id?: string;
+  existingDraftId?: string;
+}> {
   const { userId } = await auth();
   if (!userId) redirect("/sign-in");
 
@@ -166,9 +260,35 @@ export async function createDraftFromTemplate(templateId: string) {
       return { success: false, error: "Only templates can be cloned" };
     }
 
+    // Check if user already has a draft from this template
+    const existingDraft = await prisma.risk.findFirst({
+      where: {
+        cloneOf: template.ref, // came from this template
+        createdById: userId, // created by this user
+        state: "DRAFT", // still a draft
+      },
+    });
+
+    if (existingDraft) {
+      return {
+        success: false,
+        error: "You already have a draft from this template",
+        existingDraftId: existingDraft.id,
+      };
+    }
+
     // Create today's date string for ref e.g. "RA-N-001 - 31/05/2026"
-    const today = new Date().toLocaleDateString("en-GB").replace(/\//g, "/");
-    const draftRef = `${template.ref} - ${today}`;
+    // Instead of just date, add time too
+    const now = new Date();
+    const dateStr = now.toLocaleDateString("en-GB"); // 01/06/2026
+    const timeStr = now
+      .toLocaleTimeString("en-GB", {
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+
+    const draftRef = `${template.ref} - ${dateStr} ${timeStr}`;
+    // Result: "RA-N-001 - 01/06/2026 14h30"
 
     // Create the draft as a clone of the template
     const draft = await prisma.risk.create({
@@ -227,7 +347,8 @@ export async function createDraftFromTemplate(templateId: string) {
         },
       },
     });
-
+    // Revalidate dashboard so new draft appears immediately
+    revalidatePath("/dashboard");
     return { success: true, id: draft.id };
   } catch (error) {
     console.error("createDraftFromTemplate error:", error);
@@ -349,35 +470,34 @@ export async function submitDraft(id: string, data: RiskFormValues) {
 
 export async function deleteRisk(id: string) {
   // 1. Check authentication
-  const { userId } = await auth()
-  if (!userId) redirect("/sign-in")
+  const { userId } = await auth();
+  if (!userId) redirect("/sign-in");
 
   // 2. Get current user
-  const user = await prisma.user.findUnique({ where: { id: userId } })
-  if (!user) return { success: false, error: "User not found" }
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user) return { success: false, error: "User not found" };
 
   // 3. Members cannot delete anything
   if (user.role === "MEMBER") {
-    return { success: false, error: "Unauthorized" }
+    return { success: false, error: "Unauthorized" };
   }
 
   try {
     // 4. Fetch the risk to check its state
-    const existing = await prisma.risk.findUnique({ where: { id } })
-    if (!existing) return { success: false, error: "Risk not found" }
+    const existing = await prisma.risk.findUnique({ where: { id } });
+    if (!existing) return { success: false, error: "Risk not found" };
 
     // 5. Templates — ADMIN only
     if (existing.state === "TEMPLATE" && user.role !== "ADMIN") {
-      return { success: false, error: "Only Admin can delete templates" }
+      return { success: false, error: "Only Admin can delete templates" };
     }
 
     // 6. Cascade handles all related records automatically
-    await prisma.risk.delete({ where: { id } })
-    return { success: true }
-
+    await prisma.risk.delete({ where: { id } });
+    return { success: true };
   } catch (error) {
-    console.error("deleteRisk error:", error)
-    return { success: false, error: "Failed to delete risk assessment" }
+    console.error("deleteRisk error:", error);
+    return { success: false, error: "Failed to delete risk assessment" };
   }
 }
 
@@ -410,68 +530,68 @@ export async function deleteRisk(id: string) {
 
 export async function updateRisk(id: string, data: RiskFormValues) {
   // 1. Check authentication
-  const { userId } = await auth()
-  if (!userId) redirect("/sign-in")
+  const { userId } = await auth();
+  if (!userId) redirect("/sign-in");
 
   // 2. Get current user — all roles can update
-  const user = await prisma.user.findUnique({ where: { id: userId } })
-  if (!user) return { success: false, error: "User not found" }
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user) return { success: false, error: "User not found" };
 
   // 3. Validate with draft schema — relaxed validation for saving progress
-  const validated = riskDraftSchema.safeParse(data)
+  const validated = riskDraftSchema.safeParse(data);
   if (!validated.success) {
-    return { success: false, error: "Validation failed" }
+    return { success: false, error: "Validation failed" };
   }
 
-  const values = validated.data
+  const values = validated.data;
 
   try {
     // 4. Delete existing nested records — cascade handles additionalMeasures
-    await prisma.riskAssessmentRow.deleteMany({ where: { riskId: id } })
-    await prisma.teamMember.deleteMany({ where: { riskId: id } })
-    await prisma.responsiblePersons.deleteMany({ where: { riskId: id } })
+    await prisma.riskAssessmentRow.deleteMany({ where: { riskId: id } });
+    await prisma.teamMember.deleteMany({ where: { riskId: id } });
+    await prisma.responsiblePersons.deleteMany({ where: { riskId: id } });
 
     // 5. Update the risk — always keeps DRAFT state
     const risk = await prisma.risk.update({
       where: { id },
       data: {
-        ref:              values.ref!,
-        workActivity:     values.workActivity     ?? "",
-        initiator:        values.initiator!,
-        initiationDate:   values.initiationDate!,
-        reviewDate:       values.reviewDate       ?? null,
+        ref: values.ref!,
+        workActivity: values.workActivity ?? "",
+        initiator: values.initiator!,
+        initiationDate: values.initiationDate!,
+        reviewDate: values.reviewDate ?? null,
         vesselDepartment: values.vesselDepartment ?? null,
-        fleet:            values.fleet            ?? null,
-        raType:           values.raType!,
-        libraryIndex:     values.libraryIndex     ?? null,
-        libraryCategory:  values.libraryCategory  ?? null,
-        defectRelated:    values.defectRelated     ?? false,
-        initiatorComment: values.initiatorComment  ?? null,
-        alternativeWays:     values.alternativeWays     ?? false,
+        fleet: values.fleet ?? null,
+        raType: values.raType!,
+        libraryIndex: values.libraryIndex ?? null,
+        libraryCategory: values.libraryCategory ?? null,
+        defectRelated: values.defectRelated ?? false,
+        initiatorComment: values.initiatorComment ?? null,
+        alternativeWays: values.alternativeWays ?? false,
         alternativeWaysText: values.alternativeWaysText ?? null,
-        approvedBy:       values.approvedBy       ?? null,
-        state:            "DRAFT", // always DRAFT when saving progress
+        approvedBy: values.approvedBy ?? null,
+        state: "DRAFT", // always DRAFT when saving progress
         stateUpdatedById: userId,
 
         assessmentRows: {
           create: (values.assessmentRows ?? []).map((row, index) => ({
-            hazard:           row.hazard           ?? "",
-            impact:           row.impact           ?? "",
+            hazard: row.hazard ?? "",
+            impact: row.impact ?? "",
             existingControls: row.existingControls ?? "",
-            sct:              row.sct              ?? null,
-            c:                row.c                ?? null,
-            f:                row.f                ?? null,
-            rf:               row.rf               ?? null,
-            rfColor:          row.rfColor          ?? null,
-            order:            index,
+            sct: row.sct ?? null,
+            c: row.c ?? null,
+            f: row.f ?? null,
+            rf: row.rf ?? null,
+            rfColor: row.rfColor ?? null,
+            order: index,
             additionalMeasures: {
               create: (row.additionalMeasures ?? []).map((m, mIndex) => ({
                 furtherAction: m.furtherAction ?? null,
-                c:             m.c             ?? null,
-                f:             m.f             ?? null,
-                rf:            m.rf            ?? null,
-                rfColor:       m.rfColor       ?? null,
-                order:         mIndex,
+                c: m.c ?? null,
+                f: m.f ?? null,
+                rf: m.rf ?? null,
+                rfColor: m.rfColor ?? null,
+                order: mIndex,
               })),
             },
           })),
@@ -482,15 +602,17 @@ export async function updateRisk(id: string, data: RiskFormValues) {
         },
 
         responsiblePersons: {
-          create: (values.responsiblePersons ?? []).map((p) => ({ name: p.name })),
+          create: (values.responsiblePersons ?? []).map((p) => ({
+            name: p.name,
+          })),
         },
       },
-    })
+    });
 
-    return { success: true, id: risk.id }
+    return { success: true, id: risk.id };
   } catch (error) {
-    console.error("updateRisk error:", error)
-    return { success: false, error: "Failed to update risk" }
+    console.error("updateRisk error:", error);
+    return { success: false, error: "Failed to update risk" };
   }
 }
 
@@ -511,18 +633,21 @@ export async function updateCompleted(
   reviewDate: Date | null,
 ) {
   // 1. Check authentication
-  const { userId } = await auth()
-  if (!userId) redirect("/sign-in")
+  const { userId } = await auth();
+  if (!userId) redirect("/sign-in");
 
-  const user = await prisma.user.findUnique({ where: { id: userId } })
-  if (!user) return { success: false, error: "User not found" }
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user) return { success: false, error: "User not found" };
 
   try {
     // 2. Verify risk exists and is COMPLETED
-    const existing = await prisma.risk.findUnique({ where: { id } })
-    if (!existing) return { success: false, error: "Risk not found" }
+    const existing = await prisma.risk.findUnique({ where: { id } });
+    if (!existing) return { success: false, error: "Risk not found" };
     if (existing.state !== "COMPLETED") {
-      return { success: false, error: "Only completed risks can be updated this way" }
+      return {
+        success: false,
+        error: "Only completed risks can be updated this way",
+      };
     }
 
     // 3. Only update the two date fields — everything else stays locked
@@ -530,15 +655,15 @@ export async function updateCompleted(
       where: { id },
       data: {
         initiationDate,
-        reviewDate:      reviewDate ?? null,
+        reviewDate: reviewDate ?? null,
         stateUpdatedById: userId,
       },
-    })
+    });
 
-    return { success: true }
+    return { success: true };
   } catch (error) {
-    console.error("updateCompleted error:", error)
-    return { success: false, error: "Failed to update completed risk" }
+    console.error("updateCompleted error:", error);
+    return { success: false, error: "Failed to update completed risk" };
   }
 }
 

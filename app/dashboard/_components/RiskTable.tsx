@@ -5,9 +5,9 @@
  *
  * Displays all risk assessments in a filterable table.
  * Roles:
- *  - ADMIN   → can create, view, edit
- *  - MANAGER → can view and edit
- *  - MEMBER  → view only
+ *  - ADMIN   → can create template, view, edit, delete all
+ *  - MANAGER → can view, edit draft/completed, delete draft/completed
+ *  - MEMBER  → view only, can create draft from template
  *
  * Data is fetched server-side in dashboard/page.tsx and passed as props.
  * All filtering is done client-side using useMemo for performance.
@@ -19,19 +19,28 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import Link from "next/link";
+import { toast } from "sonner";
+import { createDraftFromTemplate } from "@/app/actions/risk.actions";
 
 // ─── State badge styles ───────────────────────────────────────────────────────
-/** Visual badge colors for each risk state — light and dark mode */
+/**
+ * Visual badge colors for each risk state — light and dark mode
+ * TEMPLATE → blue (master record)
+ * DRAFT    → amber (work in progress)
+ * COMPLETED → green (finalized)
+ */
 const stateStyle: Record<string, string> = {
-  DRAFT:       "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300 whitespace-nowrap",
-  IN_PROGRESS: "bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 whitespace-nowrap",
-  COMPLETED:   "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 whitespace-nowrap",
-  CANCELLED:   "bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-400 whitespace-nowrap",
+  TEMPLATE:
+    "bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 whitespace-nowrap",
+  DRAFT:
+    "bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 whitespace-nowrap",
+  COMPLETED:
+    "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 whitespace-nowrap",
 };
 
 // ─── RA Type human-readable labels ───────────────────────────────────────────
 const raTypeLabel: Record<string, string> = {
-  ROUTINE:     "Routine",
+  ROUTINE: "Routine",
   NON_ROUTINE: "Non Routine",
 };
 
@@ -54,11 +63,9 @@ const CATEGORIES = [
 ];
 
 // ─── Shared Tailwind classes ──────────────────────────────────────────────────
-/** Shared class for all filter dropdowns */
 const selectClass =
   "px-3 py-2 rounded-lg border border-[#A8D5B5] dark:border-slate-700 bg-white dark:bg-slate-900 text-sm text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-[#1A7A4A] transition-colors";
 
-/** Shared class for all filter text inputs */
 const inputClass =
   "px-3 py-2 rounded-lg border border-[#A8D5B5] dark:border-slate-700 bg-white dark:bg-slate-900 text-sm text-slate-700 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-[#1A7A4A] transition-colors";
 
@@ -75,24 +82,26 @@ export default function RiskTable({
    * Each key maps to a column in the risk table.
    */
   const [filters, setFilters] = useState({
-    ref:              "",
-    workActivity:     "",
-    initiator:        "",
+    ref: "",
+    workActivity: "",
+    initiator: "",
     vesselDepartment: "",
-    fleet:            "",
-    raType:           "",
-    libraryCategory:  "",
-    libraryIndex:     "",
-    isClone:          "",
-    defectRelated:    "",
+    fleet: "",
+    raType: "",
+    libraryCategory: "",
+    libraryIndex: "",
+    isClone: "",
+    defectRelated: "",
   });
+
+  /** Track which template is currently being cloned — for loading state */
+  const [cloningId, setCloningId] = useState<string | null>(null);
 
   const router = useRouter();
 
   /** Role checks derived from currentUser */
-  const isAdmin   = currentUser?.role === "ADMIN";
+  const isAdmin = currentUser?.role === "ADMIN";
   const isManager = currentUser?.role === "MANAGER";
-  const canEdit   = isAdmin || isManager;
 
   /**
    * indexesByCategory
@@ -137,14 +146,37 @@ export default function RiskTable({
    */
   const filtered = useMemo(() => {
     return risks.filter((r) => {
-      if (filters.ref && !r.ref.toLowerCase().includes(filters.ref.toLowerCase())) return false;
-      if (filters.workActivity && !r.workActivity.toLowerCase().includes(filters.workActivity.toLowerCase())) return false;
-      if (filters.initiator && !r.initiator.toLowerCase().includes(filters.initiator.toLowerCase())) return false;
-      if (filters.vesselDepartment && r.vesselDepartment !== filters.vesselDepartment) return false;
+      if (
+        filters.ref &&
+        !r.ref.toLowerCase().includes(filters.ref.toLowerCase())
+      )
+        return false;
+      if (
+        filters.workActivity &&
+        !r.workActivity
+          .toLowerCase()
+          .includes(filters.workActivity.toLowerCase())
+      )
+        return false;
+      if (
+        filters.initiator &&
+        !r.initiator.toLowerCase().includes(filters.initiator.toLowerCase())
+      )
+        return false;
+      if (
+        filters.vesselDepartment &&
+        r.vesselDepartment !== filters.vesselDepartment
+      )
+        return false;
       if (filters.fleet && r.fleet !== filters.fleet) return false;
       if (filters.raType && r.raType !== filters.raType) return false;
-      if (filters.libraryCategory && r.libraryCategory !== filters.libraryCategory) return false;
-      if (filters.libraryIndex && r.libraryIndex !== filters.libraryIndex) return false;
+      if (
+        filters.libraryCategory &&
+        r.libraryCategory !== filters.libraryCategory
+      )
+        return false;
+      if (filters.libraryIndex && r.libraryIndex !== filters.libraryIndex)
+        return false;
       if (filters.isClone === "yes" && !r.cloneOf) return false;
       if (filters.isClone === "no" && r.cloneOf) return false;
       if (filters.defectRelated === "yes" && !r.defectRelated) return false;
@@ -154,7 +186,9 @@ export default function RiskTable({
   }, [risks, filters]);
 
   /** Unique vessel/department values from data for dropdown */
-  const vessels = [...new Set(risks.map((r) => r.vesselDepartment).filter(Boolean))];
+  const vessels = [
+    ...new Set(risks.map((r) => r.vesselDepartment).filter(Boolean)),
+  ];
 
   /** Unique fleet values from data for dropdown */
   const fleets = [...new Set(risks.map((r) => r.fleet).filter(Boolean))];
@@ -166,22 +200,47 @@ export default function RiskTable({
   /** Resets all filters to empty state */
   const reset = () =>
     setFilters({
-      ref:              "",
-      workActivity:     "",
-      initiator:        "",
+      ref: "",
+      workActivity: "",
+      initiator: "",
       vesselDepartment: "",
-      fleet:            "",
-      raType:           "",
-      libraryCategory:  "",
-      libraryIndex:     "",
-      isClone:          "",
-      defectRelated:    "",
+      fleet: "",
+      raType: "",
+      libraryCategory: "",
+      libraryIndex: "",
+      isClone: "",
+      defectRelated: "",
     });
+
+  /**
+   * handleCreateDraft — creates a DRAFT from a TEMPLATE
+   * All roles can do this.
+   * Redirects to edit page of the new draft on success.
+   */
+  const handleCreateDraft = async (templateId: string) => {
+    setCloningId(templateId);
+    try {
+      const result = await createDraftFromTemplate(templateId);
+      if (result.success) {
+        toast.success("Draft created!");
+        router.refresh();
+      } else {
+        toast.error(result.error ?? "Failed to create draft");
+        // If draft already exists — redirect to it
+        if ("existingDraftId" in result && result.existingDraftId) {
+          router.push(`/dashboard/risks/${result.existingDraftId}/edit`);
+        }
+      }
+    } catch {
+      toast.error("Something went wrong");
+    } finally {
+      setCloningId(null);
+    }
+  };
 
   // ─── Render ───────────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-[#EEF5F0] dark:bg-slate-950 text-slate-900 dark:text-slate-100 px-6 md:px-10 py-10 font-sans">
-
       {/* ── Page Header ───────────────────────────────────────────────────── */}
       <div className="flex items-center justify-between mb-8 flex-wrap gap-4">
         <Link href="/">
@@ -198,20 +257,22 @@ export default function RiskTable({
         <div>
           <h1 className="text-4xl font-extrabold tracking-tight text-slate-700 dark:text-white">
             Mobile Marine{" "}
-            <span className="text-slate-500">Fleet Risk Assessments Portal</span>
+            <span className="text-slate-500">
+              Fleet Risk Assessments Portal
+            </span>
           </h1>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-2">
             Displaying {filtered.length} of {risks.length} assessments
           </p>
         </div>
 
-        {/* New Assessment button — ADMIN only */}
+        {/* New Template button — ADMIN only */}
         {isAdmin && (
           <button
             onClick={() => router.push("/dashboard/risks/new")}
             className="px-5 py-2.5 bg-[#1A7A4A] hover:bg-[#145f39] text-white rounded-lg text-sm font-medium transition-colors shadow-sm shadow-[#1A7A4A]/20"
           >
-            + New Assessment
+            + New Template
           </button>
         )}
       </div>
@@ -224,8 +285,6 @@ export default function RiskTable({
 
         {/* Row 1 — text inputs + category + index */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-3">
-
-          {/* Ref — partial text match */}
           <input
             type="text"
             placeholder="Ref"
@@ -233,8 +292,6 @@ export default function RiskTable({
             onChange={(e) => set("ref", e.target.value)}
             className={inputClass}
           />
-
-          {/* Work Activity — partial text match */}
           <input
             type="text"
             placeholder="Work Activity"
@@ -242,8 +299,6 @@ export default function RiskTable({
             onChange={(e) => set("workActivity", e.target.value)}
             className={inputClass}
           />
-
-          {/* Initiator — partial text match */}
           <input
             type="text"
             placeholder="Initiator"
@@ -257,13 +312,15 @@ export default function RiskTable({
             value={filters.libraryCategory}
             onChange={(e) => {
               set("libraryCategory", e.target.value);
-              set("libraryIndex", ""); // reset dependent filter
+              set("libraryIndex", "");
             }}
             className={selectClass}
           >
             <option value="">Category Index</option>
             {CATEGORIES.map((cat) => (
-              <option key={cat} value={cat}>{cat}</option>
+              <option key={cat} value={cat}>
+                {cat}
+              </option>
             ))}
           </select>
 
@@ -282,15 +339,15 @@ export default function RiskTable({
                 : "Library Index"}
             </option>
             {availableIndexes.map((idx) => (
-              <option key={idx} value={idx}>{idx}</option>
+              <option key={idx} value={idx}>
+                {idx}
+              </option>
             ))}
           </select>
         </div>
 
         {/* Row 2 — dropdown filters */}
         <div className="grid grid-cols-2 md:grid-cols-6 gap-3 mb-4">
-
-          {/* Vessel/Department — unique values from actual data */}
           <select
             value={filters.vesselDepartment}
             onChange={(e) => set("vesselDepartment", e.target.value)}
@@ -298,11 +355,12 @@ export default function RiskTable({
           >
             <option value="">Vessel/Dept</option>
             {vessels.map((v) => (
-              <option key={v!} value={v!}>{v}</option>
+              <option key={v!} value={v!}>
+                {v}
+              </option>
             ))}
           </select>
 
-          {/* Fleet — unique values from actual data */}
           <select
             value={filters.fleet}
             onChange={(e) => set("fleet", e.target.value)}
@@ -310,11 +368,12 @@ export default function RiskTable({
           >
             <option value="">Fleet</option>
             {fleets.map((f) => (
-              <option key={f!} value={f!}>{f}</option>
+              <option key={f!} value={f!}>
+                {f}
+              </option>
             ))}
           </select>
 
-          {/* RA Type */}
           <select
             value={filters.raType}
             onChange={(e) => set("raType", e.target.value)}
@@ -325,7 +384,6 @@ export default function RiskTable({
             <option value="NON_ROUTINE">Non Routine</option>
           </select>
 
-          {/* Is Clone — filters risks cloned from a template */}
           <select
             value={filters.isClone}
             onChange={(e) => set("isClone", e.target.value)}
@@ -336,7 +394,6 @@ export default function RiskTable({
             <option value="no">No</option>
           </select>
 
-          {/* Defect Related */}
           <select
             value={filters.defectRelated}
             onChange={(e) => set("defectRelated", e.target.value)}
@@ -348,7 +405,6 @@ export default function RiskTable({
           </select>
         </div>
 
-        {/* Reset all filters button */}
         <button
           onClick={reset}
           className="text-xs px-4 py-2 rounded-lg border border-[#A8D5B5] dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:bg-[#EEF5F0] dark:hover:bg-slate-800 transition-colors"
@@ -361,8 +417,7 @@ export default function RiskTable({
       <div className="rounded-xl overflow-hidden border border-[#A8D5B5] dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-
-            {/* Table header — deep green background */}
+            {/* Table header */}
             <thead className="bg-[#1A7A4A] dark:bg-[#0d4a2b] border-b border-[#145f39] dark:border-[#0a3520]">
               <tr>
                 {[
@@ -382,7 +437,7 @@ export default function RiskTable({
                 ].map((h) => (
                   <th
                     key={h}
-                    className="text-left px-4 py-3 font-semibold text-white  text-xs uppercase tracking-wide"
+                    className="text-left px-4 py-3 font-semibold text-white text-xs uppercase tracking-wide whitespace-nowrap"
                   >
                     {h}
                   </th>
@@ -391,7 +446,6 @@ export default function RiskTable({
             </thead>
 
             <tbody>
-              {/* Empty state */}
               {filtered.length === 0 ? (
                 <tr>
                   <td
@@ -419,11 +473,20 @@ export default function RiskTable({
                       {r.ref}
                     </td>
 
-                    <td className="px-4 py-3 text-slate-400 dark:text-slate-500 whitespace-nowrap">
-                      {r.cloneOf ?? "—"}
+                    {/* Clone of — shows template ref for drafts */}
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      {r.cloneOf ? (
+                        <span className="text-xs px-2 py-1 rounded-full bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 font-medium">
+                          {r.cloneOf}
+                        </span>
+                      ) : (
+                        <span className="text-slate-300 dark:text-slate-600">
+                          —
+                        </span>
+                      )}
                     </td>
 
-                    <td className="px-4 py-3  text-slate-700 dark:text-slate-300">
+                    <td className="px-4 py-3 text-slate-700 dark:text-slate-300 max-w-50 truncate">
                       {r.workActivity}
                     </td>
 
@@ -441,7 +504,7 @@ export default function RiskTable({
                         : "—"}
                     </td>
 
-                    <td className="px-4 py-3 text-slate-500 dark:text-slate-400">
+                    <td className="px-4 py-3 text-slate-500 dark:text-slate-400 whitespace-nowrap">
                       {r.vesselDepartment ?? "—"}
                     </td>
 
@@ -449,7 +512,7 @@ export default function RiskTable({
                       {raTypeLabel[r.raType]}
                     </td>
 
-                    <td className="px-4 py-3 text-slate-500 dark:text-slate-400">
+                    <td className="px-4 py-3 text-slate-500 dark:text-slate-400 whitespace-nowrap">
                       {r.libraryCategory ?? "—"}
                     </td>
 
@@ -459,39 +522,89 @@ export default function RiskTable({
 
                     {/* State badge */}
                     <td className="px-4 py-3">
-                      <span className={`text-xs px-2 py-1 rounded-full font-medium ${stateStyle[r.state]}`}>
-                        {r.state.replace("_", " ")}
+                      <span
+                        className={`text-xs px-2 py-1 rounded-full font-medium ${stateStyle[r.state] ?? ""}`}
+                      >
+                        {r.state}
                       </span>
                     </td>
 
-                    <td className="px-4 py-3 text-slate-400 dark:text-slate-500 ">
+                    <td className="px-4 py-3 text-slate-400 dark:text-slate-500 whitespace-nowrap">
                       {r.stateUpdatedBy?.name ?? "—"}
                     </td>
 
-                    {/* Action buttons */}
+                    {/* ── Action buttons ─────────────────────────────────── */}
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-1">
-                        {/* View — all roles */}
+                        {/* View — all roles, all states */}
                         <Button
                           title="View"
                           variant="ghost"
                           size="sm"
-                          onClick={() => router.push(`/dashboard/risks/${r.id}`)}
+                          onClick={() =>
+                            router.push(`/dashboard/risks/${r.id}`)
+                          }
                           className="p-1.5 text-slate-400 hover:text-[#1A7A4A] dark:hover:text-emerald-400 hover:bg-[#EEF5F0] dark:hover:bg-slate-800"
                         >
                           👁
                         </Button>
 
-                        {/* Edit — ADMIN and MANAGER only */}
-                        {canEdit && (
+                        {/* Create Draft — TEMPLATE only, all roles */}
+                        {r.state === "TEMPLATE" && (
                           <Button
-                            title="Edit"
+                            title="Create Draft from Template"
                             variant="ghost"
                             size="sm"
-                            onClick={() => router.push(`/dashboard/risks/${r.id}/edit`)}
+                            disabled={cloningId === r.id}
+                            onClick={() => handleCreateDraft(r.id)}
+                            className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-slate-800"
+                          >
+                            {cloningId === r.id ? "..." : "📋"}
+                          </Button>
+                        )}
+
+                        {/* Edit Template — TEMPLATE only, ADMIN only */}
+                        {r.state === "TEMPLATE" && isAdmin && (
+                          <Button
+                            title="Edit Template"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() =>
+                              router.push(`/dashboard/risks/${r.id}/edit`)
+                            }
                             className="p-1.5 text-slate-400 hover:text-[#1A7A4A] dark:hover:text-emerald-400 hover:bg-[#EEF5F0] dark:hover:bg-slate-800"
                           >
                             ✏️
+                          </Button>
+                        )}
+
+                        {/* Edit — DRAFT only, all roles */}
+                        {r.state === "DRAFT" && (
+                          <Button
+                            title="Edit Draft"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() =>
+                              router.push(`/dashboard/risks/${r.id}/edit`)
+                            }
+                            className="p-1.5 text-slate-400 hover:text-[#1A7A4A] dark:hover:text-emerald-400 hover:bg-[#EEF5F0] dark:hover:bg-slate-800"
+                          >
+                            ✏️
+                          </Button>
+                        )}
+
+                        {/* Edit dates — COMPLETED only, all roles */}
+                        {r.state === "COMPLETED" && (
+                          <Button
+                            title="Edit Dates"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() =>
+                              router.push(`/dashboard/risks/${r.id}/edit`)
+                            }
+                            className="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-slate-800"
+                          >
+                            📅
                           </Button>
                         )}
                       </div>
