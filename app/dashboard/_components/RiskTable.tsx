@@ -509,7 +509,7 @@ export default function RiskTable({
                           onClick={() =>
                             router.push(`/dashboard/risks/${r.id}`)
                           }
-                          className="p-1.5 text-slate-400 hover:text-[#1A7A4A] dark:hover:text-emerald-400 hover:bg-[#EEF5F0] dark:hover:bg-slate-800"
+                          className="p-1 text-slate-400 hover:text-[#1A7A4A] dark:hover:text-emerald-400 hover:bg-[#EEF5F0] dark:hover:bg-slate-800 cursor-pointer"
                         >
                           👁
                         </Button>
@@ -522,7 +522,7 @@ export default function RiskTable({
                             size="sm"
                             disabled={cloningId === r.id}
                             onClick={() => handleCreateDraft(r.id)}
-                            className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-slate-800"
+                            className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-slate-800 cursor-pointer"
                           >
                             {cloningId === r.id ? "..." : "📋"}
                           </Button>
@@ -537,7 +537,7 @@ export default function RiskTable({
                             onClick={() =>
                               router.push(`/dashboard/risks/${r.id}/edit`)
                             }
-                            className="p-1.5 text-slate-400 hover:text-[#1A7A4A] dark:hover:text-emerald-400 hover:bg-[#EEF5F0] dark:hover:bg-slate-800"
+                            className="p-1 text-slate-400 hover:text-[#1A7A4A] dark:hover:text-emerald-400 hover:bg-[#EEF5F0] dark:hover:bg-slate-800 cursor-pointer"
                           >
                             ✏️
                           </Button>
@@ -552,7 +552,7 @@ export default function RiskTable({
                             onClick={() =>
                               router.push(`/dashboard/risks/${r.id}/edit`)
                             }
-                            className="p-1.5 text-slate-400 hover:text-[#1A7A4A] dark:hover:text-emerald-400 hover:bg-[#EEF5F0] dark:hover:bg-slate-800"
+                            className="p-1 text-slate-400 hover:text-[#1A7A4A] dark:hover:text-emerald-400 hover:bg-[#EEF5F0] dark:hover:bg-slate-800 cursor-pointer"
                           >
                             ✏️
                           </Button>
@@ -567,7 +567,7 @@ export default function RiskTable({
                             onClick={() =>
                               router.push(`/dashboard/risks/${r.id}/edit`)
                             }
-                            className="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-slate-800"
+                            className="p-1 text-slate-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-slate-800 cursor-pointer"
                           >
                             📅
                           </Button>
@@ -582,7 +582,7 @@ export default function RiskTable({
                             onClick={() =>
                               router.push(`/dashboard/risks/${r.id}/pdf`)
                             }
-                            className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-slate-800"
+                            className="p-1 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-slate-800 cursor-pointer"
                           >
                             📝
                           </Button>
