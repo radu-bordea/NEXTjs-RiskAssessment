@@ -21,6 +21,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { toast } from "sonner";
 import { createDraftFromTemplate } from "@/app/actions/risk.actions";
+import { title } from "process";
 
 // ─── State badge styles ───────────────────────────────────────────────────────
 const stateStyle: Record<string, string> = {
@@ -569,6 +570,21 @@ export default function RiskTable({
                             className="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-slate-800"
                           >
                             📅
+                          </Button>
+                        )}
+
+                        {/* Download PDF - TEMPLATE and COMPLETED only, all roles */}
+                        {(r.state === "TEMPLATE" || r.state === "COMPLETED") && (
+                          <Button
+                            title="Download PDF"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() =>
+                              router.push(`/dashboard/risks/${r.id}/pdf`)
+                            }
+                            className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-slate-800"
+                          >
+                            📝
                           </Button>
                         )}
                       </div>

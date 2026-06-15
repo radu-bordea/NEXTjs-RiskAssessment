@@ -4,6 +4,7 @@
 - npm install @clerk/nextjs
 - npm install react-hook-form @hookform/resolvers zod
 - npm install @react-pdf/renderer
+- npm install --save-dev @types/react-pdf
 
 
 
