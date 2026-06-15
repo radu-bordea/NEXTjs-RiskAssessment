@@ -281,10 +281,12 @@ export default function RiskPDF({ risk }: { risk: any }) {
                 { label: "Defect Related",   value: risk.defectRelated ? "Yes" : "No" },
                 { label: "Clone of",         value: risk.cloneOf ?? "—" },
                 { label: "Created By",       value: risk.createdBy?.name ?? risk.createdBy?.email ?? "—" },
+                { label: "Updated By",       value: risk.stateUpdatedBy?.name ?? "—" },
               ].map(({ label, value }) => (
                 <View key={label} style={styles.gridItem}>
                   <Text style={styles.fieldLabel}>{label}</Text>
                   <Text style={styles.fieldValue}>{value}</Text>
+                
                 </View>
               ))}
             </View>
