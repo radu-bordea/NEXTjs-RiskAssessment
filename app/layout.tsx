@@ -119,9 +119,20 @@ export default async function RootLayout({
                       {/* Show user's first name */}
                       {clerkUser?.firstName && (
                         <span className="font-bold tracking-tight text-slate-600 dark:text-white">
-                         Vessel: {clerkUser.firstName} {clerkUser.lastName}
+                          Vessel: {clerkUser.firstName} {clerkUser.lastName}
                         </span>
                       )}
+
+                      {/* Manage Users link — ADMIN only */}
+                      {user === "ADMIN" && (
+                        <Link
+                          href="/admin/users"
+                          className="text-xs px-3 py-1.5 rounded-lg border border-[#A8D5B5] text-[#1A7A4A] hover:bg-[#EEF5F0] transition-colors font-medium"
+                        >
+                          Manage Users
+                        </Link>
+                      )}
+
                       <UserButton
                         appearance={{
                           elements: {
