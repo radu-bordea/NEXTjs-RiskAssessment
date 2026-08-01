@@ -5,11 +5,13 @@
  *
  * Displays all users in a table with role change buttons.
  * Current user's row is locked — cannot change own role.
+ * Protected admin's row is locked — role can never be changed.
  * Uses updateUserRole server action to update roles.
  */
 
 import { useState } from "react";
 import { toast } from "sonner";
+import { Lock } from "lucide-react";
 import { updateUserRole } from "@/app/actions/user.actions";
 import { useRouter } from "next/navigation";
 
@@ -21,8 +23,9 @@ type User = {
 };
 
 type Props = {
-  users:         User[];
-  currentUserId: string;
+  users:            User[];
+  currentUserId:    string;
+  protectedUserId?: string;
 };
 
 /** Role badge colors */
@@ -35,7 +38,7 @@ const roleBadge: Record<string, string> = {
 /** All available roles */
 const ROLES = ["ADMIN", "MANAGER", "MEMBER"] as const;
 
-export default function UsersTable({ users, currentUserId }: Props) {
+export default function UsersTable({ users, currentUserId, protectedUserId }: Props) {
   const router = useRouter();
 
   /**
@@ -89,7 +92,9 @@ return (
       <tbody>
         {users.map((user, index) => {
           const isCurrentUser = user.id === currentUserId;
-          const isLoading = loadingId === user.id;
+          const isProtected   = user.id === protectedUserId;
+          const isLocked      = isCurrentUser || isProtected;
+          const isLoading     = loadingId === user.id;
 
           return (
             <tr
@@ -98,7 +103,7 @@ return (
                 index % 2 === 0
                   ? "bg-white dark:bg-slate-900"
                   : "bg-[#F5FAF6] dark:bg-slate-900/50"
-              } ${isCurrentUser ? "opacity-60" : ""}`}
+              } ${isLocked ? "opacity-60" : ""}`}
             >
               <td className="px-2 py-4 font-medium text-slate-800 dark:text-white whitespace-nowrap">
                 <div className="flex items-center gap-2">
@@ -109,6 +114,15 @@ return (
                   {isCurrentUser && (
                     <span className="text-xs px-2 py-0.5 rounded-full bg-[#EEF5F0] text-[#1A7A4A] border border-[#A8D5B5] font-medium">
                       You
+                    </span>
+                  )}
+                  {isProtected && (
+                    <span
+                      title="This account's role is permanently protected"
+                      className="flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 border border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700 font-medium"
+                    >
+                      <Lock className="w-3 h-3" />
+                      Protected
                     </span>
                   )}
                 </div>
@@ -128,6 +142,14 @@ return (
                 {isCurrentUser ? (
                   <span className="text-xs text-slate-400 dark:text-slate-600">
                     Cannot change own role
+                  </span>
+                ) : isProtected ? (
+                  <span
+                    title="This account's role is permanently protected"
+                    className="flex items-center gap-1.5 text-xs text-slate-400 dark:text-slate-600"
+                  >
+                    <Lock className="w-3.5 h-3.5" />
+                    Role is locked
                   </span>
                 ) : (
                   <div className="flex items-center gap-2">
@@ -158,15 +180,17 @@ return (
     <div className="md:hidden divide-y divide-[#D4EAD9] dark:divide-slate-800">
       {users.map((user) => {
         const isCurrentUser = user.id === currentUserId;
-        const isLoading = loadingId === user.id;
+        const isProtected   = user.id === protectedUserId;
+        const isLocked      = isCurrentUser || isProtected;
+        const isLoading     = loadingId === user.id;
 
         return (
           <div
             key={user.id}
-            className={`p-4 ${isCurrentUser ? "opacity-60" : ""}`}
+            className={`p-4 ${isLocked ? "opacity-60" : ""}`}
           >
-            {/* Name + avatar + You badge */}
-            <div className="flex items-center gap-2 mb-1">
+            {/* Name + avatar + You/Protected badge */}
+            <div className="flex items-center gap-2 mb-1 flex-wrap">
               <div className="w-8 h-8 rounded-full bg-[#1A7A4A] flex items-center justify-center text-white text-xs font-bold shrink-0">
                 {(user.name ?? user.email)[0].toUpperCase()}
               </div>
@@ -176,6 +200,12 @@ return (
               {isCurrentUser && (
                 <span className="text-xs px-2 py-0.5 rounded-full bg-[#EEF5F0] text-[#1A7A4A] border border-[#A8D5B5] font-medium">
                   You
+                </span>
+              )}
+              {isProtected && (
+                <span className="flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 border border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700 font-medium">
+                  <Lock className="w-3 h-3" />
+                  Protected
                 </span>
               )}
             </div>
@@ -197,6 +227,11 @@ return (
               {isCurrentUser ? (
                 <span className="text-xs text-slate-400 dark:text-slate-600">
                   Cannot change own role
+                </span>
+              ) : isProtected ? (
+                <span className="flex items-center gap-1.5 text-xs text-slate-400 dark:text-slate-600">
+                  <Lock className="w-3.5 h-3.5" />
+                  Role is locked
                 </span>
               ) : (
                 <div className="flex flex-wrap items-center gap-2">

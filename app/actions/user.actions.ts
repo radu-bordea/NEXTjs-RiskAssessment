@@ -5,11 +5,14 @@ import { redirect } from "next/navigation"
 import prisma from "@/lib/prisma"
 import { revalidatePath } from "next/cache"
 
+const PROTECTED_ADMIN_ID = process.env.PROTECTED_ADMIN_ID
+
 /**
  * updateUserRole — Updates a user's role in the database
  *
  * Only ADMIN can call this action.
  * Admin cannot change their own role — prevents lockout.
+ * The protected admin (PROTECTED_ADMIN_ID) can never have their role changed.
  *
  * @param targetUserId - The DB id of the user to update
  * @param newRole - The new role: "ADMIN" | "MANAGER" | "MEMBER"
@@ -32,6 +35,11 @@ export async function updateUserRole(
   // 3. Prevent admin from changing their own role
   if (targetUserId === userId) {
     return { success: false, error: "You cannot change your own role" }
+  }
+
+  // 4. Protected admin's role can never be changed, by anyone
+  if (targetUserId === PROTECTED_ADMIN_ID) {
+    return { success: false, error: "This user's role cannot be changed" }
   }
 
   try {

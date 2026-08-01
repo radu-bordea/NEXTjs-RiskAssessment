@@ -1,7 +1,7 @@
-import { auth } from "@clerk/nextjs/server"
-import { redirect } from "next/navigation"
-import prisma from "@/lib/prisma"
-import UsersTable from "./_components/UsersTable"
+import { auth } from "@clerk/nextjs/server";
+import { redirect } from "next/navigation";
+import prisma from "@/lib/prisma";
+import UsersTable from "./_components/UsersTable";
 
 /**
  * AdminUsersPage — Manage user roles
@@ -11,24 +11,25 @@ import UsersTable from "./_components/UsersTable"
  * Redirects non-admin users to dashboard.
  */
 export default async function AdminUsersPage() {
-  const { userId } = await auth()
-  if (!userId) redirect("/sign-in")
+  const { userId } = await auth();
+  if (!userId) redirect("/sign-in");
 
   // Check caller is ADMIN
-  const currentUser = await prisma.user.findUnique({ where: { id: userId } })
+  const currentUser = await prisma.user.findUnique({ where: { id: userId } });
   if (!currentUser || currentUser.role !== "ADMIN") {
-    redirect("/dashboard")
+    redirect("/dashboard");
   }
 
   // Fetch all users from DB
   const users = await prisma.user.findMany({
     orderBy: { name: "asc" },
-  })
+  });
+
+  console.log({ protectedUserId: process.env.PROTECTED_ADMIN_ID, users: users.map(u => u.id) });
 
   return (
     <div className="min-h-screen bg-[#EEF5F0] dark:bg-slate-950 px-6 md:px-10 py-10 font-sans">
       <div className="max-w-4xl mx-auto">
-
         {/* Header */}
         <div className="mb-8">
           <p className="text-xs uppercase tracking-widest text-[#1A7A4A] dark:text-emerald-400 font-medium mb-2">
@@ -43,8 +44,12 @@ export default async function AdminUsersPage() {
         </div>
 
         {/* Users Table */}
-        <UsersTable users={users} currentUserId={currentUser.id} />
+        <UsersTable
+          users={users}
+          currentUserId={currentUser.id}
+          protectedUserId={process.env.PROTECTED_ADMIN_ID}
+        />
       </div>
     </div>
-  )
+  );
 }
