@@ -242,6 +242,13 @@ export default function RiskTable({
             priority
           />
         </Link>
+        {/** Back to home button */}
+        <Link
+          href="/"
+          className="text-xs px-3 py-1.5 rounded-lg border border-[#A8D5B5] text-[#1A7A4A] hover:bg-[#EEF5F0] dark:hover:bg-slate-800 transition-colors font-medium"
+        >
+          ← Home
+        </Link>
 
         <div>
           <h1 className="text-4xl font-extrabold tracking-tight text-slate-700 dark:text-white">
@@ -445,13 +452,13 @@ export default function RiskTable({
                   >
                     {/* Ref — clickable, navigates to view page */}
                     <td
-                      className="px-4 py-3 font-medium text-[#1A7A4A] dark:text-emerald-400 cursor-pointer min-w-40 hover:underline"
+                      className="px-4 py-3 font-medium text-[#1A7A4A] dark:text-emerald-400 cursor-pointer hover:underline max-w-35 truncate"
                       onClick={() => router.push(`/dashboard/risks/${r.id}`)}
                     >
                       {r.ref}
                     </td>
 
-                    <td className="px-4 py-3 text-slate-700 dark:text-slate-300 max-w-35 truncate">
+                    <td className="px-4 py-3 text-slate-700 dark:text-slate-300 max-w-44 truncate">
                       {r.workActivity}
                     </td>
 
@@ -574,7 +581,8 @@ export default function RiskTable({
                         )}
 
                         {/* Download PDF - TEMPLATE and COMPLETED only, all roles */}
-                        {(r.state === "TEMPLATE" || r.state === "COMPLETED") && (
+                        {(r.state === "TEMPLATE" ||
+                          r.state === "COMPLETED") && (
                           <Button
                             title="Download PDF"
                             variant="ghost"
