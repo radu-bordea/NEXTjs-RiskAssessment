@@ -52,6 +52,7 @@ export async function createRisk(data: RiskFormValues) {
         state: "TEMPLATE",
         createdById: userId, // ⚠️ important fix
         approvedBy: values.approvedBy ?? null,
+        emergencyResponse: values.emergencyResponse ?? null, // ← add this field
 
         assessmentRows: {
           create: values.assessmentRows.map((row, index) => ({
@@ -170,6 +171,7 @@ export async function updateTemplate(id: string, data: RiskFormValues) {
         alternativeWays: values.alternativeWays ?? false,
         alternativeWaysText: values.alternativeWaysText ?? null,
         approvedBy: values.approvedBy ?? null,   // ← add this
+        emergencyResponse: values.emergencyResponse ?? null, // ← add this field
         state: "TEMPLATE", // always stays TEMPLATE
         stateUpdatedById: userId,
 
@@ -331,6 +333,7 @@ export async function createDraftFromTemplate(templateId: string): Promise<{
         initiatorComment: template.initiatorComment,
         alternativeWays: template.alternativeWays,
         alternativeWaysText: template.alternativeWaysText,
+        emergencyResponse:   template.emergencyResponse ?? null, // ← add
         state: "DRAFT",
         createdById: userId,
 
@@ -593,6 +596,7 @@ export async function updateRisk(id: string, data: RiskFormValues) {
         alternativeWays: values.alternativeWays ?? false,
         alternativeWaysText: values.alternativeWaysText ?? null,
         approvedBy: values.approvedBy ?? null,
+        emergencyResponse: values.emergencyResponse ?? null, // ← add this field
         state: "DRAFT", // always DRAFT when saving progress
         stateUpdatedById: userId,
 

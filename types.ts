@@ -52,6 +52,7 @@ export type Risk = {
   alternativeWays: boolean;
   alternativeWaysText: string | null;
   initiatorComment: string | null;
+  emergencyResponse: string | null;
   createdBy: { name: string | null; email: string };
   stateUpdatedBy: { name: string | null } | null;
   approvedBy: string | null

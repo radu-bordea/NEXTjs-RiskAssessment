@@ -45,6 +45,7 @@ model Risk {
 
   alternativeWays     Boolean @default(false)
   alternativeWaysText String?
+  emergencyResponse String? // e.g. "Emergency response plan in place"
   initiatorComment    String?
 
   // Relations

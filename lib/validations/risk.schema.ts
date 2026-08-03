@@ -52,6 +52,7 @@ export const riskSchema = z.object({
   libraryIndex: z.string().optional(),
   defectRelated: z.boolean().default(false),
   initiatorComment: z.string().optional(),
+  emergencyResponse: z.string().optional().nullable(),
   alternativeWays: z.boolean().default(false),
   alternativeWaysText: z.string().optional(),
   assessmentRows: z
@@ -66,6 +67,7 @@ export const riskSchema = z.object({
 export const riskDraftSchema = riskSchema.partial().extend({
   ref: z.string().min(1, "Ref is required"),
   initiator: z.string().min(1, "Initiator is required"),
+  emeregencyResponse: z.string().optional().nullable(),
   initiationDate: z.date().refine((date) => date !== undefined, {
     message: "Initiation date is required",
   }),

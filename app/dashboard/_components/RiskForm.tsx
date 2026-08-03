@@ -148,6 +148,7 @@ export default function RiskForm({ currentUser, risk }: Props) {
       libraryCategory: risk?.libraryCategory ?? "",
       reviewDate: risk?.reviewDate ?? null,
       approvedBy: risk?.approvedBy ?? "",
+      emergencyResponse: risk?.emergencyResponse ?? "",
 
       assessmentRows: risk?.assessmentRows?.map((row) => ({
         id: row.id,
@@ -534,6 +535,21 @@ export default function RiskForm({ currentUser, risk }: Props) {
           <label className={labelClass}>Initiator Comments</label>
           <Textarea
             {...register("initiatorComment")}
+            rows={3}
+            disabled={allLocked}
+            className={
+              allLocked
+                ? lockedInputClass
+                : "border-[#A8D5B5] focus-visible:ring-[#1A7A4A]"
+            }
+          />
+        </div>
+
+        {/* Emergency Response — locked for COMPLETED */}
+        <div className="mt-4">
+          <label className={labelClass}>General Requirements / <span className="font-bold text-red-500">EMERGENCY RESPONSE</span></label>
+          <Textarea
+            {...register("emergencyResponse")}
             rows={3}
             disabled={allLocked}
             className={

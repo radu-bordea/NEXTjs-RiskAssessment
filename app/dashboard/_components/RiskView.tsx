@@ -160,6 +160,14 @@ export default function RiskView({ risk }: RiskViewProps) {
             <div className={fieldClass}>{risk.initiatorComment}</div>
           </div>
         )}
+
+        {/* Emergency Response */}
+        {risk.emergencyResponse && (
+          <div className="mt-3">
+            <span className={labelClass}>General Requirements / <span className="font-bold text-red-500">EMERGENCY RESPONSE</span></span>
+            <div className={fieldClass}>{risk.emergencyResponse}</div>
+          </div>
+        )}
       </div>
 
       {/* ── Assessment of Risk ────────────────────────────────────────────── */}
