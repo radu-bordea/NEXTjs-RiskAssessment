@@ -266,7 +266,7 @@ export default function RiskTable({
         {isAdmin && (
           <button
             onClick={() => router.push("/dashboard/risks/new")}
-            className="px-5 py-2.5 bg-[#1A7A4A] hover:bg-[#145f39] text-white rounded-lg text-sm font-medium transition-colors shadow-sm shadow-[#1A7A4A]/20"
+            className="px-5 py-2.5 bg-[#1A7A4A] hover:bg-[#145f39] text-white rounded-lg text-sm font-medium transition-colors shadow-sm shadow-[#1A7A4A]/20 cursor-pointer"
           >
             + New Risk Assessment
           </button>
