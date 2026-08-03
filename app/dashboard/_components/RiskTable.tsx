@@ -452,25 +452,25 @@ export default function RiskTable({
                   >
                     {/* Ref — clickable, navigates to view page */}
                     <td
-                      className="px-4 py-3 font-medium text-[#1A7A4A] dark:text-emerald-400 cursor-pointer hover:underline max-w-35 truncate"
+                      className="px-4 py-3 font-medium text-[#1A7A4A] dark:text-emerald-400 cursor-pointer hover:underline max-w-32 truncate"
                       onClick={() => router.push(`/dashboard/risks/${r.id}`)}
                     >
                       {r.ref}
                     </td>
 
-                    <td className="px-4 py-3 text-slate-700 dark:text-slate-300 max-w-44 truncate">
+                    <td className="px-4 py-3 text-slate-700 dark:text-slate-300 max-w-40 truncate">
                       {r.workActivity}
                     </td>
 
-                    <td className="px-4 py-3 whitespace-nowrap text-slate-700 dark:text-slate-300">
+                    <td className="px-4 py-3 text-slate-700 dark:text-slate-300 max-w-35 truncate">
                       {r.initiator}
                     </td>
 
-                    <td className="px-4 py-3 whitespace-nowrap text-slate-600 dark:text-slate-400">
+                    <td className="px-4 py-3 text-slate-600 dark:text-slate-400 max-w-32 truncate">
                       {new Date(r.initiationDate).toLocaleDateString("en-GB")}
                     </td>
 
-                    <td className="px-4 py-3 whitespace-nowrap text-slate-600 dark:text-slate-400">
+                    <td className="px-4 py-3 text-slate-600 dark:text-slate-400 max-w-32 truncate">
                       {r.reviewDate
                         ? new Date(r.reviewDate).toLocaleDateString("en-GB")
                         : "—"}
