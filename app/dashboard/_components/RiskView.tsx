@@ -177,13 +177,13 @@ export default function RiskView({ risk }: RiskViewProps) {
               <div className="flex-1 min-w-25 px-3 py-2.5 text-xs font-bold uppercase tracking-wide text-white border-r border-[#145f39]">
                 Hazard
               </div>
-              <div className="flex-1 min-w-25 px-3 py-2.5 text-xs font-bold uppercase tracking-wide text-white border-r border-[#145f39]">
+              <div className="flex-1 min-w-25 px-3 py-2.5 text-xs font-bold uppercase tracking-wide text-white border-r border-[#145f39] wrap-break-word">
                 Impact
               </div>
-              <div className="flex-1 min-w-25 px-3 py-2.5 text-xs font-bold uppercase tracking-wide text-white border-r border-[#145f39]">
+              <div className="flex-2 min-w-25 px-3 py-2.5 text-xs font-bold uppercase tracking-wide text-white border-r border-[#145f39]">
                 Existing Controls
               </div>
-              <div className="w-32 shrink-0 px-3 py-2.5 text-xs font-bold uppercase tracking-wide text-white border-r border-[#145f39]">
+              <div className="flex-1 min-w-25 px-3 py-2.5 text-xs font-bold uppercase tracking-wide text-white border-r border-[#145f39] wrap-break-word">
                 SCT
               </div>
               <div className="w-10 shrink-0 px-2 py-2.5 text-xs font-bold uppercase tracking-wide text-white border-r border-[#145f39] text-center">
@@ -342,16 +342,16 @@ export default function RiskView({ risk }: RiskViewProps) {
 
                   {/* Main columns */}
                   <div className="flex flex-1 min-w-0 divide-x divide-[#D4EAD9] dark:divide-slate-800">
-                    <div className="flex-1 min-w-25 px-3 py-3 text-sm text-slate-900 dark:text-white whitespace-pre-wrap">
+                    <div className="flex-1 min-w-25 px-3 py-3 text-sm text-slate-900 dark:text-white wrap-break-word whitespace-pre-wrap">
                       {row.hazard}
                     </div>
                     <div className="flex-1 min-w-25 px-3 py-3 text-sm text-slate-900 dark:text-white whitespace-pre-wrap">
                       {row.impact}
                     </div>
-                    <div className="flex-1 min-w-25 px-3 py-3 text-sm text-slate-500 dark:text-slate-400 whitespace-pre-wrap">
+                    <div className="flex-2 min-w-25 px-3 py-3 text-sm text-slate-500 dark:text-slate-400 whitespace-pre-wrap">
                       {row.existingControls ?? "—"}
                     </div>
-                    <div className="w-32 shrink-0 px-3 py-3 text-xs text-slate-600 dark:text-slate-400">
+                    <div className="flex-1 min-w-25 px-3 py-3 text-xs text-slate-600 dark:text-slate-400 wrap-break-word">
                       {row.sct ?? "—"}
                     </div>
                     <div className="w-10 shrink-0 px-2 py-3 text-sm text-center text-slate-700 dark:text-slate-300 font-medium">
