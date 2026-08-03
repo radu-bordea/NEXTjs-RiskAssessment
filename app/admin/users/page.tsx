@@ -2,7 +2,7 @@ import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import prisma from "@/lib/prisma";
 import UsersTable from "./_components/UsersTable";
-import Link from "next/link"
+import Link from "next/link";
 
 /**
  * AdminUsersPage — Manage user roles
@@ -26,19 +26,22 @@ export default async function AdminUsersPage() {
     orderBy: { name: "asc" },
   });
 
-  console.log({ protectedUserId: process.env.PROTECTED_ADMIN_ID, users: users.map(u => u.id) });
+  console.log({
+    protectedUserId: process.env.PROTECTED_ADMIN_ID,
+    users: users.map((u) => u.id),
+  });
 
   return (
     <div className="min-h-screen bg-[#EEF5F0] dark:bg-slate-950 px-6 md:px-10 py-10 font-sans">
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-            <Link
-    href="/"
-    className="text-xs px-3 py-1.5 rounded-lg border border-[#A8D5B5] text-[#1A7A4A] hover:bg-[#EEF5F0] transition-colors font-medium inline-block mb-4"
-  >
-    ← Back to Home
-  </Link>
+          <Link
+            href="/"
+            className="text-xs px-3 py-1.5 rounded-lg border border-[#A8D5B5] text-[#1A7A4A] hover:bg-[#EEF5F0] transition-colors font-medium inline-block mb-4"
+          >
+            ← Back to Home
+          </Link>
           <p className="text-xs uppercase tracking-widest text-[#1A7A4A] dark:text-emerald-400 font-medium mb-2">
             Admin Panel
           </p>
