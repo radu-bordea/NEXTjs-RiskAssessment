@@ -33,7 +33,7 @@ export default function Home() {
             </Link>
             <Link
               href="/observationdashboard"
-              className="flex items-center gap-2 px-5 py-2.5 bg-amber-100 text-amber-800 border border-amber-200 rounded-lg text-sm hover:bg-amber-100 transition-colors"
+              className="flex items-center gap-2 px-5 py-2.5 bg-amber-300 text-amber-800 border border-amber-300 rounded-lg text-sm hover:bg-amber-400 transition-colors"
             >
               👁 Access Fleet Observation Card Portal
             </Link>
