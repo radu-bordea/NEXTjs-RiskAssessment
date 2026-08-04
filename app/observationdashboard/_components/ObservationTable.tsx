@@ -89,13 +89,20 @@ export default function ObservationTable({
       <div className="flex items-center justify-between mb-8 flex-wrap gap-4">
         <Link href="/">
           <Image
-            src="/assets/images/logo1.jpg"
+            src="/assets/images/logo2.png"
             alt="MarineGuard"
             width={60}
             height={60}
             className="object-cover object-top rounded-full w-16 h-16"
             priority
           />
+        </Link>
+                {/** Back to home button */}
+        <Link
+          href="/"
+          className="text-xs px-3 py-1.5 rounded-lg border border-amber-300 hover:bg-amber-100 dark:hover:bg-slate-800 transition-colors font-medium"
+        >
+          ← Home
         </Link>
 
         <div>
