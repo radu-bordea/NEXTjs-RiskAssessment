@@ -105,6 +105,18 @@ const LIFE_SAVING_RULES = [
   { value: "SIMOPS", icon: "⚙️", label: "SIMOPS" },
 ];
 
+// ─── Section 5 — Risk Priority options ────────────────────────────────────────
+/**
+ * Single selection — only one priority level can be selected.
+ * Colors match maritime risk severity convention (green→red).
+ */
+const RISK_PRIORITIES = [
+  { value: "LOW",      label: "LOW",      desc: "Minor impact / No injury\nMinimal impact",              dot: "bg-green-500",  bg: "bg-green-50 dark:bg-green-900/20",   borderLeft: "border-l-green-500"  },
+  { value: "MEDIUM",   label: "MEDIUM",   desc: "Medical treatment /\nRestricted work\nModerate impact",  dot: "bg-yellow-400", bg: "bg-yellow-50 dark:bg-yellow-900/20", borderLeft: "border-l-yellow-400" },
+  { value: "HIGH",     label: "HIGH",     desc: "Serious injury / LT / Fatality\nMajor impact",           dot: "bg-red-500",    bg: "bg-red-50 dark:bg-red-900/20",       borderLeft: "border-l-red-500"    },
+  { value: "CRITICAL", label: "CRITICAL", desc: "Multiple fatalities /\nCatastrophic impact",             dot: "bg-red-800",    bg: "bg-red-100 dark:bg-red-950/30",      borderLeft: "border-l-red-800"    },
+]
+
 export default function ObservationForm({ currentUser, observation }: Props) {
   const router = useRouter();
   const isEditMode = !!observation;
@@ -213,6 +225,21 @@ export default function ObservationForm({ currentUser, observation }: Props) {
   const [lifeSavingRulesOther, setLifeSavingRulesOther] = useState<string>(
     observation?.lifeSavingRulesOther ?? "",
   );
+
+  // ─── Section 5 state ─────────────────────────────────────────────────────
+
+/**
+ * riskPriority — single selected priority level
+ * LOW / MEDIUM / HIGH / CRITICAL
+ */
+const [riskPriority, setRiskPriority] = useState<string>(observation?.riskPriority ?? "")
+
+/**
+ * hiPo — High Potential Event
+ * Could this observation have had serious consequences?
+ * null = not answered, true = Yes, false = No
+ */
+const [hiPo, setHiPo] = useState<boolean | null>(observation?.hiPo ?? null)
 
   // ─── Checkbox toggle helper ───────────────────────────────────────────────
   /**
@@ -405,8 +432,8 @@ export default function ObservationForm({ currentUser, observation }: Props) {
                 key={type.value}
                 className={`flex items-start gap-2 cursor-pointer py-1.5 rounded-lg transition-colors ${
                   observationTypes.includes(type.value)
-                    ? "bg-amber-50 dark:bg-amber-900/20"
-                    : "hover:bg-amber-50/50 dark:hover:bg-slate-800"
+                    ? "bg-amber-100 dark:bg-amber-700/20"
+                    : "hover:bg-amber-100/50 dark:hover:bg-slate-800"
                 }`}
               >
                 <span className="text-sm shrink-0">{type.icon}</span>
@@ -475,8 +502,8 @@ export default function ObservationForm({ currentUser, observation }: Props) {
                 key={source.value}
                 className={`flex items-start gap-2 cursor-pointer py-1.5 rounded-lg transition-colors ${
                   observationSource === source.value
-                    ? "bg-amber-50 dark:bg-amber-900/20"
-                    : "hover:bg-amber-50/50 dark:hover:bg-slate-800"
+                    ? "bg-amber-100 dark:bg-amber-700/20"
+                    : "hover:bg-amber-100/50 dark:hover:bg-slate-800"
                 }`}
               >
                 <span className="text-sm shrink-0">{source.icon}</span>
@@ -527,8 +554,8 @@ export default function ObservationForm({ currentUser, observation }: Props) {
                 key={rule.value}
                 className={`flex items-start gap-2 cursor-pointer py-1.5 rounded-lg transition-colors ${
                   lifeSavingRules.includes(rule.value)
-                    ? "bg-amber-50 dark:bg-amber-900/20"
-                    : "hover:bg-amber-50/50 dark:hover:bg-slate-800"
+                    ? "bg-amber-100 dark:bg-amber-700/20"
+                    : "hover:bg-amber-100/50 dark:hover:bg-slate-800"
                 }`}
               >
                 <span className="text-sm shrink-0">{rule.icon}</span>
@@ -564,17 +591,80 @@ export default function ObservationForm({ currentUser, observation }: Props) {
           </div>
         </div>
 
-        {/* ── Section 5 — Risk Priority ────────────────────────────────── */}
-        <div className="md:col-span-1 rounded-xl border border-amber-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-sm p-5 overflow-hidden">
-          <h2 className="text-xs font-bold uppercase tracking-widest text-amber-900 bg-amber-300 -mx-5 -mt-5 mb-4 px-5 py-3 rounded-t-xl">
-            5. Risk Priority
-          </h2>
-          <div className="flex items-center justify-center h-24">
-            <p className="text-xs text-amber-400 font-medium uppercase tracking-widest">
-              Coming Soon
-            </p>
-          </div>
+{/* ── Section 5 — Risk Priority ────────────────────────────────────── */}
+<div className="md:col-span-1 rounded-xl border border-amber-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-sm p-5 overflow-hidden">
+  <h2 className="text-xs font-bold uppercase tracking-widest text-amber-900 bg-amber-300 -mx-5 -mt-5 mb-4 px-5 py-3 rounded-t-xl">
+    5. Risk Priority
+  </h2>
+
+  {/* Radio buttons with colored severity dot — single selection */}
+  <div className="space-y-2">
+    {RISK_PRIORITIES.map((priority) => (
+<label
+  key={priority.value}
+  className={`flex items-start gap-2 cursor-pointer py-1.5 px-2 rounded-lg border-l-4 transition-colors ${
+    riskPriority === priority.value
+      ? `${priority.bg} ${priority.borderLeft}`
+      : "border-l-transparent hover:bg-amber-100/50 dark:hover:bg-slate-800"
+  }`}
+>
+        <input
+          type="radio"
+          name="riskPriority"
+          value={priority.value}
+          checked={riskPriority === priority.value}
+          onChange={() => setRiskPriority(priority.value)}
+          className="mt-1 accent-amber-400 shrink-0"
+        />
+        {/* Colored severity dot */}
+        <span className={`w-3 h-3 rounded-full mt-0.5 shrink-0 ${priority.dot}`} />
+        <div className="flex-1 min-w-0">
+          <p className="text-xs font-bold text-slate-700 dark:text-slate-200">
+            {priority.label}
+          </p>
+          <p className="text-[10px] text-slate-500 dark:text-slate-400 leading-tight whitespace-pre-line">
+            {priority.desc}
+          </p>
         </div>
+      </label>
+    ))}
+  </div>
+
+  {/* Divider */}
+  <div className="border-t border-amber-100 dark:border-slate-700 my-3" />
+
+  {/* High Potential Event (HiPo) */}
+  <div>
+    <p className="text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+      High Potential Event (HiPo)
+    </p>
+    <p className="text-[10px] text-slate-500 dark:text-slate-400 mb-2">
+      Could this observation have serious consequences?
+    </p>
+    <div className="flex items-center gap-4">
+      <label className="flex items-center gap-1.5 cursor-pointer">
+        <input
+          type="radio"
+          name="hiPo"
+          checked={hiPo === true}
+          onChange={() => setHiPo(true)}
+          className="accent-amber-400"
+        />
+        <span className="text-xs text-slate-600 dark:text-slate-300">Yes</span>
+      </label>
+      <label className="flex items-center gap-1.5 cursor-pointer">
+        <input
+          type="radio"
+          name="hiPo"
+          checked={hiPo === false}
+          onChange={() => setHiPo(false)}
+          className="accent-amber-400"
+        />
+        <span className="text-xs text-slate-600 dark:text-slate-300">No</span>
+      </label>
+    </div>
+  </div>
+</div>
       </div>
 
       {/* ── Section 6 — Observation Category ──────────────────────────── */}
