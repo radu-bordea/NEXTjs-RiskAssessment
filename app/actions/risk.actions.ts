@@ -170,7 +170,7 @@ export async function updateTemplate(id: string, data: RiskFormValues) {
         initiatorComment: values.initiatorComment ?? null,
         alternativeWays: values.alternativeWays ?? false,
         alternativeWaysText: values.alternativeWaysText ?? null,
-        approvedBy: values.approvedBy ?? null,   // ← add this
+        approvedBy: values.approvedBy ?? null, // ← add this
         emergencyResponse: values.emergencyResponse ?? null, // ← add this field
         state: "TEMPLATE", // always stays TEMPLATE
         stateUpdatedById: userId,
@@ -292,28 +292,8 @@ export async function createDraftFromTemplate(templateId: string): Promise<{
     //   Third draft same day  → "RA-N-001 - 15/03/2026/2"
     //   Draft on a new date   → "RA-N-001 - 02/06/2026"  (no counter)
 
-    const initiationDateStr = new Date(
-      template.initiationDate,
-    ).toLocaleDateString("en-GB"); // e.g. "15/03/2026"
-
-    const baseRef = `${template.ref} - ${initiationDateStr}`;
-
-    // Count how many risks already exist with this exact base ref
-    // (covers both DRAFT and COMPLETED so the counter stays accurate)
-    const existingWithSameBase = await prisma.risk.count({
-      where: {
-        ref: {
-          startsWith: baseRef,
-        },
-      },
-    });
-
-    // If none exist → use base ref as-is (clean, no counter)
-    // If one or more exist → append /N where N starts at 1
-    const draftRef =
-      existingWithSameBase === 0
-        ? baseRef
-        : `${baseRef}/${existingWithSameBase}`;
+    // Simple ref — template ref + DRAFT suffix
+    const draftRef = `${template.ref} - DRAFT`;
 
     // Create the draft as a clone of the template
     const draft = await prisma.risk.create({
@@ -333,7 +313,7 @@ export async function createDraftFromTemplate(templateId: string): Promise<{
         initiatorComment: template.initiatorComment,
         alternativeWays: template.alternativeWays,
         alternativeWaysText: template.alternativeWaysText,
-        emergencyResponse:   template.emergencyResponse ?? null, // ← add
+        emergencyResponse: template.emergencyResponse ?? null, // ← add
         state: "DRAFT",
         createdById: userId,
 

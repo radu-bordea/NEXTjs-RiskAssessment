@@ -538,9 +538,9 @@ export default function RiskPDF({ risk }: { risk: any }) {
               `Page ${pageNumber} of ${totalPages}`
             }
           />
-          <Text style={styles.footerText}>
+          {/* <Text style={styles.footerText}>
             Generated: {new Date().toLocaleDateString("en-GB")}
-          </Text>
+          </Text> */}
         </View>
       </Page>
     </Document>
