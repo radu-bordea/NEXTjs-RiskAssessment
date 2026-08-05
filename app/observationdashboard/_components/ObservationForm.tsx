@@ -85,6 +85,26 @@ const OBSERVATION_SOURCES = [
   { value: "AFTER_INCIDENT", icon: "⚡", label: "After Incident / Near Miss" },
 ];
 
+// ─── Section 4 — Life Saving Rules (IOGP) options ─────────────────────────────
+/**
+ * Multiple selection — user can check more than one rule.
+ * Stored as string[] in state → will be saved as JSON array in DB.
+ */
+const LIFE_SAVING_RULES = [
+  { value: "LINE_OF_FIRE", icon: "🔥", label: "Line of Fire" },
+  { value: "ENERGY_ISOLATION", icon: "🔌", label: "Energy Isolation (LOTO)" },
+  { value: "WORKING_AT_HEIGHT", icon: "🪜", label: "Working at Height" },
+  { value: "CONFINED_SPACE", icon: "🚪", label: "Confined Space" },
+  { value: "LIFT_OPERATIONS", icon: "🏗️", label: "Lift Operations" },
+  {
+    value: "WORKING_OVER_WATER",
+    icon: "🌊",
+    label: "Working Over / Near Water",
+  },
+  { value: "ELECTRICAL_SAFETY", icon: "⚡", label: "Electrical Safety" },
+  { value: "SIMOPS", icon: "⚙️", label: "SIMOPS" },
+];
+
 export default function ObservationForm({ currentUser, observation }: Props) {
   const router = useRouter();
   const isEditMode = !!observation;
@@ -178,6 +198,22 @@ export default function ObservationForm({ currentUser, observation }: Props) {
     observation?.observationSourceOther ?? "",
   );
 
+  // ─── Section 4 state ─────────────────────────────────────────────────────
+
+  /**
+   * lifeSavingRules — array of selected rule values
+   * Multiple checkboxes — user can select more than one
+   * e.g. ["LINE_OF_FIRE", "CONFINED_SPACE"]
+   */
+  const [lifeSavingRules, setLifeSavingRules] = useState<string[]>(
+    observation?.lifeSavingRules ?? [],
+  );
+
+  /** Other (Specify) free text for Life Saving Rules */
+  const [lifeSavingRulesOther, setLifeSavingRulesOther] = useState<string>(
+    observation?.lifeSavingRulesOther ?? "",
+  );
+
   // ─── Checkbox toggle helper ───────────────────────────────────────────────
   /**
    * toggleType — adds or removes a type from the observationTypes array
@@ -185,6 +221,16 @@ export default function ObservationForm({ currentUser, observation }: Props) {
    */
   const toggleType = (value: string) => {
     setObservationTypes((prev) =>
+      prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value],
+    );
+  };
+
+  /**
+   * toggleLifeSavingRule — adds or removes a rule from lifeSavingRules array
+   * Used for section 4 checkboxes
+   */
+  const toggleLifeSavingRule = (value: string) => {
+    setLifeSavingRules((prev) =>
       prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value],
     );
   };
@@ -473,10 +519,48 @@ export default function ObservationForm({ currentUser, observation }: Props) {
           <h2 className="text-xs font-bold uppercase tracking-widest text-amber-900 bg-amber-300 -mx-5 -mt-5 mb-4 px-5 py-3 rounded-t-xl">
             4. Life Saving Rules (IOGP)
           </h2>
-          <div className="flex items-center justify-center h-24">
-            <p className="text-xs text-amber-400 font-medium uppercase tracking-widest">
-              Coming Soon
+
+          {/* Checkboxes — multiple selection allowed */}
+          <div className="space-y-2">
+            {LIFE_SAVING_RULES.map((rule) => (
+              <label
+                key={rule.value}
+                className={`flex items-start gap-2 cursor-pointer py-1.5 rounded-lg transition-colors ${
+                  lifeSavingRules.includes(rule.value)
+                    ? "bg-amber-50 dark:bg-amber-900/20"
+                    : "hover:bg-amber-50/50 dark:hover:bg-slate-800"
+                }`}
+              >
+                <span className="text-sm shrink-0">{rule.icon}</span>
+                <input
+                  type="checkbox"
+                  value={rule.value}
+                  checked={lifeSavingRules.includes(rule.value)}
+                  onChange={() => toggleLifeSavingRule(rule.value)}
+                  className="mt-0.5 accent-amber-400 shrink-0"
+                />
+                <span className="text-xs text-slate-600 dark:text-slate-300 leading-tight">
+                  {rule.label}
+                </span>
+              </label>
+            ))}
+          </div>
+
+          {/* Divider */}
+          <div className="border-t border-amber-100 dark:border-slate-700 my-3" />
+
+          {/* Other (Specify) — textarea */}
+          <div>
+            <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-2">
+              Other (Specify):
             </p>
+            <textarea
+              value={lifeSavingRulesOther}
+              onChange={(e) => setLifeSavingRulesOther(e.target.value)}
+              rows={2}
+              placeholder="Specify other rule..."
+              className="px-3 py-2 rounded-lg border border-amber-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs w-full text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-400 transition-colors resize-none"
+            />
           </div>
         </div>
 
