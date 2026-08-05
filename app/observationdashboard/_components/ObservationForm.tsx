@@ -5,20 +5,20 @@
  *
  * Based on MMI-QHSE Observation Card form.
  * Sections:
- *  1. Observation Details ← fully implemented
- *  2. Observation Type ← implemented (radio/checkbox style)
- *  3. Observation Source ← coming soon
- *  4. Life Saving Rules (IOGP) ← coming soon
- *  5. Risk Priority ← coming soon
- *  6. Observation Category ← coming soon
- *  7. Observation Description ← coming soon
- *  8. Immediate Action Taken ← coming soon
- *  9. Corrective / Preventive Action ← coming soon
- *  10. Root Cause ← coming soon
- *  11. Potential Consequence ← coming soon
- *  12. Follow-up / Action Tracking ← coming soon
- *  13. Lessons Learned ← coming soon
- *  14. Close Out ← Admin + Manager only
+ *  1. Observation Details        ← fully implemented
+ *  2. Observation Type           ← checkboxes (multiple selection)
+ *  3. Observation Source         ← radio buttons (single selection) + icons
+ *  4. Life Saving Rules (IOGP)   ← coming soon
+ *  5. Risk Priority              ← coming soon
+ *  6. Observation Category       ← coming soon
+ *  7. Observation Description    ← coming soon
+ *  8. Immediate Action Taken     ← coming soon
+ *  9. Corrective / Preventive    ← coming soon
+ *  10. Root Cause                ← coming soon
+ *  11. Potential Consequence     ← coming soon
+ *  12. Follow-up / Action Track  ← coming soon
+ *  13. Lessons Learned           ← coming soon
+ *  14. Close Out                 ← Admin + Manager only, coming soon
  */
 
 import { useState } from "react";
@@ -39,40 +39,157 @@ type Props = {
   observation?: any;
 };
 
-/** Observation Type options — matches physical form */
+// ─── Section 2 — Observation Type options ────────────────────────────────────
+/**
+ * Multiple selection — user can check more than one type.
+ * Stored as string[] in state → will be saved as JSON array in DB.
+ */
 const OBSERVATION_TYPES = [
   {
     value: "POSITIVE_SAFETY",
+    icon: "👍",
     label: "Positive Safety Observation / Good Practice",
   },
-  { value: "UNSAFE_ACT", label: "Unsafe Act / At-Risk Behaviour" },
-  { value: "UNSAFE_CONDITION", label: "Unsafe Condition" },
-  { value: "NEAR_MISS", label: "Near Miss (Potential Incident)" },
-  { value: "ENVIRONMENTAL", label: "Environmental Observation" },
-  { value: "QUALITY_SERVICE", label: "Quality / Service Observation" },
-  { value: "IMPROVEMENT", label: "Improvement Suggestion" },
-  { value: "STOP_WORK", label: "Stop Work Intervention" },
+  { value: "UNSAFE_ACT", icon: "🚶", label: "Unsafe Act / At-Risk Behaviour" },
+  { value: "UNSAFE_CONDITION", icon: "⚠️", label: "Unsafe Condition" },
+  { value: "NEAR_MISS", icon: "⭐", label: "Near Miss (Potential Incident)" },
+  { value: "ENVIRONMENTAL", icon: "🌿", label: "Environmental Observation" },
+  {
+    value: "QUALITY_SERVICE",
+    icon: "💎",
+    label: "Quality / Service Observation",
+  },
+  { value: "IMPROVEMENT", icon: "🔧", label: "Improvement Suggestion" },
+  { value: "STOP_WORK", icon: "🛑", label: "Stop Work Intervention" },
+];
+
+// ─── Section 3 — Observation Source options ───────────────────────────────────
+/**
+ * Single selection — only one source can be selected.
+ * Stored as string in state → saved as string in DB.
+ */
+const OBSERVATION_SOURCES = [
+  {
+    value: "ROUTINE_INSPECTION",
+    icon: "🔄",
+    label: "Routine Inspection / Rounds",
+  },
+  { value: "PLANNED_SAFETY_TOUR", icon: "📍", label: "Planned Safety Tour" },
+  { value: "TOOLBOX_TALK", icon: "👥", label: "Toolbox Talk / Meeting" },
+  { value: "PERSONAL_OBSERVATION", icon: "👁", label: "Personal Observation" },
+  {
+    value: "CLIENT_THIRD_PARTY",
+    icon: "🤝",
+    label: "Client / Third Party Observation",
+  },
+  { value: "AFTER_INCIDENT", icon: "⚡", label: "After Incident / Near Miss" },
 ];
 
 export default function ObservationForm({ currentUser, observation }: Props) {
   const router = useRouter();
   const isEditMode = !!observation;
 
+  /** Submit loading state */
   const [loading, setLoading] = useState(false);
+
+  /** Save draft loading state */
   const [draftLoading, setDraftLoading] = useState(false);
 
-  /** Selected observation type — single select */
-  const [observationType, setObservationType] = useState<string>("");
+  // ─── Section 1 state ─────────────────────────────────────────────────────
 
-  /** Stop work authority used — Yes/No */
-  const [stopWorkUsed, setStopWorkUsed] = useState<boolean | null>(null);
+  /** Vessel or project name */
+  const [vesselProject, setVesselProject] = useState(
+    observation?.vesselProject ?? "",
+  );
 
-  /* Observation source states */
-  const [observationSource, setObservationSource] = useState<string>("");
-  const [observationSourceOther, setObservationSourceOther] =
-    useState<string>("");
+  /** Location on vessel e.g. Main Deck */
+  const [location, setLocation] = useState(observation?.location ?? "");
 
-  // ─── Shared Tailwind classes ──────────────────────────────────────
+  /** Job or activity being observed */
+  const [jobActivity, setJobActivity] = useState(
+    observation?.jobActivity ?? "",
+  );
+
+  /** Name of the observer — auto filled from logged in user */
+  const [observerName, setObserverName] = useState(
+    observation?.observerName ?? currentUser.name ?? currentUser.email ?? "",
+  );
+
+  /** Observer type — Crew, Contractor, Visitor, Client */
+  const [observerType, setObserverType] = useState(
+    observation?.observerType ?? "",
+  );
+
+  /** Observation reference number e.g. OBS-2026-001 */
+  const [observationNo, setObservationNo] = useState(
+    observation?.observationNo ?? "",
+  );
+
+  /** Date of observation */
+  const [date, setDate] = useState(
+    observation?.date ?? new Date().toISOString().split("T")[0],
+  );
+
+  /** Time of observation */
+  const [time, setTime] = useState(observation?.time ?? "");
+
+  /** Department or company */
+  const [department, setDepartment] = useState(observation?.department ?? "");
+
+  /** Weather and sea state conditions */
+  const [weatherSeaState, setWeatherSeaState] = useState(
+    observation?.weatherSeaState ?? "",
+  );
+
+  // ─── Section 2 state ─────────────────────────────────────────────────────
+
+  /**
+   * observationTypes — array of selected type values
+   * Multiple checkboxes — user can select more than one
+   * e.g. ["UNSAFE_ACT", "NEAR_MISS"]
+   */
+  const [observationTypes, setObservationTypes] = useState<string[]>(
+    observation?.observationTypes ?? [],
+  );
+
+  /**
+   * stopWorkUsed — was stop work authority used?
+   * null = not answered, true = Yes, false = No
+   */
+  const [stopWorkUsed, setStopWorkUsed] = useState<boolean | null>(
+    observation?.stopWorkUsed ?? null,
+  );
+
+  // ─── Section 3 state ─────────────────────────────────────────────────────
+
+  /**
+   * observationSource — single selected source value
+   * Radio buttons — only one can be selected
+   */
+  const [observationSource, setObservationSource] = useState<string>(
+    observation?.observationSource ?? "",
+  );
+
+  /**
+   * observationSourceOther — free text for "Other (Specify)"
+   * Only relevant when observationSource is empty or "OTHER"
+   */
+  const [observationSourceOther, setObservationSourceOther] = useState<string>(
+    observation?.observationSourceOther ?? "",
+  );
+
+  // ─── Checkbox toggle helper ───────────────────────────────────────────────
+  /**
+   * toggleType — adds or removes a type from the observationTypes array
+   * Used for section 2 checkboxes
+   */
+  const toggleType = (value: string) => {
+    setObservationTypes((prev) =>
+      prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value],
+    );
+  };
+
+  // ─── Shared Tailwind classes ──────────────────────────────────────────────
   const inputClass =
     "px-3 py-2 rounded-lg border border-amber-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm w-full text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-400 transition-colors";
   const labelClass =
@@ -82,11 +199,13 @@ export default function ObservationForm({ currentUser, observation }: Props) {
   const sectionHeadingClass =
     "text-xs font-bold uppercase tracking-widest text-amber-900 bg-amber-300 -mx-6 -mt-6 mb-5 px-6 py-3 rounded-t-xl";
   const comingSoonClass =
-    "rounded-xl border border-amber-200 dark:border-slate-800 bg-amber-50/30 dark:bg-slate-900/50 p-4 flex items-center justify-center min-h-[120px]";
+    "rounded-xl border border-amber-200 dark:border-slate-800 bg-amber-50/30 dark:bg-slate-900/50 p-6 mb-6 min-h-[80px] flex items-center justify-center";
 
+  // ─── Handlers ────────────────────────────────────────────────────────────
   const onSubmit = async () => {
     setLoading(true);
     try {
+      // TODO: call createObservation or submitObservation action
       toast.success("Observation submitted!");
       router.push("/observationdashboard");
     } catch {
@@ -99,6 +218,7 @@ export default function ObservationForm({ currentUser, observation }: Props) {
   const onSaveDraft = async () => {
     setDraftLoading(true);
     try {
+      // TODO: call saveObservationDraft action
       toast.success("Draft saved!");
       router.push("/observationdashboard");
     } catch {
@@ -120,6 +240,8 @@ export default function ObservationForm({ currentUser, observation }: Props) {
             <div>
               <label className={labelClass}>Vessel / Project *</label>
               <Input
+                value={vesselProject}
+                onChange={(e) => setVesselProject(e.target.value)}
                 placeholder="e.g. MV Atlantic Star"
                 className="border-amber-200 focus-visible:ring-amber-400"
               />
@@ -127,6 +249,8 @@ export default function ObservationForm({ currentUser, observation }: Props) {
             <div>
               <label className={labelClass}>Location (Area / Deck)</label>
               <Input
+                value={location}
+                onChange={(e) => setLocation(e.target.value)}
                 placeholder="e.g. Main Deck"
                 className="border-amber-200 focus-visible:ring-amber-400"
               />
@@ -134,6 +258,8 @@ export default function ObservationForm({ currentUser, observation }: Props) {
             <div>
               <label className={labelClass}>Job / Activity Observed *</label>
               <Input
+                value={jobActivity}
+                onChange={(e) => setJobActivity(e.target.value)}
                 placeholder="e.g. Crane Operations"
                 className="border-amber-200 focus-visible:ring-amber-400"
               />
@@ -141,19 +267,27 @@ export default function ObservationForm({ currentUser, observation }: Props) {
             <div>
               <label className={labelClass}>Observer Name *</label>
               <Input
-                defaultValue={currentUser.name ?? currentUser.email}
+                value={observerName}
+                onChange={(e) => setObserverName(e.target.value)}
                 className="border-amber-200 focus-visible:ring-amber-400"
               />
             </div>
+            {/* <div>
+              <label className={labelClass}>Created By</label>
+              <Input
+                value={currentUser.name ?? currentUser.email}
+                readOnly
+                className="border-amber-200 bg-amber-50 cursor-not-allowed text-slate-400"
+              />
+            </div> */}
             <div>
-              <label className={labelClass}>Observer Type</label>
-              <select className={inputClass}>
-                <option value="">— Select —</option>
-                <option value="CREW">Crew</option>
-                <option value="CONTRACTOR">Contractor</option>
-                <option value="VISITOR">Visitor</option>
-                <option value="CLIENT">Client</option>
-              </select>
+              <label className={labelClass}>Created By</label>
+              <Input
+                value={observerType}
+                onChange={(e) => setObserverType(e.target.value)}
+                placeholder="e.g. Name of creator"
+                className="border-amber-200 focus-visible:ring-amber-400"
+              />
             </div>
           </div>
 
@@ -162,6 +296,8 @@ export default function ObservationForm({ currentUser, observation }: Props) {
             <div>
               <label className={labelClass}>Observation No.</label>
               <Input
+                value={observationNo}
+                onChange={(e) => setObservationNo(e.target.value)}
                 placeholder="e.g. OBS-2026-001"
                 className="border-amber-200 focus-visible:ring-amber-400"
               />
@@ -171,7 +307,8 @@ export default function ObservationForm({ currentUser, observation }: Props) {
                 <label className={labelClass}>Date *</label>
                 <Input
                   type="date"
-                  defaultValue={new Date().toISOString().split("T")[0]}
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
                   className="border-amber-200 focus-visible:ring-amber-400"
                 />
               </div>
@@ -179,6 +316,8 @@ export default function ObservationForm({ currentUser, observation }: Props) {
                 <label className={labelClass}>Time</label>
                 <Input
                   type="time"
+                  value={time}
+                  onChange={(e) => setTime(e.target.value)}
                   className="border-amber-200 focus-visible:ring-amber-400"
                 />
               </div>
@@ -186,6 +325,8 @@ export default function ObservationForm({ currentUser, observation }: Props) {
             <div>
               <label className={labelClass}>Department / Company</label>
               <Input
+                value={department}
+                onChange={(e) => setDepartment(e.target.value)}
                 placeholder="e.g. Deck Department"
                 className="border-amber-200 focus-visible:ring-amber-400"
               />
@@ -193,6 +334,8 @@ export default function ObservationForm({ currentUser, observation }: Props) {
             <div>
               <label className={labelClass}>Weather / Sea State</label>
               <Input
+                value={weatherSeaState}
+                onChange={(e) => setWeatherSeaState(e.target.value)}
                 placeholder="e.g. Calm, Sunny"
                 className="border-amber-200 focus-visible:ring-amber-400"
               />
@@ -203,31 +346,32 @@ export default function ObservationForm({ currentUser, observation }: Props) {
 
       {/* ── Sections 2, 3, 4, 5 — Side by side grid ──────────────────── */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        {/* ── Section 2 — Observation Type ────────────────────────────── */}
+        {/* ── Section 2 — Observation Type (checkboxes) ───────────────── */}
         <div className="md:col-span-1 rounded-xl border border-amber-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-sm p-5 overflow-hidden">
           <h2 className="text-xs font-bold uppercase tracking-widest text-amber-900 bg-amber-300 -mx-5 -mt-5 mb-4 px-5 py-3 rounded-t-xl">
             2. Observation Type
           </h2>
 
-          {/* Observation type options — single select */}
+          {/* Checkboxes — multiple selection allowed */}
           <div className="space-y-2">
             {OBSERVATION_TYPES.map((type) => (
               <label
                 key={type.value}
-                className={`flex items-start gap-2 cursor-pointer p-1.5 rounded-lg transition-colors ${
-                  observationType === type.value
+                className={`flex items-start gap-2 cursor-pointer py-1.5 rounded-lg transition-colors ${
+                  observationTypes.includes(type.value)
                     ? "bg-amber-50 dark:bg-amber-900/20"
                     : "hover:bg-amber-50/50 dark:hover:bg-slate-800"
                 }`}
               >
+                <span className="text-sm shrink-0">{type.icon}</span>
                 <input
-                  type="radio"
-                  name="observationType"
+                  type="checkbox"
                   value={type.value}
-                  checked={observationType === type.value}
-                  onChange={() => setObservationType(type.value)}
+                  checked={observationTypes.includes(type.value)}
+                  onChange={() => toggleType(type.value)}
                   className="mt-0.5 accent-amber-400 shrink-0"
                 />
+
                 <span className="text-xs text-slate-600 dark:text-slate-300 leading-tight">
                   {type.label}
                 </span>
@@ -272,36 +416,24 @@ export default function ObservationForm({ currentUser, observation }: Props) {
           </div>
         </div>
 
-        {/* ── Section 3 — Observation Source ──────────────────────────────── */}
+        {/* ── Section 3 — Observation Source (radio buttons) ──────────── */}
         <div className="md:col-span-1 rounded-xl border border-amber-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-sm p-5 overflow-hidden">
           <h2 className="text-xs font-bold uppercase tracking-widest text-amber-900 bg-amber-300 -mx-5 -mt-5 mb-4 px-5 py-3 rounded-t-xl">
             3. Observation Source
           </h2>
 
-          {/* Observation source options — single select */}
+          {/* Radio buttons — single selection only */}
           <div className="space-y-2">
-            {[
-              {
-                value: "ROUTINE_INSPECTION",
-                label: "Routine Inspection / Rounds",
-              },
-              { value: "PLANNED_SAFETY_TOUR", label: "Planned Safety Tour" },
-              { value: "TOOLBOX_TALK", label: "Toolbox Talk / Meeting" },
-              { value: "PERSONAL_OBSERVATION", label: "Personal Observation" },
-              {
-                value: "CLIENT_THIRD_PARTY",
-                label: "Client / Third Party Observation",
-              },
-              { value: "AFTER_INCIDENT", label: "After Incident / Near Miss" },
-            ].map((source) => (
+            {OBSERVATION_SOURCES.map((source) => (
               <label
                 key={source.value}
-                className={`flex items-start gap-2 cursor-pointer p-1.5 rounded-lg transition-colors ${
+                className={`flex items-start gap-2 cursor-pointer py-1.5 rounded-lg transition-colors ${
                   observationSource === source.value
                     ? "bg-amber-50 dark:bg-amber-900/20"
                     : "hover:bg-amber-50/50 dark:hover:bg-slate-800"
                 }`}
               >
+                <span className="text-sm shrink-0">{source.icon}</span>
                 <input
                   type="radio"
                   name="observationSource"
@@ -310,6 +442,7 @@ export default function ObservationForm({ currentUser, observation }: Props) {
                   onChange={() => setObservationSource(source.value)}
                   className="mt-0.5 accent-amber-400 shrink-0"
                 />
+
                 <span className="text-xs text-slate-600 dark:text-slate-300 leading-tight">
                   {source.label}
                 </span>
@@ -328,7 +461,7 @@ export default function ObservationForm({ currentUser, observation }: Props) {
             <textarea
               value={observationSourceOther}
               onChange={(e) => setObservationSourceOther(e.target.value)}
-              rows={3}
+              rows={2}
               placeholder="Specify other source..."
               className="px-3 py-2 rounded-lg border border-amber-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs w-full text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-400 transition-colors resize-none"
             />
@@ -341,7 +474,7 @@ export default function ObservationForm({ currentUser, observation }: Props) {
             4. Life Saving Rules (IOGP)
           </h2>
           <div className="flex items-center justify-center h-24">
-            <p className="text-xs text-amber-400 dark:text-amber-500 font-medium uppercase tracking-widest">
+            <p className="text-xs text-amber-400 font-medium uppercase tracking-widest">
               Coming Soon
             </p>
           </div>
@@ -353,7 +486,7 @@ export default function ObservationForm({ currentUser, observation }: Props) {
             5. Risk Priority
           </h2>
           <div className="flex items-center justify-center h-24">
-            <p className="text-xs text-amber-400 dark:text-amber-300 font-medium uppercase tracking-widest">
+            <p className="text-xs text-amber-400 font-medium uppercase tracking-widest">
               Coming Soon
             </p>
           </div>
@@ -362,56 +495,56 @@ export default function ObservationForm({ currentUser, observation }: Props) {
 
       {/* ── Section 6 — Observation Category ──────────────────────────── */}
       <div className={comingSoonClass}>
-        <p className="text-xs text-amber-400 dark:text-amber-300 font-semibold uppercase tracking-widest">
+        <p className="text-xs text-amber-500 font-semibold uppercase tracking-widest">
           6. Observation Category — Coming Soon
         </p>
       </div>
 
       {/* ── Section 7 — Observation Description ───────────────────────── */}
       <div className={comingSoonClass}>
-        <p className="text-xs text-amber-400 dark:text-amber-300 font-semibold uppercase tracking-widest">
+        <p className="text-xs text-amber-500 font-semibold uppercase tracking-widest">
           7. Observation Description — Coming Soon
         </p>
       </div>
 
       {/* ── Section 8 — Immediate Action Taken ────────────────────────── */}
       <div className={comingSoonClass}>
-        <p className="text-xs text-amber-400 dark:text-amber-300 font-semibold uppercase tracking-widest">
+        <p className="text-xs text-amber-500 font-semibold uppercase tracking-widest">
           8. Immediate Action Taken — Coming Soon
         </p>
       </div>
 
       {/* ── Section 9 — Corrective / Preventive Action ────────────────── */}
       <div className={comingSoonClass}>
-        <p className="text-xs text-amber-400 dark:text-amber-300 font-semibold uppercase tracking-widest">
+        <p className="text-xs text-amber-500 font-semibold uppercase tracking-widest">
           9. Corrective / Preventive Action Required — Coming Soon
         </p>
       </div>
 
       {/* ── Section 10 — Root Cause ───────────────────────────────────── */}
       <div className={comingSoonClass}>
-        <p className="text-xs text-amber-400 dark:text-amber-300 font-semibold uppercase tracking-widest">
+        <p className="text-xs text-amber-500 font-semibold uppercase tracking-widest">
           10. Root Cause — Coming Soon
         </p>
       </div>
 
       {/* ── Section 11 — Potential Consequence ────────────────────────── */}
       <div className={comingSoonClass}>
-        <p className="text-xs text-amber-400 dark:text-amber-300 font-semibold uppercase tracking-widest">
+        <p className="text-xs text-amber-500 font-semibold uppercase tracking-widest">
           11. Potential Consequence — Coming Soon
         </p>
       </div>
 
       {/* ── Section 12 — Follow-up / Action Tracking ──────────────────── */}
       <div className={comingSoonClass}>
-        <p className="text-xs text-amber-400 dark:text-amber-300 font-semibold uppercase tracking-widest">
+        <p className="text-xs text-amber-500 font-semibold uppercase tracking-widest">
           12. Follow-up / Action Tracking — Coming Soon
         </p>
       </div>
 
       {/* ── Section 13 — Lessons Learned ──────────────────────────────── */}
       <div className={comingSoonClass}>
-        <p className="text-xs text-amber-400 dark:text-amber-300 font-semibold uppercase tracking-widest">
+        <p className="text-xs text-amber-500 font-semibold uppercase tracking-widest">
           13. Lessons Learned / Good Practice — Coming Soon
         </p>
       </div>
@@ -419,7 +552,7 @@ export default function ObservationForm({ currentUser, observation }: Props) {
       {/* ── Section 14 — Close Out (Admin + Manager only) ─────────────── */}
       {(currentUser.role === "ADMIN" || currentUser.role === "MANAGER") && (
         <div className={comingSoonClass}>
-          <p className="text-xs text-amber-400 dark:text-amber-300 font-semibold uppercase tracking-widest">
+          <p className="text-xs text-amber-500 font-semibold uppercase tracking-widest">
             14. Close Out — Coming Soon
           </p>
         </div>
