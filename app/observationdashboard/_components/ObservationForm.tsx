@@ -111,11 +111,119 @@ const LIFE_SAVING_RULES = [
  * Colors match maritime risk severity convention (green→red).
  */
 const RISK_PRIORITIES = [
-  { value: "LOW",      label: "LOW",      desc: "Minor impact / No injury\nMinimal impact",              dot: "bg-green-500",  bg: "bg-green-50 dark:bg-green-900/20",   borderLeft: "border-l-green-500"  },
-  { value: "MEDIUM",   label: "MEDIUM",   desc: "Medical treatment /\nRestricted work\nModerate impact",  dot: "bg-yellow-400", bg: "bg-yellow-50 dark:bg-yellow-900/20", borderLeft: "border-l-yellow-400" },
-  { value: "HIGH",     label: "HIGH",     desc: "Serious injury / LT / Fatality\nMajor impact",           dot: "bg-red-500",    bg: "bg-red-50 dark:bg-red-900/20",       borderLeft: "border-l-red-500"    },
-  { value: "CRITICAL", label: "CRITICAL", desc: "Multiple fatalities /\nCatastrophic impact",             dot: "bg-red-800",    bg: "bg-red-100 dark:bg-red-950/30",      borderLeft: "border-l-red-800"    },
-]
+  {
+    value: "LOW",
+    label: "LOW",
+    desc: "Minor impact / No injury\nMinimal impact",
+    dot: "bg-green-500",
+    bg: "bg-green-50 dark:bg-green-900/20",
+    borderLeft: "border-l-green-500",
+  },
+  {
+    value: "MEDIUM",
+    label: "MEDIUM",
+    desc: "Medical treatment /\nRestricted work\nModerate impact",
+    dot: "bg-yellow-400",
+    bg: "bg-yellow-50 dark:bg-yellow-900/20",
+    borderLeft: "border-l-yellow-400",
+  },
+  {
+    value: "HIGH",
+    label: "HIGH",
+    desc: "Serious injury / LT / Fatality\nMajor impact",
+    dot: "bg-red-500",
+    bg: "bg-red-50 dark:bg-red-900/20",
+    borderLeft: "border-l-red-500",
+  },
+  {
+    value: "CRITICAL",
+    label: "CRITICAL",
+    desc: "Multiple fatalities /\nCatastrophic impact",
+    dot: "bg-red-800",
+    bg: "bg-red-100 dark:bg-red-950/30",
+    borderLeft: "border-l-red-800",
+  },
+];
+
+// ─── Section 6 — Observation Category options ─────────────────────────────────
+/**
+ * 5 category groups. Operations, Work Activities, Hazards/Conditions,
+ * Environment & Other → checkboxes (multiple selection per group)
+ * Survey Equipment → radio buttons (single selection)
+ */
+const CATEGORY_OPERATIONS = [
+  "Navigation / Bridge Operations",
+  "Deck Operations",
+  "Launch & Recovery Operations",
+  "Crane Operations",
+  "Cable / Towfish Handling",
+  "Stern Roller Operations",
+  "Winch / Tow Wire Operations",
+  "Mooring Operations",
+  "A-Frame Operations",
+];
+
+const CATEGORY_SURVEY_EQUIPMENT = [
+  "USBL Operations",
+  "Multibeam Operations",
+  "Side Scan Sonar",
+  "Magnetometer",
+  "Sub Bottom Profiler",
+  "CTD Operations",
+  "Drop Camera / Video",
+  "ROV / AUV Operations",
+  "Other Survey Equipment",
+];
+
+const CATEGORY_WORK_ACTIVITIES = [
+  "Lifting Operations",
+  "Working at Height",
+  "Confined Space",
+  "Manual Handling",
+  "Hot Work",
+  "Cold Work",
+  "Electrical Work",
+  "Pressure Systems Work",
+  "SIMOPS",
+];
+
+const CATEGORY_HAZARDS = [
+  "Line of Fire",
+  "Pinch / Crush Point",
+  "Stored Energy",
+  "Slips, Trips and Falls",
+  "Dropped Objects",
+  "Struck By / Against",
+  "Fire / Explosion",
+  "Chemical Exposure",
+  "Noise / Vibration",
+];
+
+const CATEGORY_ENVIRONMENT = [
+  "Environmental / Pollution",
+  "Waste Management",
+  "Weather Conditions",
+  "Fatigue / Fitness for Duty",
+  "Housekeeping",
+  "PPE",
+  "Procedures / Permits",
+  "Communication",
+];
+
+// ─── Section 10 — Root Cause options ──────────────────────────────────────────
+/**
+ * Single selection — the most relevant root cause.
+ * Icons match the physical form categories.
+ */
+const ROOT_CAUSES = [
+  { value: "HUMAN_FACTORS", icon: "⚓", label: "Human Factors / Behaviour" },
+  { value: "PROCEDURE", icon: "🔄", label: "Procedure / Process" },
+  { value: "EQUIPMENT", icon: "🔧", label: "Equipment / Tools" },
+  { value: "COMPETENCE", icon: "☑️", label: "Competence" },
+  { value: "COMMUNICATION", icon: "☑️", label: "Communication" },
+  { value: "ENVIRONMENT", icon: "☑️", label: "Environment / Conditions" },
+  { value: "MANAGEMENT", icon: "☑️", label: "Management System" },
+];
 
 export default function ObservationForm({ currentUser, observation }: Props) {
   const router = useRouter();
@@ -228,18 +336,100 @@ export default function ObservationForm({ currentUser, observation }: Props) {
 
   // ─── Section 5 state ─────────────────────────────────────────────────────
 
-/**
- * riskPriority — single selected priority level
- * LOW / MEDIUM / HIGH / CRITICAL
- */
-const [riskPriority, setRiskPriority] = useState<string>(observation?.riskPriority ?? "")
+  /**
+   * riskPriority — single selected priority level
+   * LOW / MEDIUM / HIGH / CRITICAL
+   */
+  const [riskPriority, setRiskPriority] = useState<string>(
+    observation?.riskPriority ?? "",
+  );
 
-/**
- * hiPo — High Potential Event
- * Could this observation have had serious consequences?
- * null = not answered, true = Yes, false = No
- */
-const [hiPo, setHiPo] = useState<boolean | null>(observation?.hiPo ?? null)
+  /**
+   * hiPo — High Potential Event
+   * Could this observation have had serious consequences?
+   * null = not answered, true = Yes, false = No
+   */
+  const [hiPo, setHiPo] = useState<boolean | null>(observation?.hiPo ?? null);
+
+  // ─── Section 6 state ─────────────────────────────────────────────────────
+
+  /** Operations — checkboxes, multiple selection */
+  const [categoryOperations, setCategoryOperations] = useState<string[]>(
+    observation?.categoryOperations ?? [],
+  );
+  const [categoryOperationsOther, setCategoryOperationsOther] =
+    useState<string>(observation?.categoryOperationsOther ?? "");
+
+  /** Survey Equipment — radio buttons, single selection */
+  const [categorySurveyEquipment, setCategorySurveyEquipment] =
+    useState<string>(observation?.categorySurveyEquipment ?? "");
+  const [categorySurveyEquipmentOther, setCategorySurveyEquipmentOther] =
+    useState<string>(observation?.categorySurveyEquipmentOther ?? "");
+
+  /** Work Activities — checkboxes, multiple selection */
+  const [categoryWorkActivities, setCategoryWorkActivities] = useState<
+    string[]
+  >(observation?.categoryWorkActivities ?? []);
+  const [categoryWorkActivitiesOther, setCategoryWorkActivitiesOther] =
+    useState<string>(observation?.categoryWorkActivitiesOther ?? "");
+
+  /** Hazards / Conditions — checkboxes, multiple selection */
+  const [categoryHazards, setCategoryHazards] = useState<string[]>(
+    observation?.categoryHazards ?? [],
+  );
+  const [categoryHazardsOther, setCategoryHazardsOther] = useState<string>(
+    observation?.categoryHazardsOther ?? "",
+  );
+
+  /** Environment & Other — checkboxes, multiple selection */
+  const [categoryEnvironment, setCategoryEnvironment] = useState<string[]>(
+    observation?.categoryEnvironment ?? [],
+  );
+  const [categoryEnvironmentOther, setCategoryEnvironmentOther] =
+    useState<string>(observation?.categoryEnvironmentOther ?? "");
+
+  // ─── Section 7 state ─────────────────────────────────────────────────────
+  /** Full observation description — Who, What, Where, When, How */
+  const [observationDescription, setObservationDescription] = useState(
+    observation?.observationDescription ?? "",
+  );
+
+  // ─── Section 8 state ─────────────────────────────────────────────────────
+  /** Immediate action taken at time of observation */
+  const [immediateAction, setImmediateAction] = useState(
+    observation?.immediateAction ?? "",
+  );
+
+  // ─── Section 9 state ─────────────────────────────────────────────────────
+  /** Corrective action required + target date */
+  const [correctiveAction, setCorrectiveAction] = useState(
+    observation?.correctiveAction ?? "",
+  );
+  const [correctiveActionDate, setCorrectiveActionDate] = useState(
+    observation?.correctiveActionDate ?? "",
+  );
+
+  /** Preventive action required + target date */
+  const [preventiveAction, setPreventiveAction] = useState(
+    observation?.preventiveAction ?? "",
+  );
+  const [preventiveActionDate, setPreventiveActionDate] = useState(
+    observation?.preventiveActionDate ?? "",
+  );
+
+  /** Responsible person / team for corrective/preventive actions */
+  const [responsiblePerson, setResponsiblePerson] = useState(
+    observation?.responsiblePerson ?? "",
+  );
+
+  // ─── Section 10 state ─────────────────────────────────────────────────────
+  /** Root cause — single selection (most relevant) */
+  const [rootCause, setRootCause] = useState<string>(
+    observation?.rootCause ?? "",
+  );
+  const [rootCauseOther, setRootCauseOther] = useState<string>(
+    observation?.rootCauseOther ?? "",
+  );
 
   // ─── Checkbox toggle helper ───────────────────────────────────────────────
   /**
@@ -259,6 +449,22 @@ const [hiPo, setHiPo] = useState<boolean | null>(observation?.hiPo ?? null)
   const toggleLifeSavingRule = (value: string) => {
     setLifeSavingRules((prev) =>
       prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value],
+    );
+  };
+
+  /**
+   * toggleInArray — generic helper to add/remove a value from any string[] state
+   * Used for all checkbox groups in section 6
+   */
+  const toggleInArray = (
+    value: string,
+    current: string[],
+    setter: (v: string[]) => void,
+  ) => {
+    setter(
+      current.includes(value)
+        ? current.filter((v) => v !== value)
+        : [...current, value],
     );
   };
 
@@ -591,115 +797,465 @@ const [hiPo, setHiPo] = useState<boolean | null>(observation?.hiPo ?? null)
           </div>
         </div>
 
-{/* ── Section 5 — Risk Priority ────────────────────────────────────── */}
-<div className="md:col-span-1 rounded-xl border border-amber-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-sm p-5 overflow-hidden">
-  <h2 className="text-xs font-bold uppercase tracking-widest text-amber-900 bg-amber-300 -mx-5 -mt-5 mb-4 px-5 py-3 rounded-t-xl">
-    5. Risk Priority
-  </h2>
+        {/* ── Section 5 — Risk Priority ────────────────────────────────────── */}
+        <div className="md:col-span-1 rounded-xl border border-amber-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-sm p-5 overflow-hidden">
+          <h2 className="text-xs font-bold uppercase tracking-widest text-amber-900 bg-amber-300 -mx-5 -mt-5 mb-4 px-5 py-3 rounded-t-xl">
+            5. Risk Priority
+          </h2>
 
-  {/* Radio buttons with colored severity dot — single selection */}
-  <div className="space-y-2">
-    {RISK_PRIORITIES.map((priority) => (
-<label
-  key={priority.value}
-  className={`flex items-start gap-2 cursor-pointer py-1.5 px-2 rounded-lg border-l-4 transition-colors ${
-    riskPriority === priority.value
-      ? `${priority.bg} ${priority.borderLeft}`
-      : "border-l-transparent hover:bg-amber-100/50 dark:hover:bg-slate-800"
-  }`}
->
-        <input
-          type="radio"
-          name="riskPriority"
-          value={priority.value}
-          checked={riskPriority === priority.value}
-          onChange={() => setRiskPriority(priority.value)}
-          className="mt-1 accent-amber-400 shrink-0"
-        />
-        {/* Colored severity dot */}
-        <span className={`w-3 h-3 rounded-full mt-0.5 shrink-0 ${priority.dot}`} />
-        <div className="flex-1 min-w-0">
-          <p className="text-xs font-bold text-slate-700 dark:text-slate-200">
-            {priority.label}
-          </p>
-          <p className="text-[10px] text-slate-500 dark:text-slate-400 leading-tight whitespace-pre-line">
-            {priority.desc}
-          </p>
+          {/* Radio buttons with colored severity dot — single selection */}
+          <div className="space-y-2">
+            {RISK_PRIORITIES.map((priority) => (
+              <label
+                key={priority.value}
+                className={`flex items-start gap-2 cursor-pointer py-1.5 px-2 rounded-lg border-l-4 transition-colors ${
+                  riskPriority === priority.value
+                    ? `${priority.bg} ${priority.borderLeft}`
+                    : "border-l-transparent hover:bg-amber-100/50 dark:hover:bg-slate-800"
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="riskPriority"
+                  value={priority.value}
+                  checked={riskPriority === priority.value}
+                  onChange={() => setRiskPriority(priority.value)}
+                  className="mt-1 accent-amber-400 shrink-0"
+                />
+                {/* Colored severity dot */}
+                <span
+                  className={`w-3 h-3 rounded-full mt-0.5 shrink-0 ${priority.dot}`}
+                />
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-bold text-slate-700 dark:text-slate-200">
+                    {priority.label}
+                  </p>
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400 leading-tight whitespace-pre-line">
+                    {priority.desc}
+                  </p>
+                </div>
+              </label>
+            ))}
+          </div>
+
+          {/* Divider */}
+          <div className="border-t border-amber-100 dark:border-slate-700 my-3" />
+
+          {/* High Potential Event (HiPo) */}
+          <div>
+            <p className="text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+              High Potential Event (HiPo)
+            </p>
+            <p className="text-[10px] text-slate-500 dark:text-slate-400 mb-2">
+              Could this observation have serious consequences?
+            </p>
+            <div className="flex items-center gap-4">
+              <label className="flex items-center gap-1.5 cursor-pointer">
+                <input
+                  type="radio"
+                  name="hiPo"
+                  checked={hiPo === true}
+                  onChange={() => setHiPo(true)}
+                  className="accent-amber-400"
+                />
+                <span className="text-xs text-slate-600 dark:text-slate-300">
+                  Yes
+                </span>
+              </label>
+              <label className="flex items-center gap-1.5 cursor-pointer">
+                <input
+                  type="radio"
+                  name="hiPo"
+                  checked={hiPo === false}
+                  onChange={() => setHiPo(false)}
+                  className="accent-amber-400"
+                />
+                <span className="text-xs text-slate-600 dark:text-slate-300">
+                  No
+                </span>
+              </label>
+            </div>
+          </div>
         </div>
-      </label>
-    ))}
-  </div>
-
-  {/* Divider */}
-  <div className="border-t border-amber-100 dark:border-slate-700 my-3" />
-
-  {/* High Potential Event (HiPo) */}
-  <div>
-    <p className="text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-      High Potential Event (HiPo)
-    </p>
-    <p className="text-[10px] text-slate-500 dark:text-slate-400 mb-2">
-      Could this observation have serious consequences?
-    </p>
-    <div className="flex items-center gap-4">
-      <label className="flex items-center gap-1.5 cursor-pointer">
-        <input
-          type="radio"
-          name="hiPo"
-          checked={hiPo === true}
-          onChange={() => setHiPo(true)}
-          className="accent-amber-400"
-        />
-        <span className="text-xs text-slate-600 dark:text-slate-300">Yes</span>
-      </label>
-      <label className="flex items-center gap-1.5 cursor-pointer">
-        <input
-          type="radio"
-          name="hiPo"
-          checked={hiPo === false}
-          onChange={() => setHiPo(false)}
-          className="accent-amber-400"
-        />
-        <span className="text-xs text-slate-600 dark:text-slate-300">No</span>
-      </label>
-    </div>
-  </div>
-</div>
       </div>
 
       {/* ── Section 6 — Observation Category ──────────────────────────── */}
-      <div className={comingSoonClass}>
-        <p className="text-xs text-amber-500 font-semibold uppercase tracking-widest">
-          6. Observation Category — Coming Soon
-        </p>
+      <div className="rounded-xl border border-amber-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-sm p-6 mb-6 overflow-hidden">
+        <h2 className="text-xs font-bold uppercase tracking-widest text-amber-900 bg-amber-300 -mx-6 -mt-6 mb-5 px-6 py-3 rounded-t-xl">
+          6. Observation Category (Select all that apply)
+        </h2>
+
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+          {/* ── Column 1 — Operations (checkboxes) ─────────────────────── */}
+          <div>
+            <p className="text-xs font-bold text-slate-700 dark:text-slate-300 mb-2 uppercase tracking-wide">
+              Operations
+            </p>
+            <div className="space-y-1">
+              {CATEGORY_OPERATIONS.map((item) => (
+                <label
+                  key={item}
+                  className={`flex items-start gap-2 cursor-pointer py-1 rounded-lg transition-colors ${
+                    categoryOperations.includes(item)
+                      ? "bg-amber-100 dark:bg-amber-700/20"
+                      : "hover:bg-amber-100/50 dark:hover:bg-slate-800"
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={categoryOperations.includes(item)}
+                    onChange={() =>
+                      toggleInArray(
+                        item,
+                        categoryOperations,
+                        setCategoryOperations,
+                      )
+                    }
+                    className="mt-0.5 accent-amber-400 shrink-0"
+                  />
+                  <span className="text-[11px] text-slate-600 dark:text-slate-300 leading-tight">
+                    {item}
+                  </span>
+                </label>
+              ))}
+            </div>
+            <div className="border-t border-amber-100 dark:border-slate-700 my-2" />
+            <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-1">
+              Other (Specify):
+            </p>
+            <textarea
+              value={categoryOperationsOther}
+              onChange={(e) => setCategoryOperationsOther(e.target.value)}
+              rows={2}
+              placeholder="Specify..."
+              className="px-2 py-1.5 rounded-lg border border-amber-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-[11px] w-full text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-400 transition-colors resize-none"
+            />
+          </div>
+
+          {/* ── Column 2 — Survey Equipment (radio buttons) ─────────────── */}
+          <div>
+            <p className="text-xs font-bold text-slate-700 dark:text-slate-300 mb-2 uppercase tracking-wide">
+              Survey Equipment
+            </p>
+            <div className="space-y-1">
+              {CATEGORY_SURVEY_EQUIPMENT.map((item) => (
+                <label
+                  key={item}
+                  className={`flex items-start gap-2 cursor-pointer py-1 rounded-lg transition-colors ${
+                    categorySurveyEquipment === item
+                      ? "bg-amber-100 dark:bg-amber-700/20"
+                      : "hover:bg-amber-100/50 dark:hover:bg-slate-800"
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="categorySurveyEquipment"
+                    checked={categorySurveyEquipment === item}
+                    onChange={() => setCategorySurveyEquipment(item)}
+                    className="mt-0.5 accent-amber-400 shrink-0"
+                  />
+                  <span className="text-[11px] text-slate-600 dark:text-slate-300 leading-tight">
+                    {item}
+                  </span>
+                </label>
+              ))}
+            </div>
+            <div className="border-t border-amber-100 dark:border-slate-700 my-2" />
+            <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-1">
+              Other (Specify):
+            </p>
+            <textarea
+              value={categorySurveyEquipmentOther}
+              onChange={(e) => setCategorySurveyEquipmentOther(e.target.value)}
+              rows={2}
+              placeholder="Specify..."
+              className="px-2 py-1.5 rounded-lg border border-amber-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-[11px] w-full text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-400 transition-colors resize-none"
+            />
+          </div>
+
+          {/* ── Column 3 — Work Activities (checkboxes) ─────────────────── */}
+          <div>
+            <p className="text-xs font-bold text-slate-700 dark:text-slate-300 mb-2 uppercase tracking-wide">
+              Work Activities
+            </p>
+            <div className="space-y-1">
+              {CATEGORY_WORK_ACTIVITIES.map((item) => (
+                <label
+                  key={item}
+                  className={`flex items-start gap-2 cursor-pointer py-1 rounded-lg transition-colors ${
+                    categoryWorkActivities.includes(item)
+                      ? "bg-amber-100 dark:bg-amber-700/20"
+                      : "hover:bg-amber-100/50 dark:hover:bg-slate-800"
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={categoryWorkActivities.includes(item)}
+                    onChange={() =>
+                      toggleInArray(
+                        item,
+                        categoryWorkActivities,
+                        setCategoryWorkActivities,
+                      )
+                    }
+                    className="mt-0.5 accent-amber-400 shrink-0"
+                  />
+                  <span className="text-[11px] text-slate-600 dark:text-slate-300 leading-tight">
+                    {item}
+                  </span>
+                </label>
+              ))}
+            </div>
+            <div className="border-t border-amber-100 dark:border-slate-700 my-2" />
+            <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-1">
+              Other (Specify):
+            </p>
+            <textarea
+              value={categoryWorkActivitiesOther}
+              onChange={(e) => setCategoryWorkActivitiesOther(e.target.value)}
+              rows={2}
+              placeholder="Specify..."
+              className="px-2 py-1.5 rounded-lg border border-amber-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-[11px] w-full text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-400 transition-colors resize-none"
+            />
+          </div>
+
+          {/* ── Column 4 — Hazards / Conditions (checkboxes) ────────────── */}
+          <div>
+            <p className="text-xs font-bold text-slate-700 dark:text-slate-300 mb-2 uppercase tracking-wide">
+              Hazards / Conditions
+            </p>
+            <div className="space-y-1">
+              {CATEGORY_HAZARDS.map((item) => (
+                <label
+                  key={item}
+                  className={`flex items-start gap-2 cursor-pointer py-1 rounded-lg transition-colors ${
+                    categoryHazards.includes(item)
+                      ? "bg-amber-100 dark:bg-amber-700/20"
+                      : "hover:bg-amber-100/50 dark:hover:bg-slate-800"
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={categoryHazards.includes(item)}
+                    onChange={() =>
+                      toggleInArray(item, categoryHazards, setCategoryHazards)
+                    }
+                    className="mt-0.5 accent-amber-400 shrink-0"
+                  />
+                  <span className="text-[11px] text-slate-600 dark:text-slate-300 leading-tight">
+                    {item}
+                  </span>
+                </label>
+              ))}
+            </div>
+            <div className="border-t border-amber-100 dark:border-slate-700 my-2" />
+            <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-1">
+              Other (Specify):
+            </p>
+            <textarea
+              value={categoryHazardsOther}
+              onChange={(e) => setCategoryHazardsOther(e.target.value)}
+              rows={2}
+              placeholder="Specify..."
+              className="px-2 py-1.5 rounded-lg border border-amber-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-[11px] w-full text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-400 transition-colors resize-none"
+            />
+          </div>
+
+          {/* ── Column 5 — Environment & Other (checkboxes) ─────────────── */}
+          <div>
+            <p className="text-xs font-bold text-slate-700 dark:text-slate-300 mb-2 uppercase tracking-wide">
+              Environment & Other
+            </p>
+            <div className="space-y-1">
+              {CATEGORY_ENVIRONMENT.map((item) => (
+                <label
+                  key={item}
+                  className={`flex items-start gap-2 cursor-pointer py-1 rounded-lg transition-colors ${
+                    categoryEnvironment.includes(item)
+                      ? "bg-amber-100 dark:bg-amber-700/20"
+                      : "hover:bg-amber-100/50 dark:hover:bg-slate-800"
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={categoryEnvironment.includes(item)}
+                    onChange={() =>
+                      toggleInArray(
+                        item,
+                        categoryEnvironment,
+                        setCategoryEnvironment,
+                      )
+                    }
+                    className="mt-0.5 accent-amber-400 shrink-0"
+                  />
+                  <span className="text-[11px] text-slate-600 dark:text-slate-300 leading-tight">
+                    {item}
+                  </span>
+                </label>
+              ))}
+            </div>
+            <div className="border-t border-amber-100 dark:border-slate-700 my-2" />
+            <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-1">
+              Other (Specify):
+            </p>
+            <textarea
+              value={categoryEnvironmentOther}
+              onChange={(e) => setCategoryEnvironmentOther(e.target.value)}
+              rows={2}
+              placeholder="Specify..."
+              className="px-2 py-1.5 rounded-lg border border-amber-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-[11px] w-full text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-400 transition-colors resize-none"
+            />
+          </div>
+        </div>
       </div>
 
-      {/* ── Section 7 — Observation Description ───────────────────────── */}
-      <div className={comingSoonClass}>
-        <p className="text-xs text-amber-500 font-semibold uppercase tracking-widest">
-          7. Observation Description — Coming Soon
-        </p>
+      {/* ── Sections 7 & 8 — Description + Immediate Action ─────────────── */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        {/* Section 7 — Observation Description */}
+        <div className="rounded-xl border border-amber-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-sm p-6 overflow-hidden">
+          <h2 className="text-xs font-bold uppercase tracking-widest text-amber-900 bg-amber-300 -mx-6 -mt-6 mb-4 px-6 py-3 rounded-t-xl">
+            7. Observation Description
+          </h2>
+          <label className={labelClass}>
+            Describe what was observed. Be specific (Who, What, Where, When,
+            How)
+          </label>
+          <textarea
+            value={observationDescription}
+            onChange={(e) => setObservationDescription(e.target.value)}
+            rows={5}
+            placeholder="Describe what was observed..."
+            className="px-3 py-2 rounded-lg border border-amber-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm w-full text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-400 transition-colors resize-none"
+          />
+        </div>
+
+        {/* Section 8 — Immediate Action Taken */}
+        <div className="rounded-xl border border-amber-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-sm p-6 overflow-hidden">
+          <h2 className="text-xs font-bold uppercase tracking-widest text-amber-900 bg-amber-300 -mx-6 -mt-6 mb-4 px-6 py-3 rounded-t-xl">
+            8. Immediate Action Taken
+          </h2>
+          <label className={labelClass}>
+            What immediate action was taken at the time of observation?
+          </label>
+          <textarea
+            value={immediateAction}
+            onChange={(e) => setImmediateAction(e.target.value)}
+            rows={5}
+            placeholder="Describe the immediate action taken..."
+            className="px-3 py-2 rounded-lg border border-amber-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm w-full text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-400 transition-colors resize-none"
+          />
+        </div>
       </div>
 
-      {/* ── Section 8 — Immediate Action Taken ────────────────────────── */}
-      <div className={comingSoonClass}>
-        <p className="text-xs text-amber-500 font-semibold uppercase tracking-widest">
-          8. Immediate Action Taken — Coming Soon
-        </p>
-      </div>
+      {/* ── Sections 9 & 10 — Corrective Action + Root Cause ─────────────── */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        {/* Section 9 — Corrective / Preventive Action */}
+        <div className="rounded-xl border border-amber-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-sm p-6 overflow-hidden">
+          <h2 className="text-xs font-bold uppercase tracking-widest text-amber-900 bg-amber-300 -mx-6 -mt-6 mb-4 px-6 py-3 rounded-t-xl">
+            9. Corrective / Preventive Action Required
+          </h2>
 
-      {/* ── Section 9 — Corrective / Preventive Action ────────────────── */}
-      <div className={comingSoonClass}>
-        <p className="text-xs text-amber-500 font-semibold uppercase tracking-widest">
-          9. Corrective / Preventive Action Required — Coming Soon
-        </p>
-      </div>
+          <div className="space-y-4">
+            {/* Corrective Action */}
+            <div>
+              <label className={labelClass}>Corrective Action</label>
+              <textarea
+                value={correctiveAction}
+                onChange={(e) => setCorrectiveAction(e.target.value)}
+                rows={3}
+                placeholder="What corrective action is required?"
+                className="px-3 py-2 rounded-lg border border-amber-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm w-full text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-400 transition-colors resize-none mb-2"
+              />
+              <label className={labelClass}>Target Completion Date</label>
+              <Input
+                type="date"
+                value={correctiveActionDate}
+                onChange={(e) => setCorrectiveActionDate(e.target.value)}
+                className="border-amber-200 focus-visible:ring-amber-400"
+              />
+            </div>
 
-      {/* ── Section 10 — Root Cause ───────────────────────────────────── */}
-      <div className={comingSoonClass}>
-        <p className="text-xs text-amber-500 font-semibold uppercase tracking-widest">
-          10. Root Cause — Coming Soon
-        </p>
+            {/* Preventive Action */}
+            <div>
+              <label className={labelClass}>Preventive Action</label>
+              <textarea
+                value={preventiveAction}
+                onChange={(e) => setPreventiveAction(e.target.value)}
+                rows={3}
+                placeholder="What preventive action is required?"
+                className="px-3 py-2 rounded-lg border border-amber-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm w-full text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-400 transition-colors resize-none mb-2"
+              />
+              <label className={labelClass}>Target Completion Date</label>
+              <Input
+                type="date"
+                value={preventiveActionDate}
+                onChange={(e) => setPreventiveActionDate(e.target.value)}
+                className="border-amber-200 focus-visible:ring-amber-400"
+              />
+            </div>
+
+            {/* Responsible Person / Team */}
+            <div>
+              <label className={labelClass}>Responsible Person / Team</label>
+              <Input
+                value={responsiblePerson}
+                onChange={(e) => setResponsiblePerson(e.target.value)}
+                placeholder="e.g. Chief Officer"
+                className="border-amber-200 focus-visible:ring-amber-400"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Section 10 — Root Cause */}
+        <div className="rounded-xl border border-amber-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-sm p-6 overflow-hidden">
+          <h2 className="text-xs font-bold uppercase tracking-widest text-amber-900 bg-amber-300 -mx-6 -mt-6 mb-4 px-6 py-3 rounded-t-xl">
+            10. Root Cause (Select the most relevant)
+          </h2>
+
+          {/* Radio buttons — single selection only */}
+          <div className="space-y-1">
+            {ROOT_CAUSES.map((cause) => (
+              <label
+                key={cause.value}
+                className={`flex items-start gap-2 cursor-pointer py-1.5 rounded-lg transition-colors ${
+                  rootCause === cause.value
+                    ? "bg-amber-100 dark:bg-amber-700/20"
+                    : "hover:bg-amber-100/50 dark:hover:bg-slate-800"
+                }`}
+              >
+                <span className="text-sm shrink-0">{cause.icon}</span>
+                <input
+                  type="radio"
+                  name="rootCause"
+                  checked={rootCause === cause.value}
+                  onChange={() => setRootCause(cause.value)}
+                  className="mt-0.5 accent-amber-400 shrink-0"
+                />
+                <span className="text-xs text-slate-600 dark:text-slate-300 leading-tight">
+                  {cause.label}
+                </span>
+              </label>
+            ))}
+          </div>
+
+          {/* Divider */}
+          <div className="border-t border-amber-100 dark:border-slate-700 my-3" />
+
+          {/* Other (Specify) — textarea */}
+          <div>
+            <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-2">
+              Other (Specify):
+            </p>
+            <textarea
+              value={rootCauseOther}
+              onChange={(e) => setRootCauseOther(e.target.value)}
+              rows={2}
+              placeholder="Specify other root cause..."
+              className="px-3 py-2 rounded-lg border border-amber-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs w-full text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-400 transition-colors resize-none"
+            />
+          </div>
+        </div>
       </div>
 
       {/* ── Section 11 — Potential Consequence ────────────────────────── */}
