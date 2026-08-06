@@ -158,9 +158,8 @@ const CATEGORY_OPERATIONS = [
   "Crane Operations",
   "Cable / Towfish Handling",
   "Stern Roller Operations",
-  "Winch / Tow Wire Operations",
+  "E/R Operations",
   "Mooring Operations",
-  "A-Frame Operations",
 ];
 
 const CATEGORY_SURVEY_EQUIPMENT = [
@@ -212,17 +211,17 @@ const CATEGORY_ENVIRONMENT = [
 
 // ─── Section 10 — Root Cause options ──────────────────────────────────────────
 /**
- * Single selection — the most relevant root cause.
- * Icons match the physical form categories.
+ * Multiple selection — checkboxes (client requested more than one option)
+ * Icons matched to each category theme.
  */
 const ROOT_CAUSES = [
   { value: "HUMAN_FACTORS", icon: "⚓", label: "Human Factors / Behaviour" },
   { value: "PROCEDURE", icon: "🔄", label: "Procedure / Process" },
   { value: "EQUIPMENT", icon: "🔧", label: "Equipment / Tools" },
-  { value: "COMPETENCE", icon: "☑️", label: "Competence" },
-  { value: "COMMUNICATION", icon: "☑️", label: "Communication" },
-  { value: "ENVIRONMENT", icon: "☑️", label: "Environment / Conditions" },
-  { value: "MANAGEMENT", icon: "☑️", label: "Management System" },
+  { value: "COMPETENCE", icon: "🎓", label: "Competence" },
+  { value: "COMMUNICATION", icon: "💬", label: "Communication" },
+  { value: "ENVIRONMENT", icon: "🌦️", label: "Environment / Conditions" },
+  { value: "MANAGEMENT", icon: "📋", label: "Management System" },
 ];
 
 export default function ObservationForm({ currentUser, observation }: Props) {
@@ -423,9 +422,12 @@ export default function ObservationForm({ currentUser, observation }: Props) {
   );
 
   // ─── Section 10 state ─────────────────────────────────────────────────────
-  /** Root cause — single selection (most relevant) */
-  const [rootCause, setRootCause] = useState<string>(
-    observation?.rootCause ?? "",
+  /**
+   * rootCauses — array of selected root cause values
+   * Multiple checkboxes — user can select more than one
+   */
+  const [rootCauses, setRootCauses] = useState<string[]>(
+    observation?.rootCauses ?? [],
   );
   const [rootCauseOther, setRootCauseOther] = useState<string>(
     observation?.rootCauseOther ?? "",
@@ -1156,45 +1158,53 @@ export default function ObservationForm({ currentUser, observation }: Props) {
           </h2>
 
           <div className="space-y-4">
-            {/* Corrective Action */}
+            {/* Corrective Action — textarea + date in 2 columns on desktop */}
             <div>
               <label className={labelClass}>Corrective Action</label>
-              <textarea
-                value={correctiveAction}
-                onChange={(e) => setCorrectiveAction(e.target.value)}
-                rows={3}
-                placeholder="What corrective action is required?"
-                className="px-3 py-2 rounded-lg border border-amber-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm w-full text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-400 transition-colors resize-none mb-2"
-              />
-              <label className={labelClass}>Target Completion Date</label>
-              <Input
-                type="date"
-                value={correctiveActionDate}
-                onChange={(e) => setCorrectiveActionDate(e.target.value)}
-                className="border-amber-200 focus-visible:ring-amber-400"
-              />
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <textarea
+                  value={correctiveAction}
+                  onChange={(e) => setCorrectiveAction(e.target.value)}
+                  rows={3}
+                  placeholder="What corrective action is required?"
+                  className="md:col-span-2 px-3 py-2 rounded-lg border border-amber-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm w-full text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-400 transition-colors resize-none"
+                />
+                <div className="md:col-span-1">
+                  <label className={labelClass}>Target Completion Date</label>
+                  <Input
+                    type="date"
+                    value={correctiveActionDate}
+                    onChange={(e) => setCorrectiveActionDate(e.target.value)}
+                    className="border-amber-200 focus-visible:ring-amber-400"
+                  />
+                </div>
+              </div>
             </div>
 
-            {/* Preventive Action */}
+            {/* Preventive Action — textarea + date in 2 columns on desktop */}
             <div>
               <label className={labelClass}>Preventive Action</label>
-              <textarea
-                value={preventiveAction}
-                onChange={(e) => setPreventiveAction(e.target.value)}
-                rows={3}
-                placeholder="What preventive action is required?"
-                className="px-3 py-2 rounded-lg border border-amber-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm w-full text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-400 transition-colors resize-none mb-2"
-              />
-              <label className={labelClass}>Target Completion Date</label>
-              <Input
-                type="date"
-                value={preventiveActionDate}
-                onChange={(e) => setPreventiveActionDate(e.target.value)}
-                className="border-amber-200 focus-visible:ring-amber-400"
-              />
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <textarea
+                  value={preventiveAction}
+                  onChange={(e) => setPreventiveAction(e.target.value)}
+                  rows={3}
+                  placeholder="What preventive action is required?"
+                  className="md:col-span-2 px-3 py-2 rounded-lg border border-amber-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm w-full text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-400 transition-colors resize-none"
+                />
+                <div className="md:col-span-1">
+                  <label className={labelClass}>Target Completion Date</label>
+                  <Input
+                    type="date"
+                    value={preventiveActionDate}
+                    onChange={(e) => setPreventiveActionDate(e.target.value)}
+                    className="border-amber-200 focus-visible:ring-amber-400"
+                  />
+                </div>
+              </div>
             </div>
 
-            {/* Responsible Person / Team */}
+            {/* Responsible Person / Team — stays full width, single row */}
             <div>
               <label className={labelClass}>Responsible Person / Team</label>
               <Input
@@ -1213,23 +1223,24 @@ export default function ObservationForm({ currentUser, observation }: Props) {
             10. Root Cause (Select the most relevant)
           </h2>
 
-          {/* Radio buttons — single selection only */}
+          {/* Checkboxes — multiple selection allowed */}
           <div className="space-y-1">
             {ROOT_CAUSES.map((cause) => (
               <label
                 key={cause.value}
                 className={`flex items-start gap-2 cursor-pointer py-1.5 rounded-lg transition-colors ${
-                  rootCause === cause.value
+                  rootCauses.includes(cause.value)
                     ? "bg-amber-100 dark:bg-amber-700/20"
                     : "hover:bg-amber-100/50 dark:hover:bg-slate-800"
                 }`}
               >
                 <span className="text-sm shrink-0">{cause.icon}</span>
                 <input
-                  type="radio"
-                  name="rootCause"
-                  checked={rootCause === cause.value}
-                  onChange={() => setRootCause(cause.value)}
+                  type="checkbox"
+                  checked={rootCauses.includes(cause.value)}
+                  onChange={() =>
+                    toggleInArray(cause.value, rootCauses, setRootCauses)
+                  }
                   className="mt-0.5 accent-amber-400 shrink-0"
                 />
                 <span className="text-xs text-slate-600 dark:text-slate-300 leading-tight">
