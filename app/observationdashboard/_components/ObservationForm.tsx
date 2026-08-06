@@ -27,6 +27,20 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
+import {
+  OBSERVATION_TYPES,
+  OBSERVATION_SOURCES,
+  LIFE_SAVING_RULES,
+  RISK_PRIORITIES,
+  CATEGORY_OPERATIONS,
+  CATEGORY_SURVEY_EQUIPMENT,
+  CATEGORY_WORK_ACTIVITIES,
+  CATEGORY_HAZARDS,
+  CATEGORY_ENVIRONMENT,
+  ROOT_CAUSES,
+  POTENTIAL_CONSEQUENCES,
+} from "./observationOptions"
+
 type User = {
   id: string;
   name: string | null;
@@ -39,190 +53,7 @@ type Props = {
   observation?: any;
 };
 
-// ─── Section 2 — Observation Type options ────────────────────────────────────
-/**
- * Multiple selection — user can check more than one type.
- * Stored as string[] in state → will be saved as JSON array in DB.
- */
-const OBSERVATION_TYPES = [
-  {
-    value: "POSITIVE_SAFETY",
-    icon: "👍",
-    label: "Positive Safety Observation / Good Practice",
-  },
-  { value: "UNSAFE_ACT", icon: "🚶", label: "Unsafe Act / At-Risk Behaviour" },
-  { value: "UNSAFE_CONDITION", icon: "⚠️", label: "Unsafe Condition" },
-  { value: "NEAR_MISS", icon: "⭐", label: "Near Miss (Potential Incident)" },
-  { value: "ENVIRONMENTAL", icon: "🌿", label: "Environmental Observation" },
-  {
-    value: "QUALITY_SERVICE",
-    icon: "💎",
-    label: "Quality / Service Observation",
-  },
-  { value: "IMPROVEMENT", icon: "🔧", label: "Improvement Suggestion" },
-  { value: "STOP_WORK", icon: "🛑", label: "Stop Work Intervention" },
-];
 
-// ─── Section 3 — Observation Source options ───────────────────────────────────
-/**
- * Single selection — only one source can be selected.
- * Stored as string in state → saved as string in DB.
- */
-const OBSERVATION_SOURCES = [
-  {
-    value: "ROUTINE_INSPECTION",
-    icon: "🔄",
-    label: "Routine Inspection / Rounds",
-  },
-  { value: "PLANNED_SAFETY_TOUR", icon: "📍", label: "Planned Safety Tour" },
-  { value: "TOOLBOX_TALK", icon: "👥", label: "Toolbox Talk / Meeting" },
-  { value: "PERSONAL_OBSERVATION", icon: "👁", label: "Personal Observation" },
-  {
-    value: "CLIENT_THIRD_PARTY",
-    icon: "🤝",
-    label: "Client / Third Party Observation",
-  },
-  { value: "AFTER_INCIDENT", icon: "⚡", label: "After Incident / Near Miss" },
-];
-
-// ─── Section 4 — Life Saving Rules (IOGP) options ─────────────────────────────
-/**
- * Multiple selection — user can check more than one rule.
- * Stored as string[] in state → will be saved as JSON array in DB.
- */
-const LIFE_SAVING_RULES = [
-  { value: "LINE_OF_FIRE", icon: "🔥", label: "Line of Fire" },
-  { value: "ENERGY_ISOLATION", icon: "🔌", label: "Energy Isolation (LOTO)" },
-  { value: "WORKING_AT_HEIGHT", icon: "🪜", label: "Working at Height" },
-  { value: "CONFINED_SPACE", icon: "🚪", label: "Confined Space" },
-  { value: "LIFT_OPERATIONS", icon: "🏗️", label: "Lift Operations" },
-  {
-    value: "WORKING_OVER_WATER",
-    icon: "🌊",
-    label: "Working Over / Near Water",
-  },
-  { value: "ELECTRICAL_SAFETY", icon: "⚡", label: "Electrical Safety" },
-  { value: "SIMOPS", icon: "⚙️", label: "SIMOPS" },
-];
-
-// ─── Section 5 — Risk Priority options ────────────────────────────────────────
-/**
- * Single selection — only one priority level can be selected.
- * Colors match maritime risk severity convention (green→red).
- */
-const RISK_PRIORITIES = [
-  {
-    value: "LOW",
-    label: "LOW",
-    desc: "Minor impact / No injury\nMinimal impact",
-    dot: "bg-green-500",
-    bg: "bg-green-50 dark:bg-green-900/20",
-    borderLeft: "border-l-green-500",
-  },
-  {
-    value: "MEDIUM",
-    label: "MEDIUM",
-    desc: "Medical treatment /\nRestricted work\nModerate impact",
-    dot: "bg-yellow-400",
-    bg: "bg-yellow-50 dark:bg-yellow-900/20",
-    borderLeft: "border-l-yellow-400",
-  },
-  {
-    value: "HIGH",
-    label: "HIGH",
-    desc: "Serious injury / LT / Fatality\nMajor impact",
-    dot: "bg-red-500",
-    bg: "bg-red-50 dark:bg-red-900/20",
-    borderLeft: "border-l-red-500",
-  },
-  {
-    value: "CRITICAL",
-    label: "CRITICAL",
-    desc: "Multiple fatalities /\nCatastrophic impact",
-    dot: "bg-red-800",
-    bg: "bg-red-100 dark:bg-red-950/30",
-    borderLeft: "border-l-red-800",
-  },
-];
-
-// ─── Section 6 — Observation Category options ─────────────────────────────────
-/**
- * 5 category groups. Operations, Work Activities, Hazards/Conditions,
- * Environment & Other → checkboxes (multiple selection per group)
- * Survey Equipment → radio buttons (single selection)
- */
-const CATEGORY_OPERATIONS = [
-  "Navigation / Bridge Operations",
-  "Deck Operations",
-  "Launch & Recovery Operations",
-  "Crane Operations",
-  "Cable / Towfish Handling",
-  "Stern Roller Operations",
-  "E/R Operations",
-  "Mooring Operations",
-];
-
-const CATEGORY_SURVEY_EQUIPMENT = [
-  "USBL Operations",
-  "Multibeam Operations",
-  "Side Scan Sonar",
-  "Magnetometer",
-  "Sub Bottom Profiler",
-  "CTD Operations",
-  "Drop Camera / Video",
-  "ROV / AUV Operations",
-  "Other Survey Equipment",
-];
-
-const CATEGORY_WORK_ACTIVITIES = [
-  "Lifting Operations",
-  "Working at Height",
-  "Confined Space",
-  "Manual Handling",
-  "Hot Work",
-  "Cold Work",
-  "Electrical Work",
-  "Pressure Systems Work",
-  "SIMOPS",
-];
-
-const CATEGORY_HAZARDS = [
-  "Line of Fire",
-  "Pinch / Crush Point",
-  "Stored Energy",
-  "Slips, Trips and Falls",
-  "Dropped Objects",
-  "Struck By / Against",
-  "Fire / Explosion",
-  "Chemical Exposure",
-  "Noise / Vibration",
-];
-
-const CATEGORY_ENVIRONMENT = [
-  "Environmental / Pollution",
-  "Waste Management",
-  "Weather Conditions",
-  "Fatigue / Fitness for Duty",
-  "Housekeeping",
-  "PPE",
-  "Procedures / Permits",
-  "Communication",
-];
-
-// ─── Section 10 — Root Cause options ──────────────────────────────────────────
-/**
- * Multiple selection — checkboxes (client requested more than one option)
- * Icons matched to each category theme.
- */
-const ROOT_CAUSES = [
-  { value: "HUMAN_FACTORS", icon: "⚓", label: "Human Factors / Behaviour" },
-  { value: "PROCEDURE", icon: "🔄", label: "Procedure / Process" },
-  { value: "EQUIPMENT", icon: "🔧", label: "Equipment / Tools" },
-  { value: "COMPETENCE", icon: "🎓", label: "Competence" },
-  { value: "COMMUNICATION", icon: "💬", label: "Communication" },
-  { value: "ENVIRONMENT", icon: "🌦️", label: "Environment / Conditions" },
-  { value: "MANAGEMENT", icon: "📋", label: "Management System" },
-];
 
 export default function ObservationForm({ currentUser, observation }: Props) {
   const router = useRouter();
@@ -431,6 +262,61 @@ export default function ObservationForm({ currentUser, observation }: Props) {
   );
   const [rootCauseOther, setRootCauseOther] = useState<string>(
     observation?.rootCauseOther ?? "",
+  );
+
+  // ─── Section 11 state ─────────────────────────────────────────────────────
+  /**
+   * potentialConsequences — array of selected consequence values
+   * Multiple checkboxes — user can select more than one
+   */
+  const [potentialConsequences, setPotentialConsequences] = useState<string[]>(
+    observation?.potentialConsequences ?? [],
+  );
+  const [potentialConsequenceOther, setPotentialConsequenceOther] =
+    useState<string>(observation?.potentialConsequenceOther ?? "");
+
+  // ─── Section 12 (Lessons Learned) state ────────────────────────────────────
+  /** What can we learn from this observation? */
+  const [lessonsLearned, setLessonsLearned] = useState(
+    observation?.lessonsLearned ?? "",
+  );
+
+  /** How can we prevent recurrence? */
+  const [preventRecurrence, setPreventRecurrence] = useState(
+    observation?.preventRecurrence ?? "",
+  );
+
+  // ─── Section 13 (Close Out) state — Admin + Manager only ─────────────────
+  /** Name of QHSE Manager/Officer who closed the observation */
+  const [closedBy, setClosedBy] = useState(observation?.closedBy ?? "");
+
+  /** Date the observation was closed */
+  const [dateClosed, setDateClosed] = useState(observation?.dateClosed ?? "");
+
+  /** Was the corrective action effective? — Yes/No */
+  const [correctiveActionEffective, setCorrectiveActionEffective] = useState<
+    boolean | null
+  >(observation?.correctiveActionEffective ?? null);
+
+  /** Is further action required? — Yes/No */
+  const [furtherActionRequired, setFurtherActionRequired] = useState<
+    boolean | null
+  >(observation?.furtherActionRequired ?? null);
+
+  /** Name of person closing out (instead of signature) */
+  const [closeOutName, setCloseOutName] = useState(
+    observation?.closeOutName ?? currentUser.name ?? currentUser.email ?? "",
+  );
+
+  // ─── Document footer state ─────────────────────────────────────────────────
+  /** Office response note */
+  const [officeResponse, setOfficeResponse] = useState(
+    observation?.officeResponse ?? "",
+  );
+
+  /** Document effective date */
+  const [effectiveDate, setEffectiveDate] = useState(
+    observation?.effectiveDate ?? "",
   );
 
   // ─── Checkbox toggle helper ───────────────────────────────────────────────
@@ -1269,35 +1155,331 @@ export default function ObservationForm({ currentUser, observation }: Props) {
         </div>
       </div>
 
-      {/* ── Section 11 — Potential Consequence ────────────────────────── */}
-      <div className={comingSoonClass}>
-        <p className="text-xs text-amber-500 font-semibold uppercase tracking-widest">
-          11. Potential Consequence — Coming Soon
-        </p>
+      {/* ── Sections 11 & 12 — Potential Consequence + Lessons Learned ───── */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        {/* Section 11 — Potential Consequence */}
+        <div className="rounded-xl border border-amber-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-sm p-6 overflow-hidden">
+          <h2 className="text-xs font-bold uppercase tracking-widest text-amber-900 bg-amber-300 -mx-6 -mt-6 mb-4 px-6 py-3 rounded-t-xl">
+            11. Potential Consequence (Select all that apply)
+          </h2>
+
+          {/* Checkboxes — multiple selection allowed */}
+          <div className="space-y-1">
+            {POTENTIAL_CONSEQUENCES.map((item) => (
+              <label
+                key={item}
+                className={`flex items-start gap-2 cursor-pointer py-1.5 rounded-lg transition-colors ${
+                  potentialConsequences.includes(item)
+                    ? "bg-amber-100 dark:bg-amber-700/20"
+                    : "hover:bg-amber-100/50 dark:hover:bg-slate-800"
+                }`}
+              >
+                <input
+                  type="checkbox"
+                  checked={potentialConsequences.includes(item)}
+                  onChange={() =>
+                    toggleInArray(
+                      item,
+                      potentialConsequences,
+                      setPotentialConsequences,
+                    )
+                  }
+                  className="mt-0.5 accent-amber-400 shrink-0"
+                />
+                <span className="text-xs text-slate-600 dark:text-slate-300 leading-tight">
+                  {item}
+                </span>
+              </label>
+            ))}
+          </div>
+
+          {/* Divider */}
+          <div className="border-t border-amber-100 dark:border-slate-700 my-3" />
+
+          {/* Other (Specify) — textarea */}
+          <div>
+            <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-2">
+              Other (Specify):
+            </p>
+            <textarea
+              value={potentialConsequenceOther}
+              onChange={(e) => setPotentialConsequenceOther(e.target.value)}
+              rows={2}
+              placeholder="Specify other consequence..."
+              className="px-3 py-2 rounded-lg border border-amber-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs w-full text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-400 transition-colors resize-none"
+            />
+          </div>
+        </div>
+
+        {/* Section 12 — Lessons Learned / Good Practice */}
+        <div className="rounded-xl border border-amber-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-sm p-6 overflow-hidden">
+          <h2 className="text-xs font-bold uppercase tracking-widest text-amber-900 bg-amber-300 -mx-6 -mt-6 mb-4 px-6 py-3 rounded-t-xl">
+            12. Lessons Learned / Good Practice
+          </h2>
+
+          <div className="space-y-4">
+            <div>
+              <label className={labelClass}>
+                What can we learn from this observation?
+              </label>
+              <textarea
+                value={lessonsLearned}
+                onChange={(e) => setLessonsLearned(e.target.value)}
+                rows={3}
+                placeholder="Lessons learned..."
+                className="px-3 py-2 rounded-lg border border-amber-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm w-full text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-400 transition-colors resize-none"
+              />
+            </div>
+
+            <div>
+              <label className={labelClass}>
+                How can we prevent recurrence?
+              </label>
+              <textarea
+                value={preventRecurrence}
+                onChange={(e) => setPreventRecurrence(e.target.value)}
+                rows={3}
+                placeholder="Prevention measures..."
+                className="px-3 py-2 rounded-lg border border-amber-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm w-full text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-400 transition-colors resize-none"
+              />
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* ── Section 12 — Follow-up / Action Tracking ──────────────────── */}
-      <div className={comingSoonClass}>
-        <p className="text-xs text-amber-500 font-semibold uppercase tracking-widest">
-          12. Follow-up / Action Tracking — Coming Soon
-        </p>
-      </div>
-
-      {/* ── Section 13 — Lessons Learned ──────────────────────────────── */}
-      <div className={comingSoonClass}>
-        <p className="text-xs text-amber-500 font-semibold uppercase tracking-widest">
-          13. Lessons Learned / Good Practice — Coming Soon
-        </p>
-      </div>
-
-      {/* ── Section 14 — Close Out (Admin + Manager only) ─────────────── */}
+      {/* ── Section 13 — Close Out (Admin + Manager only) ─────────────── */}
       {(currentUser.role === "ADMIN" || currentUser.role === "MANAGER") && (
-        <div className={comingSoonClass}>
-          <p className="text-xs text-amber-500 font-semibold uppercase tracking-widest">
-            14. Close Out — Coming Soon
-          </p>
+        <div className={sectionClass}>
+          <h2 className={sectionHeadingClass}>13. Close Out</h2>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Closed By */}
+            <div>
+              <label className={labelClass}>Closed By</label>
+              <Input
+                value={closedBy}
+                onChange={(e) => setClosedBy(e.target.value)}
+                placeholder="e.g. QHSE Manager name"
+                className="border-amber-200 focus-visible:ring-amber-400"
+              />
+            </div>
+
+            {/* Date Closed */}
+            <div>
+              <label className={labelClass}>Date Closed</label>
+              <Input
+                type="date"
+                value={dateClosed}
+                onChange={(e) => setDateClosed(e.target.value)}
+                className="border-amber-200 focus-visible:ring-amber-400"
+              />
+            </div>
+
+            {/* Was the corrective action effective? */}
+            <div>
+              <p className={labelClass}>Was the corrective action effective?</p>
+              <div className="flex items-center gap-4">
+                <label className="flex items-center gap-1.5 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="correctiveEffective"
+                    checked={correctiveActionEffective === true}
+                    onChange={() => setCorrectiveActionEffective(true)}
+                    className="accent-amber-400"
+                  />
+                  <span className="text-xs text-slate-600 dark:text-slate-300">
+                    Yes
+                  </span>
+                </label>
+                <label className="flex items-center gap-1.5 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="correctiveEffective"
+                    checked={correctiveActionEffective === false}
+                    onChange={() => setCorrectiveActionEffective(false)}
+                    className="accent-amber-400"
+                  />
+                  <span className="text-xs text-slate-600 dark:text-slate-300">
+                    No
+                  </span>
+                </label>
+              </div>
+            </div>
+
+            {/* Further action required? */}
+            <div>
+              <p className={labelClass}>Further action required?</p>
+              <div className="flex items-center gap-4">
+                <label className="flex items-center gap-1.5 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="furtherAction"
+                    checked={furtherActionRequired === true}
+                    onChange={() => setFurtherActionRequired(true)}
+                    className="accent-amber-400"
+                  />
+                  <span className="text-xs text-slate-600 dark:text-slate-300">
+                    Yes
+                  </span>
+                </label>
+                <label className="flex items-center gap-1.5 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="furtherAction"
+                    checked={furtherActionRequired === false}
+                    onChange={() => setFurtherActionRequired(false)}
+                    className="accent-amber-400"
+                  />
+                  <span className="text-xs text-slate-600 dark:text-slate-300">
+                    No
+                  </span>
+                </label>
+              </div>
+            </div>
+
+            {/* Name — instead of signature */}
+            <div className="md:col-span-2">
+              <label className={labelClass}>Name</label>
+              <Input
+                value={closeOutName}
+                onChange={(e) => setCloseOutName(e.target.value)}
+                className="border-amber-200 focus-visible:ring-amber-400"
+              />
+            </div>
+          </div>
         </div>
       )}
+
+      {/* ── Important Notes + Confidential Notice ─────────────────────── */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        {/* Important Notes */}
+        <div className="rounded-xl border border-blue-200 dark:border-slate-700 bg-blue-50 dark:bg-blue-200/30 shadow-sm p-5 overflow-hidden">
+          <h3 className="text-xs font-bold uppercase tracking-widest text-amber-900 bg-blue-200 -mx-5 -mt-5 mb-4 px-5 py-2.5 rounded-t-xl">
+            Important Notes
+          </h3>
+          <div className="space-y-2">
+            <div className="flex items-start gap-2">
+              <span className="text-sm shrink-0">⚓</span>
+              <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                This card is intended to promote a positive safety culture and
+                continuous improvement.
+              </p>
+            </div>
+            <div className="flex items-start gap-2">
+              <span className="text-sm shrink-0">⚓</span>
+              <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                Use this card for reporting observations, for incidents,
+                injuries, pollution, or emergencies, follow the company&apos;s
+                immediate reporting procedures.
+              </p>
+            </div>
+            <div className="flex items-start gap-2">
+              <span className="text-sm shrink-0">⚓</span>
+              <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                All reports will be reviewed, investigated if necessary, and
+                corrective actions tracked to closure.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Confidential & Non-Punitive */}
+        <div className="rounded-xl border border-amber-200 dark:border-slate-700 bg-amber-50 dark:bg-amber-600/30 shadow-sm p-5 overflow-hidden">
+          <div className="flex items-start gap-3">
+            <span className="text-2xl shrink-0">🛡️</span>
+            <div>
+              <h3 className="text-xs font-bold uppercase tracking-widest text-amber-900 dark:text-amber-400 mb-2">
+                Confidential & Non-Punitive
+              </h3>
+              <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed mb-2">
+                Reports are handled confidentially and in accordance with the
+                company&apos;s Just Culture and reporting procedures.
+              </p>
+              <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                Deliberate violations, gross negligence or unlawful acts may
+                require separate investigation.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Document Footer — Office Response + OCAP Icons ───────────────── */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        {/* Left — Document Owner / Office Response */}
+        <div className="rounded-xl border border-amber-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-sm p-5">
+          <div className="space-y-3">
+            <div>
+              <label className={labelClass}>Document Owner</label>
+              <p className="text-sm text-slate-700 dark:text-slate-200 font-medium">
+                QHSE Department
+              </p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div className="md:col-span-2">
+                <label className={labelClass}>Office Response</label>
+                <Input
+                  value={officeResponse}
+                  onChange={(e) => setOfficeResponse(e.target.value)}
+                  placeholder="e.g. Reviewed by office"
+                  className="border-amber-200 focus-visible:ring-amber-400"
+                />
+              </div>
+              <div className="md:col-span-1">
+                <label className={labelClass}>Effective Date</label>
+                <Input
+                  type="date"
+                  value={effectiveDate}
+                  onChange={(e) => setEffectiveDate(e.target.value)}
+                  className="border-amber-200 focus-visible:ring-amber-400"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Right — OCAP icons matching Important Notes theme */}
+        <div className="rounded-xl border border-blue-200 dark:border-slate-700 bg-blue-50 dark:bg-blue-200/30 shadow-sm p-5">
+          <div className="grid grid-cols-4 gap-3 h-full items-center">
+            <div className="flex flex-col items-center text-center gap-1">
+              <span className="text-xl">👁</span>
+              <p className="text-[10px] font-bold text-amber-900 dark:text-amber-400 uppercase tracking-wide">
+                Observe
+              </p>
+              <p className="text-[9px] text-slate-500 dark:text-slate-400 leading-tight">
+                Be aware of what is happening
+              </p>
+            </div>
+            <div className="flex flex-col items-center text-center gap-1">
+              <span className="text-xl">❤️</span>
+              <p className="text-[10px] font-bold text-amber-900 dark:text-amber-400 uppercase tracking-wide">
+                Care
+              </p>
+              <p className="text-[9px] text-slate-500 dark:text-slate-400 leading-tight">
+                Care for yourself and others
+              </p>
+            </div>
+            <div className="flex flex-col items-center text-center gap-1">
+              <span className="text-xl">⚙️</span>
+              <p className="text-[10px] font-bold text-amber-900 dark:text-amber-400 uppercase tracking-wide">
+                Act
+              </p>
+              <p className="text-[9px] text-slate-500 dark:text-slate-400 leading-tight">
+                Take action to eliminate risks
+              </p>
+            </div>
+            <div className="flex flex-col items-center text-center gap-1">
+              <span className="text-xl">🛡️</span>
+              <p className="text-[10px] font-bold text-amber-900 dark:text-amber-400 uppercase tracking-wide">
+                Prevent
+              </p>
+              <p className="text-[9px] text-slate-500 dark:text-slate-400 leading-tight">
+                Prevent incidents before they happen
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* ── Submit / Save Draft / Cancel ──────────────────────────────── */}
       <div className="flex items-center gap-4 pb-10 flex-wrap">
