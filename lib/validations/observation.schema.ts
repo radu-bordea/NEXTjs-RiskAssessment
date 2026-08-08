@@ -14,10 +14,10 @@ export const observationSchema = z.object({
   date: z.coerce.date({ message: "Date is required" }),
   time: z.string().optional().nullable(),
   observerName: z.string().min(1, "Observer name is required"),
-  observerType: z.string().optional().nullable(),
+  createdByField: z.string().min(1, "Created by field is required"),
 
   // ─── Section 2 — Observation Type ────────────────────────────────
-  observationType: z.string().optional().nullable(),
+  observationType: z.string().min(1, "Observation type is required"),
   stopWorkUsed: z.boolean().optional().nullable(),
 
   // ─── Section 3 — Observation Source ──────────────────────────────

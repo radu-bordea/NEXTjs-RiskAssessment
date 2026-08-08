@@ -166,7 +166,7 @@ model Observation {
   date            DateTime
   time            String?
   observerName    String
-  observerType    String? // "Created By" free text field
+  createdByField  String? // "Created By" free text field
 
   // ─── Section 2 — Observation Type (single select) ────────────────
   observationType String?

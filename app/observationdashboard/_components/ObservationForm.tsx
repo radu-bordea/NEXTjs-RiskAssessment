@@ -41,6 +41,8 @@ import {
   POTENTIAL_CONSEQUENCES,
 } from "./observationOptions";
 
+import { createObservation } from "@/app/actions/observation.actions";
+
 type User = {
   id: string;
   name: string | null;
@@ -73,24 +75,14 @@ export default function ObservationForm({ currentUser, observation }: Props) {
   /** Location on vessel e.g. Main Deck */
   const [location, setLocation] = useState(observation?.location ?? "");
 
-  /** Job or activity being observed */
-  const [jobActivity, setJobActivity] = useState(
-    observation?.jobActivity ?? "",
-  );
-
   /** Name of the observer — auto filled from logged in user */
   const [observerName, setObserverName] = useState(
     observation?.observerName ?? currentUser.name ?? currentUser.email ?? "",
   );
 
-  /** Observer type — Crew, Contractor, Visitor, Client */
-  const [observerType, setObserverType] = useState(
-    observation?.observerType ?? "",
-  );
-
-  /** Observation reference number e.g. OBS-2026-001 */
-  const [observationNo, setObservationNo] = useState(
-    observation?.observationNo ?? "",
+  // New:
+  const [createdByField, setCreatedByField] = useState(
+    observation?.createdByField ?? "",
   );
 
   /** Date of observation */
@@ -101,9 +93,6 @@ export default function ObservationForm({ currentUser, observation }: Props) {
   /** Time of observation */
   const [time, setTime] = useState(observation?.time ?? "");
 
-  /** Department or company */
-  const [department, setDepartment] = useState(observation?.department ?? "");
-
   /** Weather and sea state conditions */
   const [weatherSeaState, setWeatherSeaState] = useState(
     observation?.weatherSeaState ?? "",
@@ -111,13 +100,13 @@ export default function ObservationForm({ currentUser, observation }: Props) {
 
   // ─── Section 2 state ─────────────────────────────────────────────────────
 
-/**
- * observationType — single selected type value
- * Radio buttons — only one can be selected
- */
-const [observationType, setObservationType] = useState<string>(
-  observation?.observationType ?? "",
-);
+  /**
+   * observationType — single selected type value
+   * Radio buttons — only one can be selected
+   */
+  const [observationType, setObservationType] = useState<string>(
+    observation?.observationType ?? "",
+  );
 
   /**
    * stopWorkUsed — was stop work authority used?
@@ -316,8 +305,7 @@ const [observationType, setObservationType] = useState<string>(
     observation?.effectiveDate ?? "",
   );
 
-  // ─── Checkbox toggle helper ───────────────────────────────────────────────
-  /**
+  // ─── Checkbox toggle helpers ───────────────────────────────────────────────
 
   /**
    * toggleLifeSavingRule — adds or removes a rule from lifeSavingRules array
@@ -359,11 +347,101 @@ const [observationType, setObservationType] = useState<string>(
 
   // ─── Handlers ────────────────────────────────────────────────────────────
   const onSubmit = async () => {
+    // Manual validation for required fields before submitting
+    if (!vesselProject) {
+      toast.error("Vessel / Project is required");
+      return;
+    }
+    if (!observerName) {
+      toast.error("Observer Name is required");
+      return;
+    }
+    if (!createdByField) {
+      toast.error("Created By is required");
+      return;
+    }
+    if (!observationType) {
+      toast.error("Please select an Observation Type");
+      return;
+    }
+    if (!observationDescription) {
+      toast.error("Observation Description is required");
+      return;
+    }
+
     setLoading(true);
     try {
-      // TODO: call createObservation or submitObservation action
-      toast.success("Observation submitted!");
-      router.push("/observationdashboard");
+      const result = await createObservation({
+        vesselProject,
+        location,
+        weatherSeaState,
+        date: new Date(date),
+        time,
+        observerName,
+        createdByField,
+
+        observationType,
+        stopWorkUsed,
+
+        observationSource,
+        observationSourceOther,
+
+        lifeSavingRules,
+        lifeSavingRulesOther,
+
+        riskPriority,
+        hiPo,
+
+        categoryOperations,
+        categoryOperationsOther,
+        categorySurveyEquipment,
+        categorySurveyEquipmentOther,
+        categoryWorkActivities,
+        categoryWorkActivitiesOther,
+        categoryHazards,
+        categoryHazardsOther,
+        categoryEnvironment,
+        categoryEnvironmentOther,
+
+        observationDescription,
+
+        immediateAction,
+
+        correctiveAction,
+        correctiveActionDate: correctiveActionDate
+          ? new Date(correctiveActionDate)
+          : null,
+        preventiveAction,
+        preventiveActionDate: preventiveActionDate
+          ? new Date(preventiveActionDate)
+          : null,
+        responsiblePerson,
+
+        rootCauses,
+        rootCauseOther,
+
+        potentialConsequences,
+        potentialConsequenceOther,
+
+        lessonsLearned,
+        preventRecurrence,
+
+        closedBy,
+        dateClosed: dateClosed ? new Date(dateClosed) : null,
+        correctiveActionEffective,
+        furtherActionRequired,
+        closeOutName,
+
+        officeResponse,
+        effectiveDate: effectiveDate ? new Date(effectiveDate) : null,
+      });
+
+      if (result.success) {
+        toast.success("Observation submitted!");
+        router.push("/observationdashboard");
+      } else {
+        toast.error(result.error ?? "Something went wrong");
+      }
     } catch {
       toast.error("Something went wrong");
     } finally {
@@ -453,10 +531,10 @@ const [observationType, setObservationType] = useState<string>(
               />
             </div>
             <div>
-              <label className={labelClass}>Created By</label>
+              <label className={labelClass}>Created By *</label>
               <Input
-                value={observerType}
-                onChange={(e) => setObserverType(e.target.value)}
+                value={createdByField}
+                onChange={(e) => setCreatedByField(e.target.value)}
                 placeholder="e.g. Name of creator"
                 className="border-amber-200 focus-visible:ring-amber-400"
               />
@@ -467,71 +545,75 @@ const [observationType, setObservationType] = useState<string>(
 
       {/* ── Sections 2, 3, 4, 5 — Side by side grid ──────────────────── */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-{/* ── Section 2 — Observation Type (radio buttons) ───────────────── */}
-<div className="md:col-span-1 rounded-xl border border-amber-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-sm p-5 overflow-hidden">
-  <h2 className="text-xs font-bold uppercase tracking-widest text-amber-900 bg-amber-300 -mx-5 -mt-5 mb-4 px-5 py-3 rounded-t-xl">
-    2. Observation Type
-  </h2>
+        {/* ── Section 2 — Observation Type (radio buttons) ───────────────── */}
+        <div className="md:col-span-1 rounded-xl border border-amber-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-sm p-5 overflow-hidden">
+          <h2 className="text-xs font-bold uppercase tracking-widest text-amber-900 bg-amber-300 -mx-5 -mt-5 mb-4 px-5 py-3 rounded-t-xl">
+            2. Observation Type
+          </h2>
 
-  {/* Radio buttons — single selection only */}
-  <div className="space-y-2">
-    {OBSERVATION_TYPES.map((type) => (
-      <label
-        key={type.value}
-        className={`flex items-start gap-2 cursor-pointer py-1.5 rounded-lg transition-colors ${
-          observationType === type.value
-            ? "bg-amber-100 dark:bg-amber-700/20"
-            : "hover:bg-amber-100/50 dark:hover:bg-slate-800"
-        }`}
-      >
-        <span className="text-sm shrink-0">{type.icon}</span>
-        <input
-          type="radio"
-          name="observationType"
-          value={type.value}
-          checked={observationType === type.value}
-          onChange={() => setObservationType(type.value)}
-          className="mt-0.5 accent-amber-400 shrink-0"
-        />
-        <span className="text-xs text-slate-600 dark:text-slate-300 leading-tight">
-          {type.label}
-        </span>
-      </label>
-    ))}
-  </div>
+          {/* Radio buttons — single selection only */}
+          <div className="space-y-2">
+            {OBSERVATION_TYPES.map((type) => (
+              <label
+                key={type.value}
+                className={`flex items-start gap-2 cursor-pointer py-1.5 rounded-lg transition-colors ${
+                  observationType === type.value
+                    ? "bg-amber-100 dark:bg-amber-700/20"
+                    : "hover:bg-amber-100/50 dark:hover:bg-slate-800"
+                }`}
+              >
+                <span className="text-sm shrink-0">{type.icon}</span>
+                <input
+                  type="radio"
+                  name="observationType"
+                  value={type.value}
+                  checked={observationType === type.value}
+                  onChange={() => setObservationType(type.value)}
+                  className="mt-0.5 accent-amber-400 shrink-0"
+                />
+                <span className="text-xs text-slate-600 dark:text-slate-300 leading-tight">
+                  {type.label}
+                </span>
+              </label>
+            ))}
+          </div>
 
-  {/* Divider */}
-  <div className="border-t border-amber-100 dark:border-slate-700 my-3" />
+          {/* Divider */}
+          <div className="border-t border-amber-100 dark:border-slate-700 my-3" />
 
-  {/* Was Stop Work Authority Used? — stays exactly as it is */}
-  <div>
-    <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-2">
-      Was Stop Work Authority Used?
-    </p>
-    <div className="flex items-center gap-4">
-      <label className="flex items-center gap-1.5 cursor-pointer">
-        <input
-          type="radio"
-          name="stopWork"
-          checked={stopWorkUsed === true}
-          onChange={() => setStopWorkUsed(true)}
-          className="accent-amber-400"
-        />
-        <span className="text-xs text-slate-600 dark:text-slate-300">Yes</span>
-      </label>
-      <label className="flex items-center gap-1.5 cursor-pointer">
-        <input
-          type="radio"
-          name="stopWork"
-          checked={stopWorkUsed === false}
-          onChange={() => setStopWorkUsed(false)}
-          className="accent-amber-400"
-        />
-        <span className="text-xs text-slate-600 dark:text-slate-300">No</span>
-      </label>
-    </div>
-  </div>
-</div>
+          {/* Was Stop Work Authority Used? — stays exactly as it is */}
+          <div>
+            <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-2">
+              Was Stop Work Authority Used?
+            </p>
+            <div className="flex items-center gap-4">
+              <label className="flex items-center gap-1.5 cursor-pointer">
+                <input
+                  type="radio"
+                  name="stopWork"
+                  checked={stopWorkUsed === true}
+                  onChange={() => setStopWorkUsed(true)}
+                  className="accent-amber-400"
+                />
+                <span className="text-xs text-slate-600 dark:text-slate-300">
+                  Yes
+                </span>
+              </label>
+              <label className="flex items-center gap-1.5 cursor-pointer">
+                <input
+                  type="radio"
+                  name="stopWork"
+                  checked={stopWorkUsed === false}
+                  onChange={() => setStopWorkUsed(false)}
+                  className="accent-amber-400"
+                />
+                <span className="text-xs text-slate-600 dark:text-slate-300">
+                  No
+                </span>
+              </label>
+            </div>
+          </div>
+        </div>
 
         {/* ── Section 3 — Observation Source (radio buttons) ──────────── */}
         <div className="md:col-span-1 rounded-xl border border-amber-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-sm p-5 overflow-hidden">
@@ -952,11 +1034,11 @@ const [observationType, setObservationType] = useState<string>(
         {/* Section 7 — Observation Description */}
         <div className="rounded-xl border border-amber-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-sm p-6 overflow-hidden">
           <h2 className="text-xs font-bold uppercase tracking-widest text-amber-900 bg-amber-300 -mx-6 -mt-6 mb-4 px-6 py-3 rounded-t-xl">
-            7. Observation Description
+            7. Observation Description *
           </h2>
           <label className={labelClass}>
             Describe what was observed. Be specific (Who, What, Where, When,
-            How)
+            How) *
           </label>
           <textarea
             value={observationDescription}

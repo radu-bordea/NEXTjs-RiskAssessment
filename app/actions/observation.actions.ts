@@ -25,11 +25,11 @@ export async function createObservation(data: ObservationFormValues) {
   if (!user) return { success: false, error: "User not found" }
 
   // 2. Validate with Zod
-  const validated = observationSchema.safeParse(data)
+const validated = observationSchema.safeParse(data)
   if (!validated.success) {
+    console.log("Zod validation errors:", validated.error.flatten())
     return { success: false, error: "Validation failed" }
   }
-
   const values = validated.data
 
   try {
@@ -61,7 +61,7 @@ export async function createObservation(data: ObservationFormValues) {
         date:            values.date,
         time:            values.time ?? null,
         observerName:    values.observerName,
-        observerType:    values.observerType ?? null,
+        createdByField: values.createdByField ?? null,
 
         observationType: values.observationType ?? null,
         stopWorkUsed:    values.stopWorkUsed ?? null,
