@@ -22,6 +22,9 @@ model User {
 
   risksCreated     Risk[] @relation("CreatedBy")
   risksStateUpdate Risk[] @relation("StateUpdatedBy")
+
+  observationsCreated      Observation[] @relation("ObservationCreatedBy")
+  observationsStateUpdated Observation[] @relation("ObservationStateUpdatedBy")
 }
 
 model Risk {
@@ -35,7 +38,7 @@ model Risk {
   reviewDate       DateTime?
   vesselDepartment String? // e.g. "Company-TMS Tankers Ltd - Office"
   raType           RAType    @default(NON_ROUTINE)
-  libraryCategory   String? // e.g. "Navigation"
+  libraryCategory  String? // e.g. "Navigation"
   libraryIndex     String? // e.g. "NAVIGATION:Navigation in Kiel Canal"
   state            RiskState @default(TEMPLATE)
   notes            String? // any extra notes
@@ -45,7 +48,7 @@ model Risk {
 
   alternativeWays     Boolean @default(false)
   alternativeWaysText String?
-  emergencyResponse String? // e.g. "Emergency response plan in place"
+  emergencyResponse   String? // e.g. "Emergency response plan in place"
   initiatorComment    String?
 
   // Relations
@@ -60,9 +63,9 @@ model Risk {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  assessmentRows RiskAssessmentRow[]
-  teamMembers    TeamMember[]
-  responsiblePersons    ResponsiblePersons[]
+  assessmentRows     RiskAssessmentRow[]
+  teamMembers        TeamMember[]
+  responsiblePersons ResponsiblePersons[]
 
   @@index([ref])
   @@index([state])
@@ -143,4 +146,108 @@ enum RFColor {
   GREEN
   YELLOW
   RED
+}
+
+enum ObservationState {
+  DRAFT
+  COMPLETED
+}
+
+model Observation {
+  id String @id @default(cuid())
+
+  // ─── Auto-generated title — server generates this on create, user never types it ───
+  title String
+
+  // ─── Section 1 — Observation Details ─────────────────────────────
+  vesselProject   String
+  location        String?
+  weatherSeaState String?
+  date            DateTime
+  time            String?
+  observerName    String
+  observerType    String? // "Created By" free text field
+
+  // ─── Section 2 — Observation Type (single select) ────────────────
+  observationType String?
+
+  // Was Stop Work Authority Used?
+  stopWorkUsed Boolean?
+
+  // ─── Section 3 — Observation Source (single select) ──────────────
+  observationSource      String?
+  observationSourceOther String?
+
+  // ─── Section 4 — Life Saving Rules IOGP (multi select) ────────────
+  lifeSavingRules      String[]
+  lifeSavingRulesOther String?
+
+  // ─── Section 5 — Risk Priority ────────────────────────────────────
+  riskPriority String?
+  hiPo         Boolean?
+
+  // ─── Section 6 — Observation Category ─────────────────────────────
+  categoryOperations      String[]
+  categoryOperationsOther String?
+
+  categorySurveyEquipment      String?
+  categorySurveyEquipmentOther String?
+
+  categoryWorkActivities      String[]
+  categoryWorkActivitiesOther String?
+
+  categoryHazards      String[]
+  categoryHazardsOther String?
+
+  categoryEnvironment      String[]
+  categoryEnvironmentOther String?
+
+  // ─── Section 7 — Observation Description ──────────────────────────
+  observationDescription String
+
+  // ─── Section 8 — Immediate Action Taken ───────────────────────────
+  immediateAction String?
+
+  // ─── Section 9 — Corrective / Preventive Action ───────────────────
+  correctiveAction     String?
+  correctiveActionDate DateTime?
+  preventiveAction     String?
+  preventiveActionDate DateTime?
+  responsiblePerson    String?
+
+  // ─── Section 10 — Root Cause (multi select) ───────────────────────
+  rootCauses     String[]
+  rootCauseOther String?
+
+  // ─── Section 11 — Potential Consequence (multi select) ────────────
+  potentialConsequences     String[]
+  potentialConsequenceOther String?
+
+  // ─── Section 12 — Lessons Learned ──────────────────────────────────
+  lessonsLearned    String?
+  preventRecurrence String?
+
+  // ─── Section 13 — Close Out (Admin/Manager only) ──────────────────
+  closedBy                  String?
+  dateClosed                DateTime?
+  correctiveActionEffective Boolean?
+  furtherActionRequired     Boolean?
+  closeOutName              String?
+
+  // ─── Document Footer ────────────────────────────────────────────────
+  officeResponse String?
+  effectiveDate  DateTime?
+
+  // ─── State ────────────────────────────────────────────────────────
+  state ObservationState @default(COMPLETED)
+
+  // ─── Relations ────────────────────────────────────────────────────
+  createdById String
+  createdBy   User   @relation("ObservationCreatedBy", fields: [createdById], references: [id])
+
+  stateUpdatedById String?
+  stateUpdatedBy   User?   @relation("ObservationStateUpdatedBy", fields: [stateUpdatedById], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

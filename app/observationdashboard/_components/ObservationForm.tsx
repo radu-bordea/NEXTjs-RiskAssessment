@@ -39,7 +39,7 @@ import {
   CATEGORY_ENVIRONMENT,
   ROOT_CAUSES,
   POTENTIAL_CONSEQUENCES,
-} from "./observationOptions"
+} from "./observationOptions";
 
 type User = {
   id: string;
@@ -52,8 +52,6 @@ type Props = {
   currentUser: User;
   observation?: any;
 };
-
-
 
 export default function ObservationForm({ currentUser, observation }: Props) {
   const router = useRouter();
@@ -113,14 +111,13 @@ export default function ObservationForm({ currentUser, observation }: Props) {
 
   // ─── Section 2 state ─────────────────────────────────────────────────────
 
-  /**
-   * observationTypes — array of selected type values
-   * Multiple checkboxes — user can select more than one
-   * e.g. ["UNSAFE_ACT", "NEAR_MISS"]
-   */
-  const [observationTypes, setObservationTypes] = useState<string[]>(
-    observation?.observationTypes ?? [],
-  );
+/**
+ * observationType — single selected type value
+ * Radio buttons — only one can be selected
+ */
+const [observationType, setObservationType] = useState<string>(
+  observation?.observationType ?? "",
+);
 
   /**
    * stopWorkUsed — was stop work authority used?
@@ -321,14 +318,6 @@ export default function ObservationForm({ currentUser, observation }: Props) {
 
   // ─── Checkbox toggle helper ───────────────────────────────────────────────
   /**
-   * toggleType — adds or removes a type from the observationTypes array
-   * Used for section 2 checkboxes
-   */
-  const toggleType = (value: string) => {
-    setObservationTypes((prev) =>
-      prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value],
-    );
-  };
 
   /**
    * toggleLifeSavingRule — adds or removes a rule from lifeSavingRules array
@@ -423,27 +412,11 @@ export default function ObservationForm({ currentUser, observation }: Props) {
               />
             </div>
             <div>
-              <label className={labelClass}>Observer Name *</label>
+              <label className={labelClass}>Weather / Sea State</label>
               <Input
-                value={observerName}
-                onChange={(e) => setObserverName(e.target.value)}
-                className="border-amber-200 focus-visible:ring-amber-400"
-              />
-            </div>
-            {/* <div>
-              <label className={labelClass}>Created By</label>
-              <Input
-                value={currentUser.name ?? currentUser.email}
-                readOnly
-                className="border-amber-200 bg-amber-50 cursor-not-allowed text-slate-400"
-              />
-            </div> */}
-            <div>
-              <label className={labelClass}>Created By</label>
-              <Input
-                value={observerType}
-                onChange={(e) => setObserverType(e.target.value)}
-                placeholder="e.g. Name of creator"
+                value={weatherSeaState}
+                onChange={(e) => setWeatherSeaState(e.target.value)}
+                placeholder="e.g. Calm, Sunny"
                 className="border-amber-200 focus-visible:ring-amber-400"
               />
             </div>
@@ -451,15 +424,6 @@ export default function ObservationForm({ currentUser, observation }: Props) {
 
           {/* ── Right column ─────────────────────────────────────────── */}
           <div className="space-y-4">
-            <div>
-              <label className={labelClass}>Observation No. *</label>
-              <Input
-                value={observationNo}
-                onChange={(e) => setObservationNo(e.target.value)}
-                placeholder="e.g. OBS-2026-001"
-                className="border-amber-200 focus-visible:ring-amber-400"
-              />
-            </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className={labelClass}>Date *</label>
@@ -481,11 +445,19 @@ export default function ObservationForm({ currentUser, observation }: Props) {
               </div>
             </div>
             <div>
-              <label className={labelClass}>Weather / Sea State</label>
+              <label className={labelClass}>Observer Name *</label>
               <Input
-                value={weatherSeaState}
-                onChange={(e) => setWeatherSeaState(e.target.value)}
-                placeholder="e.g. Calm, Sunny"
+                value={observerName}
+                onChange={(e) => setObserverName(e.target.value)}
+                className="border-amber-200 focus-visible:ring-amber-400"
+              />
+            </div>
+            <div>
+              <label className={labelClass}>Created By</label>
+              <Input
+                value={observerType}
+                onChange={(e) => setObserverType(e.target.value)}
+                placeholder="e.g. Name of creator"
                 className="border-amber-200 focus-visible:ring-amber-400"
               />
             </div>
@@ -495,75 +467,71 @@ export default function ObservationForm({ currentUser, observation }: Props) {
 
       {/* ── Sections 2, 3, 4, 5 — Side by side grid ──────────────────── */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        {/* ── Section 2 — Observation Type (checkboxes) ───────────────── */}
-        <div className="md:col-span-1 rounded-xl border border-amber-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-sm p-5 overflow-hidden">
-          <h2 className="text-xs font-bold uppercase tracking-widest text-amber-900 bg-amber-300 -mx-5 -mt-5 mb-4 px-5 py-3 rounded-t-xl">
-            2. Observation Type
-          </h2>
+{/* ── Section 2 — Observation Type (radio buttons) ───────────────── */}
+<div className="md:col-span-1 rounded-xl border border-amber-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-sm p-5 overflow-hidden">
+  <h2 className="text-xs font-bold uppercase tracking-widest text-amber-900 bg-amber-300 -mx-5 -mt-5 mb-4 px-5 py-3 rounded-t-xl">
+    2. Observation Type
+  </h2>
 
-          {/* Checkboxes — multiple selection allowed */}
-          <div className="space-y-2">
-            {OBSERVATION_TYPES.map((type) => (
-              <label
-                key={type.value}
-                className={`flex items-start gap-2 cursor-pointer py-1.5 rounded-lg transition-colors ${
-                  observationTypes.includes(type.value)
-                    ? "bg-amber-100 dark:bg-amber-700/20"
-                    : "hover:bg-amber-100/50 dark:hover:bg-slate-800"
-                }`}
-              >
-                <span className="text-sm shrink-0">{type.icon}</span>
-                <input
-                  type="checkbox"
-                  value={type.value}
-                  checked={observationTypes.includes(type.value)}
-                  onChange={() => toggleType(type.value)}
-                  className="mt-0.5 accent-amber-400 shrink-0"
-                />
+  {/* Radio buttons — single selection only */}
+  <div className="space-y-2">
+    {OBSERVATION_TYPES.map((type) => (
+      <label
+        key={type.value}
+        className={`flex items-start gap-2 cursor-pointer py-1.5 rounded-lg transition-colors ${
+          observationType === type.value
+            ? "bg-amber-100 dark:bg-amber-700/20"
+            : "hover:bg-amber-100/50 dark:hover:bg-slate-800"
+        }`}
+      >
+        <span className="text-sm shrink-0">{type.icon}</span>
+        <input
+          type="radio"
+          name="observationType"
+          value={type.value}
+          checked={observationType === type.value}
+          onChange={() => setObservationType(type.value)}
+          className="mt-0.5 accent-amber-400 shrink-0"
+        />
+        <span className="text-xs text-slate-600 dark:text-slate-300 leading-tight">
+          {type.label}
+        </span>
+      </label>
+    ))}
+  </div>
 
-                <span className="text-xs text-slate-600 dark:text-slate-300 leading-tight">
-                  {type.label}
-                </span>
-              </label>
-            ))}
-          </div>
+  {/* Divider */}
+  <div className="border-t border-amber-100 dark:border-slate-700 my-3" />
 
-          {/* Divider */}
-          <div className="border-t border-amber-100 dark:border-slate-700 my-3" />
-
-          {/* Was Stop Work Authority Used? */}
-          <div>
-            <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-2">
-              Was Stop Work Authority Used?
-            </p>
-            <div className="flex items-center gap-4">
-              <label className="flex items-center gap-1.5 cursor-pointer">
-                <input
-                  type="radio"
-                  name="stopWork"
-                  checked={stopWorkUsed === true}
-                  onChange={() => setStopWorkUsed(true)}
-                  className="accent-amber-400"
-                />
-                <span className="text-xs text-slate-600 dark:text-slate-300">
-                  Yes
-                </span>
-              </label>
-              <label className="flex items-center gap-1.5 cursor-pointer">
-                <input
-                  type="radio"
-                  name="stopWork"
-                  checked={stopWorkUsed === false}
-                  onChange={() => setStopWorkUsed(false)}
-                  className="accent-amber-400"
-                />
-                <span className="text-xs text-slate-600 dark:text-slate-300">
-                  No
-                </span>
-              </label>
-            </div>
-          </div>
-        </div>
+  {/* Was Stop Work Authority Used? — stays exactly as it is */}
+  <div>
+    <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-2">
+      Was Stop Work Authority Used?
+    </p>
+    <div className="flex items-center gap-4">
+      <label className="flex items-center gap-1.5 cursor-pointer">
+        <input
+          type="radio"
+          name="stopWork"
+          checked={stopWorkUsed === true}
+          onChange={() => setStopWorkUsed(true)}
+          className="accent-amber-400"
+        />
+        <span className="text-xs text-slate-600 dark:text-slate-300">Yes</span>
+      </label>
+      <label className="flex items-center gap-1.5 cursor-pointer">
+        <input
+          type="radio"
+          name="stopWork"
+          checked={stopWorkUsed === false}
+          onChange={() => setStopWorkUsed(false)}
+          className="accent-amber-400"
+        />
+        <span className="text-xs text-slate-600 dark:text-slate-300">No</span>
+      </label>
+    </div>
+  </div>
+</div>
 
         {/* ── Section 3 — Observation Source (radio buttons) ──────────── */}
         <div className="md:col-span-1 rounded-xl border border-amber-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-sm p-5 overflow-hidden">

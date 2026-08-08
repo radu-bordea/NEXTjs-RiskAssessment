@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 /**
  * ObservationTable — Observation Card dashboard
@@ -13,58 +13,57 @@
  *  - MEMBER        → can create and edit own drafts
  */
 
-import { useState, useMemo } from "react"
-import { useRouter } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import Link from "next/link"
-import Image from "next/image"
+import { useState, useMemo } from "react";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import Image from "next/image";
 
 type Observation = {
-  id:            string
-  title:         string
-  description:   string
-  vesselProject: string
-  observerName:  string
-  date:          Date
-  status:        string
-}
+  id: string;
+  title: string;
+  description: string;
+  vesselProject: string;
+  date: Date;
+  status: string;
+};
 
 // ─── Status badge styles ──────────────────────────────────────────────────────
 /** Visual badge colors for each observation state */
 const statusStyle: Record<string, string> = {
-  DRAFT:     "bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 whitespace-nowrap",
-  COMPLETED: "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 whitespace-nowrap",
-}
+  DRAFT:
+    "bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 whitespace-nowrap",
+  COMPLETED:
+    "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 whitespace-nowrap",
+};
 
 // ─── Shared Tailwind classes ──────────────────────────────────────────────────
 const inputClass =
-  "px-3 py-2 rounded-lg border border-amber-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm text-slate-700 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-400 transition-colors"
+  "px-3 py-2 rounded-lg border border-amber-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm text-slate-700 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-400 transition-colors";
 
 const selectClass =
-  "px-3 py-2 rounded-lg border border-amber-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-400 transition-colors"
+  "px-3 py-2 rounded-lg border border-amber-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-400 transition-colors";
 
 export default function ObservationTable({
   observations,
 }: {
-  observations: Observation[]
+  observations: Observation[];
 }) {
-  const router = useRouter()
+  const router = useRouter();
 
   /** Filter state — all start empty */
   const [filters, setFilters] = useState({
-    title:         "",
+    title: "",
     vesselProject: "",
-    observerName:  "",
-    status:        "",
-  })
+    status: "",
+  });
 
   /** Helper to update a single filter key */
   const set = (key: string, value: string) =>
-    setFilters((prev) => ({ ...prev, [key]: value }))
+    setFilters((prev) => ({ ...prev, [key]: value }));
 
   /** Reset all filters to empty */
-  const reset = () =>
-    setFilters({ title: "", vesselProject: "", observerName: "", status: "" })
+  const reset = () => setFilters({ title: "", vesselProject: "", status: "" });
 
   /**
    * filtered — applies all active filters and sorts by date descending
@@ -73,18 +72,26 @@ export default function ObservationTable({
   const filtered = useMemo(() => {
     return observations
       .filter((o) => {
-        if (filters.title && !o.title.toLowerCase().includes(filters.title.toLowerCase())) return false
-        if (filters.vesselProject && !o.vesselProject.toLowerCase().includes(filters.vesselProject.toLowerCase())) return false
-        if (filters.observerName && !o.observerName.toLowerCase().includes(filters.observerName.toLowerCase())) return false
-        if (filters.status && o.status !== filters.status) return false
-        return true
+        if (
+          filters.title &&
+          !o.title.toLowerCase().includes(filters.title.toLowerCase())
+        )
+          return false;
+        if (
+          filters.vesselProject &&
+          !o.vesselProject
+            .toLowerCase()
+            .includes(filters.vesselProject.toLowerCase())
+        )
+          return false;
+        if (filters.status && o.status !== filters.status) return false;
+        return true;
       })
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-  }, [observations, filters])
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }, [observations, filters]);
 
   return (
     <div className="min-h-screen bg-[#fffffa] dark:bg-slate-950 text-slate-900 dark:text-slate-100 px-6 md:px-10 py-10 font-sans">
-
       {/* ── Page Header ───────────────────────────────────────────────── */}
       <div className="flex items-center justify-between mb-8 flex-wrap gap-4">
         <Link href="/">
@@ -97,7 +104,7 @@ export default function ObservationTable({
             priority
           />
         </Link>
-                {/** Back to home button */}
+        {/** Back to home button */}
         <Link
           href="/"
           className="text-xs px-3 py-1.5 rounded-lg border border-amber-300 hover:bg-amber-100 dark:hover:bg-slate-800 transition-colors font-medium"
@@ -129,8 +136,7 @@ export default function ObservationTable({
         <p className="text-xs font-semibold text-amber-600 dark:text-amber-400 uppercase tracking-widest mb-4">
           Filters
         </p>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-4">
           {/* Title text search */}
           <input
             type="text"
@@ -146,15 +152,6 @@ export default function ObservationTable({
             placeholder="Vessel / Project"
             value={filters.vesselProject}
             onChange={(e) => set("vesselProject", e.target.value)}
-            className={inputClass}
-          />
-
-          {/* Observer name text search */}
-          <input
-            type="text"
-            placeholder="Observer Name"
-            value={filters.observerName}
-            onChange={(e) => set("observerName", e.target.value)}
             className={inputClass}
           />
 
@@ -182,14 +179,12 @@ export default function ObservationTable({
       <div className="rounded-xl overflow-hidden border border-amber-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-
             {/* Table header — amber background */}
             <thead className="bg-amber-300 border-b border-amber-400">
               <tr>
                 {[
                   "Title",
                   "Description",
-                  "Observer",
                   "Date",
                   "Status",
                   "Actions",
@@ -209,7 +204,7 @@ export default function ObservationTable({
               {filtered.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={6}
+                    colSpan={5}
                     className="px-4 py-10 text-center text-slate-400 text-sm"
                   >
                     No observations found matching your filters.
@@ -228,7 +223,11 @@ export default function ObservationTable({
                     {/* Title — clickable, navigates to view page */}
                     <td
                       className="px-4 py-3 font-medium text-amber-600 dark:text-amber-400 cursor-pointer hover:underline whitespace-nowrap"
-                      onClick={() => router.push(`/observationdashboard/observations/${o.id}`)}
+                      onClick={() =>
+                        router.push(
+                          `/observationdashboard/observations/${o.id}`,
+                        )
+                      }
                     >
                       {o.title}
                     </td>
@@ -238,11 +237,6 @@ export default function ObservationTable({
                       {o.description}
                     </td>
 
-                    {/* Observer name */}
-                    <td className="px-4 py-3 whitespace-nowrap text-slate-700 dark:text-slate-300">
-                      {o.observerName}
-                    </td>
-
                     {/* Date */}
                     <td className="px-4 py-3 whitespace-nowrap text-slate-600 dark:text-slate-400">
                       {new Date(o.date).toLocaleDateString("en-GB")}
@@ -250,7 +244,9 @@ export default function ObservationTable({
 
                     {/* Status badge */}
                     <td className="px-4 py-3">
-                      <span className={`text-xs px-2 py-1 rounded-full font-medium ${statusStyle[o.status] ?? ""}`}>
+                      <span
+                        className={`text-xs px-2 py-1 rounded-full font-medium ${statusStyle[o.status] ?? ""}`}
+                      >
                         {o.status}
                       </span>
                     </td>
@@ -258,13 +254,16 @@ export default function ObservationTable({
                     {/* ── Action buttons ─────────────────────────────── */}
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-1">
-
                         {/* View — all roles, all states */}
                         <Button
                           title="View"
                           variant="ghost"
                           size="sm"
-                          onClick={() => router.push(`/observationdashboard/observations/${o.id}`)}
+                          onClick={() =>
+                            router.push(
+                              `/observationdashboard/observations/${o.id}`,
+                            )
+                          }
                           className="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-slate-800"
                         >
                           👁
@@ -276,7 +275,11 @@ export default function ObservationTable({
                             title="Edit Draft"
                             variant="ghost"
                             size="sm"
-                            onClick={() => router.push(`/observationdashboard/observations/${o.id}/edit`)}
+                            onClick={() =>
+                              router.push(
+                                `/observationdashboard/observations/${o.id}/edit`,
+                              )
+                            }
                             className="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-slate-800"
                           >
                             ✏️
@@ -289,7 +292,11 @@ export default function ObservationTable({
                             title="Download PDF"
                             variant="ghost"
                             size="sm"
-                            onClick={() => router.push(`/observationdashboard/observations/${o.id}/pdf`)}
+                            onClick={() =>
+                              router.push(
+                                `/observationdashboard/observations/${o.id}/pdf`,
+                              )
+                            }
                             className="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-slate-800"
                           >
                             📄
@@ -305,5 +312,5 @@ export default function ObservationTable({
         </div>
       </div>
     </div>
-  )
+  );
 }
