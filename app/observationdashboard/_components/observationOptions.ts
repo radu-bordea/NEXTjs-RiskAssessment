@@ -49,7 +49,7 @@ export const LIFE_SAVING_RULES = [
   { value: "WORKING_AT_HEIGHT",  icon: "🪜", label: "Working at Height"            },
   { value: "CONFINED_SPACE",     icon: "🚪", label: "Confined Space"               },
   { value: "LIFT_OPERATIONS",    icon: "🏗️", label: "Lift Operations"              },
-  { value: "WORKING_OVER_WATER", icon: "🌊", label: "Working Over / Near Water"    },
+  { value: "WORKING_OVER_WATER", icon: "🌊", label: "Working Overboard / Working Near the Ship's Side"    },
   { value: "ELECTRICAL_SAFETY",  icon: "⚡", label: "Electrical Safety"            },
   { value: "SIMOPS",             icon: "⚙️", label: "SIMOPS"                       },
 ]

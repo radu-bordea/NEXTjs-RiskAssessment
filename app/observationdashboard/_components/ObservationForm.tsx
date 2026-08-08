@@ -423,15 +423,6 @@ export default function ObservationForm({ currentUser, observation }: Props) {
               />
             </div>
             <div>
-              <label className={labelClass}>Job / Activity Observed *</label>
-              <Input
-                value={jobActivity}
-                onChange={(e) => setJobActivity(e.target.value)}
-                placeholder="e.g. Crane Operations"
-                className="border-amber-200 focus-visible:ring-amber-400"
-              />
-            </div>
-            <div>
               <label className={labelClass}>Observer Name *</label>
               <Input
                 value={observerName}
@@ -461,7 +452,7 @@ export default function ObservationForm({ currentUser, observation }: Props) {
           {/* ── Right column ─────────────────────────────────────────── */}
           <div className="space-y-4">
             <div>
-              <label className={labelClass}>Observation No.</label>
+              <label className={labelClass}>Observation No. *</label>
               <Input
                 value={observationNo}
                 onChange={(e) => setObservationNo(e.target.value)}
@@ -488,15 +479,6 @@ export default function ObservationForm({ currentUser, observation }: Props) {
                   className="border-amber-200 focus-visible:ring-amber-400"
                 />
               </div>
-            </div>
-            <div>
-              <label className={labelClass}>Department / Company</label>
-              <Input
-                value={department}
-                onChange={(e) => setDepartment(e.target.value)}
-                placeholder="e.g. Deck Department"
-                className="border-amber-200 focus-visible:ring-amber-400"
-              />
             </div>
             <div>
               <label className={labelClass}>Weather / Sea State</label>
