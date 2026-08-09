@@ -255,7 +255,7 @@ export default function ObservationTable({
                               `/observationdashboard/observations/${o.id}`,
                             )
                           }
-                          className="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-slate-800"
+                          className="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-slate-800 cursor-pointer"
                         >
                           👁
                         </Button>
@@ -271,7 +271,7 @@ export default function ObservationTable({
                                 `/observationdashboard/observations/${o.id}/edit`,
                               )
                             }
-                            className="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-slate-800"
+                            className="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-slate-800 cursor-pointer"
                           >
                             ✏️
                           </Button>
@@ -288,7 +288,7 @@ export default function ObservationTable({
                                 `/observationdashboard/observations/${o.id}/pdf`,
                               )
                             }
-                            className="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-slate-800"
+                            className="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-slate-800 cursor-pointer"
                           >
                             📄
                           </Button>
