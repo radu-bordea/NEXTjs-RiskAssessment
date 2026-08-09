@@ -67,3 +67,15 @@ export type User = {
   name: string | null;
   email: string;
 } | null;
+
+
+// ─── Observation types ─────────────────────────────────────────────────────
+
+export type Observation = {
+  id:                     string
+  title:                  string
+  observationDescription: string
+  vesselProject:          string
+  date:                   Date
+  state:                  "DRAFT" | "COMPLETED"
+}

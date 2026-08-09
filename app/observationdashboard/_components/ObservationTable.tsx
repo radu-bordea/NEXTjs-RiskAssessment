@@ -19,14 +19,7 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import Image from "next/image";
 
-type Observation = {
-  id: string;
-  title: string;
-  description: string;
-  vesselProject: string;
-  date: Date;
-  status: string;
-};
+import type { Observation, User } from "@/types";
 
 // ─── Status badge styles ──────────────────────────────────────────────────────
 /** Visual badge colors for each observation state */
@@ -46,8 +39,10 @@ const selectClass =
 
 export default function ObservationTable({
   observations,
+  currentUser,
 }: {
   observations: Observation[];
+  currentUser: User;
 }) {
   const router = useRouter();
 
@@ -84,7 +79,7 @@ export default function ObservationTable({
             .includes(filters.vesselProject.toLowerCase())
         )
           return false;
-        if (filters.status && o.status !== filters.status) return false;
+        if (filters.status && o.state !== filters.status) return false;
         return true;
       })
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
@@ -182,20 +177,16 @@ export default function ObservationTable({
             {/* Table header — amber background */}
             <thead className="bg-amber-300 border-b border-amber-400">
               <tr>
-                {[
-                  "Title",
-                  "Description",
-                  "Date",
-                  "Status",
-                  "Actions",
-                ].map((h) => (
-                  <th
-                    key={h}
-                    className="text-left px-4 py-3 font-semibold text-amber-900 text-xs uppercase tracking-wide whitespace-nowrap"
-                  >
-                    {h}
-                  </th>
-                ))}
+                {["Title", "Description", "Date", "Status", "Actions"].map(
+                  (h) => (
+                    <th
+                      key={h}
+                      className="text-left px-4 py-3 font-semibold text-amber-900 text-xs uppercase tracking-wide whitespace-nowrap"
+                    >
+                      {h}
+                    </th>
+                  ),
+                )}
               </tr>
             </thead>
 
@@ -234,7 +225,7 @@ export default function ObservationTable({
 
                     {/* Description — truncated */}
                     <td className="px-4 py-3 text-slate-600 dark:text-slate-300 max-w-[250px] truncate">
-                      {o.description}
+                      {o.observationDescription}
                     </td>
 
                     {/* Date */}
@@ -245,9 +236,9 @@ export default function ObservationTable({
                     {/* Status badge */}
                     <td className="px-4 py-3">
                       <span
-                        className={`text-xs px-2 py-1 rounded-full font-medium ${statusStyle[o.status] ?? ""}`}
+                        className={`text-xs px-2 py-1 rounded-full font-medium ${statusStyle[o.state] ?? ""}`}
                       >
-                        {o.status}
+                        {o.state}
                       </span>
                     </td>
 
@@ -270,7 +261,7 @@ export default function ObservationTable({
                         </Button>
 
                         {/* Edit — DRAFT only, all roles */}
-                        {o.status === "DRAFT" && (
+                        {o.state === "DRAFT" && (
                           <Button
                             title="Edit Draft"
                             variant="ghost"
@@ -287,7 +278,7 @@ export default function ObservationTable({
                         )}
 
                         {/* Download PDF — COMPLETED only, all roles */}
-                        {o.status === "COMPLETED" && (
+                        {o.state === "COMPLETED" && (
                           <Button
                             title="Download PDF"
                             variant="ghost"
