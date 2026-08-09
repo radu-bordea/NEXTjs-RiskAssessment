@@ -24,20 +24,20 @@ export default function Home() {
             identify, track, and mitigate operational risks across their entire
             fleet — from vessel to voyage.
           </p>
-          <div className="flex items-center gap-3 flex-wrap">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 w-full max-w-2xl">
             <Link
               href="/dashboard"
-              className="flex items-center gap-2 px-5 py-2.5 bg-[#0F6E56] text-[#E1F5EE] rounded-lg text-sm hover:bg-[#085041] transition-colors"
+              className="flex items-center justify-center gap-2 px-5 py-3 bg-[#0F6E56] text-[#E1F5EE] rounded-lg text-sm hover:bg-[#085041] transition-colors text-center"
             >
               🔒 Access Fleet Risk Assessment Portal
             </Link>
             <Link
               href="/observationdashboard"
-              className="flex items-center gap-2 px-5 py-2.5 bg-amber-300 text-amber-800 border border-amber-300 rounded-lg text-sm hover:bg-amber-400 transition-colors"
+              className="flex items-center justify-center gap-2 px-5 py-3 bg-amber-300 text-amber-800 border border-amber-300 rounded-lg text-sm hover:bg-amber-400 transition-colors text-center"
             >
               👁 Access Fleet Observation Card Portal
             </Link>
-            <button className="px-4 py-2.5 text-sm text-zinc-500 border border-zinc-200 dark:border-zinc-700 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors">
+            <button className="px-4 py-3 text-sm text-zinc-500 border border-zinc-200 dark:border-zinc-700 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors text-center">
               Learn more
             </button>
           </div>

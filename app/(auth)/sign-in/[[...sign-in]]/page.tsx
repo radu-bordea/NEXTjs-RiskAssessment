@@ -6,7 +6,7 @@ export default function SignInPage() {
       {/* Left panel — Clerk handles the form */}
       <div className="flex items-center justify-center p-8 bg-white dark:bg-zinc-950">
         <SignIn
-          forceRedirectUrl="/dashboard"
+          forceRedirectUrl="/"
           appearance={{
             elements: {
               rootBox: "w-full max-w-sm",
@@ -41,7 +41,7 @@ export default function SignInPage() {
               back aboard.
             </em>
           </h1>
-          <p className="text-[#5DCAA5] text-sm leading-relaxed max-w-[220px]">
+          <p className="text-[#5DCAA5] text-sm leading-relaxed max-w-55">
             Sign in to access your fleet's risk register and assessment
             dashboard.
           </p>
