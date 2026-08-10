@@ -87,5 +87,17 @@ export const observationSchema = z.object({
   effectiveDate: z.coerce.date().optional().nullable(),
 });
 
+/**
+ * observationDraftSchema — relaxed validation for saving progress
+ * Only vesselProject and observerName required — everything else optional
+ * since a draft can be incomplete.
+ */
+export const observationDraftSchema = observationSchema.partial({
+  createdByField: true,
+  observationType: true,
+  observationDescription: true,
+  date: true,
+})
+
 /** Type inferred from the schema — used for form state and action params */
 export type ObservationFormValues = z.infer<typeof observationSchema>;

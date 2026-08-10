@@ -41,7 +41,23 @@ import {
   POTENTIAL_CONSEQUENCES,
 } from "./observationOptions";
 
-import { createObservation } from "@/app/actions/observation.actions";
+import {
+  createObservation,
+  saveObservationDraft,
+  deleteObservation,
+} from "@/app/actions/observation.actions";
+
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 type User = {
   id: string;
@@ -452,9 +468,80 @@ export default function ObservationForm({ currentUser, observation }: Props) {
   const onSaveDraft = async () => {
     setDraftLoading(true);
     try {
-      // TODO: call saveObservationDraft action
-      toast.success("Draft saved!");
-      router.push("/observationdashboard");
+      // Helper: converts empty string to undefined so Zod .partial() works correctly
+      const emptyToUndefined = (val: string) => (val === "" ? undefined : val);
+
+      const result = await saveObservationDraft({
+        vesselProject,
+        location,
+        weatherSeaState,
+        date: date ? new Date(date) : undefined,
+        time,
+        observerName,
+        createdByField: emptyToUndefined(createdByField),
+
+        observationType: emptyToUndefined(observationType),
+        stopWorkUsed,
+
+        observationSource,
+        observationSourceOther,
+
+        lifeSavingRules,
+        lifeSavingRulesOther,
+
+        riskPriority,
+        hiPo,
+
+        categoryOperations,
+        categoryOperationsOther,
+        categorySurveyEquipment,
+        categorySurveyEquipmentOther,
+        categoryWorkActivities,
+        categoryWorkActivitiesOther,
+        categoryHazards,
+        categoryHazardsOther,
+        categoryEnvironment,
+        categoryEnvironmentOther,
+
+        observationDescription: emptyToUndefined(observationDescription),
+
+        immediateAction,
+
+        correctiveAction,
+        correctiveActionDate: correctiveActionDate
+          ? new Date(correctiveActionDate)
+          : null,
+        preventiveAction,
+        preventiveActionDate: preventiveActionDate
+          ? new Date(preventiveActionDate)
+          : null,
+        responsiblePerson,
+
+        rootCauses,
+        rootCauseOther,
+
+        potentialConsequences,
+        potentialConsequenceOther,
+
+        lessonsLearned,
+        preventRecurrence,
+
+        closedBy,
+        dateClosed: dateClosed ? new Date(dateClosed) : null,
+        correctiveActionEffective,
+        furtherActionRequired,
+        closeOutName,
+
+        officeResponse,
+        effectiveDate: effectiveDate ? new Date(effectiveDate) : null,
+      });
+
+      if (result.success) {
+        toast.success("Draft saved!");
+        router.push("/observationdashboard");
+      } else {
+        toast.error(result.error ?? "Failed to save draft");
+      }
     } catch {
       toast.error("Something went wrong");
     } finally {
@@ -1513,36 +1600,109 @@ export default function ObservationForm({ currentUser, observation }: Props) {
         </div>
       </div>
 
-      {/* ── Submit / Save Draft / Cancel ──────────────────────────────── */}
-      <div className="flex items-center gap-4 pb-10 flex-wrap">
-        <Button
-          type="button"
-          disabled={loading || draftLoading}
-          onClick={onSubmit}
-          className="px-8 py-3 bg-amber-300 hover:bg-amber-400 text-amber-900 border border-amber-200 shadow-sm"
-        >
-          {loading ? "Submitting..." : "Submit"}
-        </Button>
+      {/* ── Submit / Save Draft / Cancel / Delete ─────────────────────── */}
+      <div className="flex items-center justify-between flex-wrap gap-4 pb-10">
+        <div className="flex items-center gap-4 flex-wrap">
+          <Button
+            type="button"
+            disabled={loading || draftLoading}
+            onClick={onSubmit}
+            className="px-8 py-3 bg-amber-300 hover:bg-amber-400 text-amber-900 border border-amber-200 shadow-sm"
+          >
+            {loading ? "Submitting..." : "Submit"}
+          </Button>
 
-        <Button
-          type="button"
-          disabled={loading || draftLoading}
-          onClick={onSaveDraft}
-          className="px-8 py-3 bg-white hover:bg-amber-50 text-amber-900 border border-amber-200 shadow-sm"
-        >
-          {draftLoading ? "Saving..." : "Save Draft"}
-        </Button>
+          <Button
+            type="button"
+            disabled={loading || draftLoading}
+            onClick={onSaveDraft}
+            className="px-8 py-3 bg-white hover:bg-amber-50 text-amber-900 border border-amber-200 shadow-sm"
+          >
+            {draftLoading ? "Saving..." : "Save Draft"}
+          </Button>
 
+          <Button
+            type="button"
+            variant="outline"
+            disabled={loading || draftLoading}
+            onClick={() => router.push("/observationdashboard")}
+            className="border-amber-200 text-slate-600 hover:bg-amber-50"
+          >
+            Cancel
+          </Button>
+        </div>
+
+        {/* Delete — edit mode only, permission checked here */}
+        {isEditMode &&
+          (currentUser.role === "ADMIN" ||
+            currentUser.role === "MANAGER" ||
+            (currentUser.role === "MEMBER" &&
+              observation?.state === "DRAFT" &&
+              observation?.createdById === currentUser.id)) && (
+            <DeleteObservationButton observationId={observation.id} />
+          )}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * DeleteObservationButton — Confirmation dialog before deleting
+ *
+ * Visibility rules handled by parent — only rendered when:
+ * ADMIN/MANAGER (any state) or MEMBER (own draft only)
+ */
+function DeleteObservationButton({ observationId }: { observationId: string }) {
+  const router = useRouter();
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDelete = async () => {
+    setDeleting(true);
+    try {
+      const result = await deleteObservation(observationId);
+      if (result.success) {
+        toast.success("Observation deleted.");
+        router.push("/observationdashboard");
+      } else {
+        toast.error(result.error ?? "Failed to delete");
+      }
+    } catch {
+      toast.error("Something went wrong");
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  return (
+    <AlertDialog>
+      <AlertDialogTrigger asChild>
         <Button
           type="button"
           variant="outline"
-          disabled={loading || draftLoading}
-          onClick={() => router.push("/observationdashboard")}
-          className="border-amber-200 text-slate-600 hover:bg-amber-50"
+          className="border-red-200 text-red-500 hover:bg-red-50 hover:text-red-600"
         >
-          Cancel
+          Delete Observation
         </Button>
-      </div>
-    </div>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Delete Observation Card?</AlertDialogTitle>
+          <AlertDialogDescription>
+            This action cannot be undone. The observation and all its data will
+            be permanently deleted.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction
+            onClick={handleDelete}
+            disabled={deleting}
+            className="bg-red-500 hover:bg-red-600 text-white"
+          >
+            {deleting ? "Deleting..." : "Yes, delete"}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }
