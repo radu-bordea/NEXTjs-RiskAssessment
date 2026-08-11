@@ -44,6 +44,7 @@ import {
 import {
   createObservation,
   saveObservationDraft,
+  updateObservation,
   deleteObservation,
 } from "@/app/actions/observation.actions";
 
@@ -362,192 +363,195 @@ export default function ObservationForm({ currentUser, observation }: Props) {
     "rounded-xl border border-amber-200 dark:border-slate-800 bg-amber-50/30 dark:bg-slate-900/50 p-6 mb-6 min-h-[80px] flex items-center justify-center";
 
   // ─── Handlers ────────────────────────────────────────────────────────────
-  const onSubmit = async () => {
-    // Manual validation for required fields before submitting
-    if (!vesselProject) {
-      toast.error("Vessel / Project is required");
-      return;
+const onSubmit = async () => {
+  // Manual validation for required fields before submitting
+  if (!vesselProject) {
+    toast.error("Vessel / Project is required")
+    return
+  }
+  if (!observerName) {
+    toast.error("Observer Name is required")
+    return
+  }
+  if (!createdByField) {
+    toast.error("Created By is required")
+    return
+  }
+  if (!observationType) {
+    toast.error("Please select an Observation Type")
+    return
+  }
+  if (!observationDescription) {
+    toast.error("Observation Description is required")
+    return
+  }
+
+  setLoading(true)
+  try {
+    const payload = {
+      vesselProject,
+      location,
+      weatherSeaState,
+      date: new Date(date),
+      time,
+      observerName,
+      createdByField,
+
+      observationType,
+      stopWorkUsed,
+
+      observationSource,
+      observationSourceOther,
+
+      lifeSavingRules,
+      lifeSavingRulesOther,
+
+      riskPriority,
+      hiPo,
+
+      categoryOperations,
+      categoryOperationsOther,
+      categorySurveyEquipment,
+      categorySurveyEquipmentOther,
+      categoryWorkActivities,
+      categoryWorkActivitiesOther,
+      categoryHazards,
+      categoryHazardsOther,
+      categoryEnvironment,
+      categoryEnvironmentOther,
+
+      observationDescription,
+
+      immediateAction,
+
+      correctiveAction,
+      correctiveActionDate: correctiveActionDate ? new Date(correctiveActionDate) : null,
+      preventiveAction,
+      preventiveActionDate: preventiveActionDate ? new Date(preventiveActionDate) : null,
+      responsiblePerson,
+
+      rootCauses,
+      rootCauseOther,
+
+      potentialConsequences,
+      potentialConsequenceOther,
+
+      lessonsLearned,
+      preventRecurrence,
+
+      closedBy,
+      dateClosed: dateClosed ? new Date(dateClosed) : null,
+      correctiveActionEffective,
+      furtherActionRequired,
+      closeOutName,
+
+      officeResponse,
+      effectiveDate: effectiveDate ? new Date(effectiveDate) : null,
     }
-    if (!observerName) {
-      toast.error("Observer Name is required");
-      return;
+
+    // Edit mode → updateObservation (submitAsCompleted = true)
+    // Create mode → createObservation
+    const result = isEditMode
+      ? await updateObservation(observation.id, payload, true)
+      : await createObservation(payload)
+
+    if (result.success) {
+      toast.success(isEditMode ? "Observation submitted!" : "Observation created!")
+      router.push("/observationdashboard")
+    } else {
+      toast.error(result.error ?? "Something went wrong")
     }
-    if (!createdByField) {
-      toast.error("Created By is required");
-      return;
+  } catch {
+    toast.error("Something went wrong")
+  } finally {
+    setLoading(false)
+  }
+}
+
+const onSaveDraft = async () => {
+  setDraftLoading(true)
+  try {
+    const emptyToUndefined = (val: string) => (val === "" ? undefined : val)
+
+    const payload = {
+      vesselProject,
+      location,
+      weatherSeaState,
+      date: date ? new Date(date) : undefined,
+      time,
+      observerName,
+      createdByField: emptyToUndefined(createdByField),
+
+      observationType: emptyToUndefined(observationType),
+      stopWorkUsed,
+
+      observationSource,
+      observationSourceOther,
+
+      lifeSavingRules,
+      lifeSavingRulesOther,
+
+      riskPriority,
+      hiPo,
+
+      categoryOperations,
+      categoryOperationsOther,
+      categorySurveyEquipment,
+      categorySurveyEquipmentOther,
+      categoryWorkActivities,
+      categoryWorkActivitiesOther,
+      categoryHazards,
+      categoryHazardsOther,
+      categoryEnvironment,
+      categoryEnvironmentOther,
+
+      observationDescription: emptyToUndefined(observationDescription),
+
+      immediateAction,
+
+      correctiveAction,
+      correctiveActionDate: correctiveActionDate ? new Date(correctiveActionDate) : null,
+      preventiveAction,
+      preventiveActionDate: preventiveActionDate ? new Date(preventiveActionDate) : null,
+      responsiblePerson,
+
+      rootCauses,
+      rootCauseOther,
+
+      potentialConsequences,
+      potentialConsequenceOther,
+
+      lessonsLearned,
+      preventRecurrence,
+
+      closedBy,
+      dateClosed: dateClosed ? new Date(dateClosed) : null,
+      correctiveActionEffective,
+      furtherActionRequired,
+      closeOutName,
+
+      officeResponse,
+      effectiveDate: effectiveDate ? new Date(effectiveDate) : null,
     }
-    if (!observationType) {
-      toast.error("Please select an Observation Type");
-      return;
+
+    // Edit mode → updateObservation (submitAsCompleted = false)
+    // Create mode → saveObservationDraft
+    const result = isEditMode
+      ? await updateObservation(observation.id, payload, false)
+      : await saveObservationDraft(payload)
+
+    if (result.success) {
+      toast.success("Draft saved!")
+      router.push("/observationdashboard")
+    } else {
+      toast.error(result.error ?? "Failed to save draft")
     }
-    if (!observationDescription) {
-      toast.error("Observation Description is required");
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const result = await createObservation({
-        vesselProject,
-        location,
-        weatherSeaState,
-        date: new Date(date),
-        time,
-        observerName,
-        createdByField,
-
-        observationType,
-        stopWorkUsed,
-
-        observationSource,
-        observationSourceOther,
-
-        lifeSavingRules,
-        lifeSavingRulesOther,
-
-        riskPriority,
-        hiPo,
-
-        categoryOperations,
-        categoryOperationsOther,
-        categorySurveyEquipment,
-        categorySurveyEquipmentOther,
-        categoryWorkActivities,
-        categoryWorkActivitiesOther,
-        categoryHazards,
-        categoryHazardsOther,
-        categoryEnvironment,
-        categoryEnvironmentOther,
-
-        observationDescription,
-
-        immediateAction,
-
-        correctiveAction,
-        correctiveActionDate: correctiveActionDate
-          ? new Date(correctiveActionDate)
-          : null,
-        preventiveAction,
-        preventiveActionDate: preventiveActionDate
-          ? new Date(preventiveActionDate)
-          : null,
-        responsiblePerson,
-
-        rootCauses,
-        rootCauseOther,
-
-        potentialConsequences,
-        potentialConsequenceOther,
-
-        lessonsLearned,
-        preventRecurrence,
-
-        closedBy,
-        dateClosed: dateClosed ? new Date(dateClosed) : null,
-        correctiveActionEffective,
-        furtherActionRequired,
-        closeOutName,
-
-        officeResponse,
-        effectiveDate: effectiveDate ? new Date(effectiveDate) : null,
-      });
-
-      if (result.success) {
-        toast.success("Observation submitted!");
-        router.push("/observationdashboard");
-      } else {
-        toast.error(result.error ?? "Something went wrong");
-      }
-    } catch {
-      toast.error("Something went wrong");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const onSaveDraft = async () => {
-    setDraftLoading(true);
-    try {
-      // Helper: converts empty string to undefined so Zod .partial() works correctly
-      const emptyToUndefined = (val: string) => (val === "" ? undefined : val);
-
-      const result = await saveObservationDraft({
-        vesselProject,
-        location,
-        weatherSeaState,
-        date: date ? new Date(date) : undefined,
-        time,
-        observerName,
-        createdByField: emptyToUndefined(createdByField),
-
-        observationType: emptyToUndefined(observationType),
-        stopWorkUsed,
-
-        observationSource,
-        observationSourceOther,
-
-        lifeSavingRules,
-        lifeSavingRulesOther,
-
-        riskPriority,
-        hiPo,
-
-        categoryOperations,
-        categoryOperationsOther,
-        categorySurveyEquipment,
-        categorySurveyEquipmentOther,
-        categoryWorkActivities,
-        categoryWorkActivitiesOther,
-        categoryHazards,
-        categoryHazardsOther,
-        categoryEnvironment,
-        categoryEnvironmentOther,
-
-        observationDescription: emptyToUndefined(observationDescription),
-
-        immediateAction,
-
-        correctiveAction,
-        correctiveActionDate: correctiveActionDate
-          ? new Date(correctiveActionDate)
-          : null,
-        preventiveAction,
-        preventiveActionDate: preventiveActionDate
-          ? new Date(preventiveActionDate)
-          : null,
-        responsiblePerson,
-
-        rootCauses,
-        rootCauseOther,
-
-        potentialConsequences,
-        potentialConsequenceOther,
-
-        lessonsLearned,
-        preventRecurrence,
-
-        closedBy,
-        dateClosed: dateClosed ? new Date(dateClosed) : null,
-        correctiveActionEffective,
-        furtherActionRequired,
-        closeOutName,
-
-        officeResponse,
-        effectiveDate: effectiveDate ? new Date(effectiveDate) : null,
-      });
-
-      if (result.success) {
-        toast.success("Draft saved!");
-        router.push("/observationdashboard");
-      } else {
-        toast.error(result.error ?? "Failed to save draft");
-      }
-    } catch {
-      toast.error("Something went wrong");
-    } finally {
-      setDraftLoading(false);
-    }
-  };
+  } catch {
+    toast.error("Something went wrong")
+  } finally {
+    setDraftLoading(false)
+  }
+}
 
   return (
     <div className="space-y-6">

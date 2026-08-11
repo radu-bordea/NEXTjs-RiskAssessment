@@ -306,3 +306,141 @@ export async function deleteObservation(id: string) {
     return { success: false, error: "Failed to delete observation" }
   }
 }
+
+/**
+ * updateObservation — Updates an existing DRAFT observation
+ *
+ * Used for both:
+ *  - Saving draft progress (state stays DRAFT)
+ *  - Submitting a draft (state → COMPLETED)
+ *
+ * Permission rules:
+ *  - ADMIN/MANAGER → can edit any draft
+ *  - MEMBER        → can only edit their own drafts
+ *
+ * @param id - The cuid of the observation to update
+ * @param data - Form values
+ * @param submitAsCompleted - true = validates strictly and sets COMPLETED
+ * @returns { success: true, id: string } or { success: false, error: string }
+ */
+export async function updateObservation(
+  id: string,
+  data: Partial<ObservationFormValues>,
+  submitAsCompleted: boolean
+) {
+  const { userId } = await auth()
+  if (!userId) redirect("/sign-in")
+
+  const user = await prisma.user.findUnique({ where: { id: userId } })
+  if (!user) return { success: false, error: "User not found" }
+
+  const existing = await prisma.observation.findUnique({ where: { id } })
+  if (!existing) return { success: false, error: "Observation not found" }
+
+  if (existing.state !== "DRAFT") {
+    return { success: false, error: "Only drafts can be edited" }
+  }
+
+  // Permission check
+  if (user.role === "MEMBER" && existing.createdById !== userId) {
+    return { success: false, error: "You can only edit your own drafts" }
+  }
+
+  // Validate — strict schema if submitting, relaxed if saving draft
+  const schema = submitAsCompleted ? observationSchema : observationDraftSchema
+  const validated = schema.safeParse(data)
+  if (!validated.success) {
+    console.log("Zod validation errors:", validated.error.flatten())
+    return { success: false, error: "Validation failed" }
+  }
+
+  const values = validated.data
+
+  try {
+    // Regenerate title if type or date changed
+    const dateStr = values.date
+      ? values.date.toLocaleDateString("en-GB")
+      : new Date(existing.date).toLocaleDateString("en-GB")
+    const typeLabel = values.observationType ?? existing.observationType ?? "DRAFT"
+    const title = `${typeLabel} - ${dateStr}`
+
+    const observation = await prisma.observation.update({
+      where: { id },
+      data: {
+        title,
+
+        vesselProject:   values.vesselProject!,
+        location:        values.location ?? null,
+        weatherSeaState: values.weatherSeaState ?? null,
+        date:            values.date ?? existing.date,
+        time:            values.time ?? null,
+        observerName:    values.observerName!,
+        createdByField:  values.createdByField ?? null,
+
+        observationType: values.observationType ?? null,
+        stopWorkUsed:    values.stopWorkUsed ?? null,
+
+        observationSource:      values.observationSource ?? null,
+        observationSourceOther: values.observationSourceOther ?? null,
+
+        lifeSavingRules:      values.lifeSavingRules ?? [],
+        lifeSavingRulesOther: values.lifeSavingRulesOther ?? null,
+
+        riskPriority: values.riskPriority ?? null,
+        hiPo:         values.hiPo ?? null,
+
+        categoryOperations:      values.categoryOperations ?? [],
+        categoryOperationsOther: values.categoryOperationsOther ?? null,
+
+        categorySurveyEquipment:      values.categorySurveyEquipment ?? null,
+        categorySurveyEquipmentOther: values.categorySurveyEquipmentOther ?? null,
+
+        categoryWorkActivities:      values.categoryWorkActivities ?? [],
+        categoryWorkActivitiesOther: values.categoryWorkActivitiesOther ?? null,
+
+        categoryHazards:      values.categoryHazards ?? [],
+        categoryHazardsOther: values.categoryHazardsOther ?? null,
+
+        categoryEnvironment:      values.categoryEnvironment ?? [],
+        categoryEnvironmentOther: values.categoryEnvironmentOther ?? null,
+
+        observationDescription: values.observationDescription ?? "",
+
+        immediateAction: values.immediateAction ?? null,
+
+        correctiveAction:     values.correctiveAction ?? null,
+        correctiveActionDate: values.correctiveActionDate ?? null,
+        preventiveAction:     values.preventiveAction ?? null,
+        preventiveActionDate: values.preventiveActionDate ?? null,
+        responsiblePerson:    values.responsiblePerson ?? null,
+
+        rootCauses:     values.rootCauses ?? [],
+        rootCauseOther: values.rootCauseOther ?? null,
+
+        potentialConsequences:     values.potentialConsequences ?? [],
+        potentialConsequenceOther: values.potentialConsequenceOther ?? null,
+
+        lessonsLearned:    values.lessonsLearned ?? null,
+        preventRecurrence: values.preventRecurrence ?? null,
+
+        closedBy:                   values.closedBy ?? null,
+        dateClosed:                 values.dateClosed ?? null,
+        correctiveActionEffective:  values.correctiveActionEffective ?? null,
+        furtherActionRequired:      values.furtherActionRequired ?? null,
+        closeOutName:               values.closeOutName ?? null,
+
+        officeResponse: values.officeResponse ?? null,
+        effectiveDate:  values.effectiveDate ?? null,
+
+        state: submitAsCompleted ? "COMPLETED" : "DRAFT",
+        stateUpdatedById: userId,
+      },
+    })
+
+    revalidatePath("/observationdashboard")
+    return { success: true, id: observation.id }
+  } catch (error) {
+    console.error("updateObservation error:", error)
+    return { success: false, error: "Failed to update observation" }
+  }
+}
