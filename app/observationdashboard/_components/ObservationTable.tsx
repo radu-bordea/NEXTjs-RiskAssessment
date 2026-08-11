@@ -5,12 +5,11 @@
  *
  * Displays all observation cards in a filterable table.
  * Amber/yellow theme to distinguish from Risk Assessment (green).
- * Currently uses fake data — will connect to DB after Prisma schema.
  *
  * States: DRAFT / COMPLETED
  * Roles:
- *  - ADMIN/MANAGER → can create, edit all, delete drafts
- *  - MEMBER        → can create and edit own drafts
+ *  - ADMIN/MANAGER → can create, edit any draft, delete draft or completed
+ *  - MEMBER        → can create, edit own draft, delete own draft only
  */
 
 import { useState, useMemo } from "react";
@@ -18,6 +17,20 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import Image from "next/image";
+import { toast } from "sonner";
+
+import { deleteObservation } from "@/app/actions/observation.actions";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 import type { Observation, User } from "@/types";
 
@@ -42,9 +55,16 @@ export default function ObservationTable({
   currentUser,
 }: {
   observations: Observation[];
-  currentUser: User;
+  currentUser: User | null;
 }) {
   const router = useRouter();
+
+  /** True when logged in user is ADMIN or MANAGER */
+  const isAdminOrManager =
+    currentUser?.role === "ADMIN" || currentUser?.role === "MANAGER";
+
+  /** Track which observation is currently being deleted — for loading state */
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   /** Filter state — all start empty */
   const [filters, setFilters] = useState({
@@ -84,6 +104,28 @@ export default function ObservationTable({
       })
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [observations, filters]);
+
+  /**
+   * handleDelete — deletes an observation
+   * Only called after AlertDialog confirmation.
+   * Server action enforces the actual permission rules.
+   */
+  const handleDelete = async (id: string) => {
+    setDeletingId(id);
+    try {
+      const result = await deleteObservation(id);
+      if (result.success) {
+        toast.success("Observation deleted.");
+        router.refresh();
+      } else {
+        toast.error(result.error ?? "Failed to delete");
+      }
+    } catch {
+      toast.error("Something went wrong");
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[#fffffa] dark:bg-slate-950 text-slate-900 dark:text-slate-100 px-6 md:px-10 py-10 font-sans">
@@ -224,7 +266,7 @@ export default function ObservationTable({
                     </td>
 
                     {/* Description — truncated */}
-                    <td className="px-4 py-3 text-slate-600 dark:text-slate-300 max-w-[250px] truncate">
+                    <td className="px-4 py-3 text-slate-600 dark:text-slate-300 max-w-62.5 truncate">
                       {o.observationDescription}
                     </td>
 
@@ -292,6 +334,44 @@ export default function ObservationTable({
                           >
                             📄
                           </Button>
+                        )}
+
+                        {/* Delete — COMPLETED only, ADMIN/MANAGER only */}
+                        {o.state === "COMPLETED" && isAdminOrManager && (
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button
+                                title="Delete"
+                                variant="ghost"
+                                size="sm"
+                                disabled={deletingId === o.id}
+                                className="p-1.5 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-slate-800"
+                              >
+                                {deletingId === o.id ? "..." : "🗑️"}
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>
+                                  Delete Observation Card?
+                                </AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  This action cannot be undone. The
+                                  observation "{o.title}" and all its data
+                                  will be permanently deleted.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() => handleDelete(o.id)}
+                                  className="bg-red-500 hover:bg-red-600 text-white"
+                                >
+                                  Yes, delete
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
                         )}
                       </div>
                     </td>
