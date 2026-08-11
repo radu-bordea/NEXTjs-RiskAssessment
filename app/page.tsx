@@ -37,6 +37,18 @@ export default function Home() {
             >
               👁 Access Fleet Observation Card Portal
             </Link>
+            <Link
+              href="/safetymeetingsdashboard"
+              className="flex items-center justify-center gap-2 px-5 py-3 bg-red-300 text-red-900 border border-red-300 rounded-lg text-sm hover:bg-red-400 transition-colors text-center"
+            >
+              📋 Access Safety Meetings / Toolbox Talks
+            </Link>
+            <Link
+              href="/workpermitsdashboard"
+              className="flex items-center justify-center gap-2 px-5 py-3 bg-blue-300 text-blue-900 border border-blue-300 rounded-lg text-sm hover:bg-blue-400 transition-colors text-center"
+            >
+              📝 Access Work Permits Portal
+            </Link>
             <button className="px-4 py-3 text-sm text-zinc-500 border border-zinc-200 dark:border-zinc-700 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors text-center">
               Learn more
             </button>
