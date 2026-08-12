@@ -1,6 +1,15 @@
 import Link from "next/link";
+import { auth } from "@clerk/nextjs/server";
+import HomeDashboard from "@/components/HomeDashboard";
 
-export default function Home() {
+export default async function Home() {
+  const { userId } = await auth();
+
+  // Signed in → show the analytics dashboard
+  if (userId) {
+    return <HomeDashboard />;
+  }
+
   return (
     <div className="min-h-screen flex flex-col font-sans bg-white dark:bg-zinc-950">
       {/* Hero */}
@@ -66,19 +75,19 @@ export default function Home() {
             </div>
             {[
               {
-                ship: "MV Atlantic Star",
+                ship: "Mobile Voyager",
                 detail: "Engine · Route A12",
                 level: "High",
                 cls: "bg-orange-50 text-orange-700",
               },
               {
-                ship: "MV Nordvik",
+                ship: "Mobile Viking",
                 detail: "Weather · North Sea",
                 level: "Medium",
                 cls: "bg-amber-50 text-amber-700",
               },
               {
-                ship: "MV Cargowave",
+                ship: "Mobile Florin Paraschiv",
                 detail: "Cargo securing · Oslo",
                 level: "Low",
                 cls: "bg-green-50 text-green-700",
