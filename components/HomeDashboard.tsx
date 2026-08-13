@@ -14,6 +14,7 @@
  */
 
 import Link from "next/link";
+import Image from "next/image";
 import {
   LineChart,
   Line,
@@ -79,7 +80,7 @@ const moduleCards = [
 export default function HomeDashboard() {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans">
-      <div className="max-w-[1700px] mx-auto px-4 md:px-8 py-8">
+      <div className="max-w-425 mx-auto px-4 md:px-8 py-8">
         {/* ── Main grid — 1/3 sidebar + 2/3 charts ────────────────────── */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* ══════════════════════════════════════════════════════════
@@ -197,6 +198,88 @@ export default function HomeDashboard() {
                   </div>
                 </div>
               ))}
+            </div>
+
+            {/* ── Mission/Vision banner with ship background ──────────────────── */}
+            <div className="relative rounded-xl overflow-hidden min-h-105">
+              {/* Background image */}
+              <Image
+                src="/assets/images/ships.jpg"
+                alt="Marine survey vessels"
+                fill
+                className="object-cover"
+              />
+              {/* Dark overlay for text readability */}
+              <div className="absolute inset-0 bg-[#0a1f2e]/65" />
+
+              {/* Content */}
+              <div className="relative z-10 p-5 flex flex-col h-full ">
+                <div className="flex flex-row items-center gap-6 mb-6 p-4 pl-24">
+                  {/* Shield icon */}
+                  <div className="w-10 h-10 rounded-full border-2 border-emerald-400 flex items-center justify-center mb-4">
+                    <span className="text-emerald-400 text-lg">🛡️</span>
+                  </div>
+                  <div>
+                    {/* Headline */}
+                    <h3 className="text-white font-bold text-lg leading-snug mb-2 uppercase">
+                      Safe Operations.
+                      <br />
+                      Safe People. Safe Environment.
+                    </h3>
+                    <p className="text-emerald-100 text-xs leading-relaxed mb-6">
+                      Every task planned. Every risk assessed.
+                      <br />
+                      Everyone home safe.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Mission / Vision / Commitment — stacked for narrow sidebar */}
+                <div className="space-y-4 md:grid md:grid-cols-3 md:gap-4">
+                  <div className="pt-3 border-r p-4">
+                    <p className="text-emerald-300 text-[10px] font-bold uppercase tracking-wide mb-1">
+                      Our Mission
+                    </p>
+                    <p className="text-emerald-50 text-[11px] leading-relaxed">
+                      To deliver safe, efficient and reliable survey operations
+                      that create value for our clients while protecting people,
+                      assets and the marine environment.
+                    </p>
+                  </div>
+
+                  <div className="pt-3 border-r p-4">
+                    <p className="text-emerald-300 text-[10px] font-bold uppercase tracking-wide mb-1">
+                      Our Vision
+                    </p>
+                    <p className="text-emerald-50 text-[11px] leading-relaxed">
+                      To be a global leader in marine survey and data solutions,
+                      recognised for excellence, innovation and integrity in
+                      everything we do.
+                    </p>
+                  </div>
+
+                  <div className="pt-3 p-4">
+                    <p className="text-emerald-300 text-[10px] font-bold uppercase tracking-wide mb-1">
+                      Our Commitment
+                    </p>
+                    <p className="text-emerald-50 text-[11px] leading-relaxed">
+                      Zero harm to people. Zero harm to the environment.
+                      Excellence in execution. Trust in our results.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Footer tagline */}
+                <div className="pt-3 mt-4 text-center">
+                  <p className="text-emerald-300 text-[10px] font-bold uppercase tracking-wide flex items-center justify-center gap-1.5 mb-1">
+                   🛡️ Project Successfully
+                  </p>
+                  <p className="text-emerald-100/80 text-[10px] leading-relaxed">
+                    Through planning, competence and teamwork we deliver safe
+                    operations and accurate results — every time, everywhere.
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
 
