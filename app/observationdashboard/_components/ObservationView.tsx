@@ -326,7 +326,7 @@ export default function ObservationView({ observation }: ObservationViewProps) {
       )}
 
       {/* ── Section 11 & 12 — Potential Consequence + Lessons Learned ── */}
-      {(observation.potentialConsequences?.length > 0 || observation.lessonsLearned || observation.preventRecurrence) && (
+      {(observation.potentialConsequences?.length > 0 || observation.potentialConsequenceOther || observation.lessonsLearned || observation.preventRecurrence) && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
           {(observation.potentialConsequences?.length > 0 || observation.potentialConsequenceOther) && (
