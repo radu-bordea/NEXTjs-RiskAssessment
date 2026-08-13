@@ -287,8 +287,35 @@ export default function HomeDashboard() {
               RIGHT COLUMN (2/3) — All charts stacked
               ══════════════════════════════════════════════════════════ */}
           <div className="lg:col-span-2 space-y-6">
+            {/* ── Stat cards row ──────────────────────────────────────── */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-3">
+              {statCards.map((s) => (
+                <div
+                  key={s.label}
+                  className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm p-3"
+                >
+                  <div
+                    className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs mb-2 ${s.color}`}
+                  >
+                    {s.icon}
+                  </div>
+                  <p className="text-[9px] uppercase tracking-wide text-slate-900 font-medium mb-1">
+                    {s.label}
+                  </p>
+                  <p className="text-xl font-extrabold text-slate-800 dark:text-white">
+                    {s.value}
+                  </p>
+                  <p className={`text-[9px] mt-1 ${s.subColor}`}>{s.sub}</p>
+                  <button className="text-[9px] text-blue-500 hover:underline mt-1.5">
+                    {s.link} →
+                  </button>
+                </div>
+              ))}
+            </div>
+
             {/* ── Leading Indicators + Attention Required ────────────── */}
             <div className="grid grid-cols-1 xl:grid-cols-[1fr_300px] gap-6">
+              
               {/* Leading Indicators chart */}
               <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm p-5">
                 <p className="text-sm font-bold text-slate-700 dark:text-white mb-4">
@@ -378,31 +405,7 @@ export default function HomeDashboard() {
               </div>
             </div>
 
-            {/* ── Stat cards row ──────────────────────────────────────── */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-3">
-              {statCards.map((s) => (
-                <div
-                  key={s.label}
-                  className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm p-3"
-                >
-                  <div
-                    className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs mb-2 ${s.color}`}
-                  >
-                    {s.icon}
-                  </div>
-                  <p className="text-[9px] uppercase tracking-wide text-slate-400 font-medium mb-1">
-                    {s.label}
-                  </p>
-                  <p className="text-xl font-extrabold text-slate-800 dark:text-white">
-                    {s.value}
-                  </p>
-                  <p className={`text-[9px] mt-1 ${s.subColor}`}>{s.sub}</p>
-                  <button className="text-[9px] text-blue-500 hover:underline mt-1.5">
-                    {s.link} →
-                  </button>
-                </div>
-              ))}
-            </div>
+
 
             {/* ── Risk Overview + Safety Trend + Corrective Actions ────── */}
             <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
