@@ -58,7 +58,7 @@ export default function ObservationView({ observation }: ObservationViewProps) {
     "text-sm text-slate-900 dark:text-white font-medium"
 
   const fieldClass =
-    "rounded-lg border border-amber-200 dark:border-slate-700 bg-amber-50/30 dark:bg-slate-950 px-3 py-2 text-sm min-h-[38px] w-full"
+    "rounded-lg border border-amber-200 dark:border-slate-700 bg-amber-50/30 dark:bg-slate-950 px-3 py-2 text-sm min-h-[38px] w-full break-words"
 
   /** Tag/pill for checkbox array items */
   const tagClass =
@@ -262,7 +262,7 @@ export default function ObservationView({ observation }: ObservationViewProps) {
       )}
 
       {/* ── Section 9 & 10 — Corrective Action + Root Cause ──────────── */}
-      {(observation.correctiveAction || observation.preventiveAction || observation.rootCauses?.length > 0) && (
+      {(observation.correctiveAction || observation.preventiveAction || observation.rootCauses?.length > 0 || observation.rootCauseOther) && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
           {(observation.correctiveAction || observation.preventiveAction) && (
