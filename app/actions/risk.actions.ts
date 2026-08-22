@@ -397,6 +397,9 @@ export async function submitDraft(id: string, data: RiskFormValues) {
       return { success: false, error: "Only drafts can be submitted" };
     }
 
+    // Remove " - DRAFT" suffix from ref when completing
+   const cleanRef = existing.ref.replace(/ - DRAFT$/, " - COMPLETED");
+
     // Delete existing nested records and recreate from form data
     await prisma.riskAssessmentRow.deleteMany({ where: { riskId: id } });
     await prisma.teamMember.deleteMany({ where: { riskId: id } });
@@ -406,6 +409,7 @@ export async function submitDraft(id: string, data: RiskFormValues) {
     const risk = await prisma.risk.update({
       where: { id },
       data: {
+        ref: cleanRef,
         workActivity: values.workActivity,
         initiationDate: values.initiationDate,
         reviewDate: values.reviewDate ?? null,
@@ -673,5 +677,3 @@ export async function updateCompleted(
     return { success: false, error: "Failed to update completed risk" };
   }
 }
-
-
