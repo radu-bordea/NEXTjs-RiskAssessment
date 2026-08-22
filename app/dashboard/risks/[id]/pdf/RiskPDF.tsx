@@ -140,14 +140,14 @@ const styles = StyleSheet.create({
   },
 
   // Column widths for assessment table
-  colHazard: { width: "20%", paddingRight: 4 },
-  colImpact: { width: "20%", paddingRight: 4 },
-  colControls: { width: "20%", paddingRight: 4 },
-  colSct: { width: "16%", paddingRight: 4 },
-  colC: { width: "5%", textAlign: "center" },
-  colF: { width: "5%", textAlign: "center" },
-  colRf: { width: "5%", textAlign: "center" },
-  colMeasures: { width: "9%", paddingLeft: 4 },
+  colHazard: { width: "15%", paddingRight: 4 },
+  colImpact: { width: "13%", paddingRight: 4 },
+  colControls: { width: "19%", paddingRight: 4 },
+  colSct: { width: "9%", paddingRight: 4 },
+  colC: { width: "4%", textAlign: "center" },
+  colF: { width: "4%", textAlign: "center" },
+  colRf: { width: "6%", textAlign: "center" },
+  colMeasures: { width: "30%", paddingLeft: 4 },
 
   // ── RF color badge ────────────────────────────────────────────────────────
   rfBadge: {
