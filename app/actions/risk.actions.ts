@@ -264,23 +264,6 @@ export async function createDraftFromTemplate(templateId: string): Promise<{
       return { success: false, error: "Only templates can be cloned" };
     }
 
-    // Check if user already has a draft from this template
-    const existingDraft = await prisma.risk.findFirst({
-      where: {
-        cloneOf: template.ref, // came from this template
-        createdById: userId, // created by this user
-        state: "DRAFT", // still a draft
-      },
-    });
-
-    if (existingDraft) {
-      return {
-        success: false,
-        error: "You already have a draft from this template",
-        existingDraftId: existingDraft.id,
-      };
-    }
-
     // ── Build ref using the SOURCE's initiationDate, not today ───────────
     //
     // The client wants the ref date to reflect when the original work
@@ -292,8 +275,12 @@ export async function createDraftFromTemplate(templateId: string): Promise<{
     //   Third draft same day  → "RA-N-001 - 15/03/2026/2"
     //   Draft on a new date   → "RA-N-001 - 02/06/2026"  (no counter)
 
-    // Simple ref — template ref + DRAFT suffix
-    const draftRef = `${template.ref} - DRAFT`;
+    // Count existing drafts/completed from this template to get next number
+    const existingCount = await prisma.risk.count({
+      where: { cloneOf: template.ref },
+    });
+    const draftNumber = existingCount + 1;
+    const draftRef = `${template.ref} - DRAFT_${draftNumber}`;
 
     // Create the draft as a clone of the template
     const draft = await prisma.risk.create({
@@ -397,8 +384,8 @@ export async function submitDraft(id: string, data: RiskFormValues) {
       return { success: false, error: "Only drafts can be submitted" };
     }
 
-    // Remove " - DRAFT" suffix from ref when completing
-   const cleanRef = existing.ref.replace(/ - DRAFT$/, " - COMPLETED");
+    // Replace "DRAFT_N" with "COMPLETED_N", preserving the draft's number
+    const cleanRef = existing.ref.replace(/DRAFT_(\d+)$/, "COMPLETED_$1");
 
     // Delete existing nested records and recreate from form data
     await prisma.riskAssessmentRow.deleteMany({ where: { riskId: id } });
