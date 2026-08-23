@@ -474,19 +474,24 @@ export async function deleteRisk(id: string) {
   const user = await prisma.user.findUnique({ where: { id: userId } });
   if (!user) return { success: false, error: "User not found" };
 
-  // 3. Members cannot delete anything
-  if (user.role === "MEMBER") {
-    return { success: false, error: "Unauthorized" };
-  }
-
   try {
-    // 4. Fetch the risk to check its state
+    // 3. Fetch the risk to check its state
     const existing = await prisma.risk.findUnique({ where: { id } });
     if (!existing) return { success: false, error: "Risk not found" };
 
-    // 5. Templates — ADMIN only
+    // 4. Templates — ADMIN only
     if (existing.state === "TEMPLATE" && user.role !== "ADMIN") {
       return { success: false, error: "Only Admin can delete templates" };
+    }
+
+    // 5. Members can only delete their OWN drafts
+    if (user.role === "MEMBER") {
+      if (existing.state !== "DRAFT") {
+        return { success: false, error: "You can only delete drafts" };
+      }
+      if (existing.createdById !== userId) {
+        return { success: false, error: "You can only delete your own drafts" };
+      }
     }
 
     // 6. Cascade handles all related records automatically

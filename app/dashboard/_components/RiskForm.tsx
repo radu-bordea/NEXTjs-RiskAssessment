@@ -547,7 +547,10 @@ export default function RiskForm({ currentUser, risk }: Props) {
 
         {/* Emergency Response — locked for COMPLETED */}
         <div className="mt-4">
-          <label className={labelClass}>General Requirements / <span className="font-bold text-red-500">EMERGENCY RESPONSE</span></label>
+          <label className={labelClass}>
+            General Requirements /{" "}
+            <span className="font-bold text-red-500">EMERGENCY RESPONSE</span>
+          </label>
           <Textarea
             {...register("emergencyResponse")}
             rows={3}
@@ -833,10 +836,15 @@ export default function RiskForm({ currentUser, risk }: Props) {
           </Button>
         </div>
 
-        {/* Delete — ADMIN only, edit mode only */}
-        {isEditMode && currentUser?.role === "ADMIN" && (
-          <DeleteRiskButton riskId={risk!.id} />
-        )}
+        {/* Delete — ADMIN/MANAGER any, MEMBER only their own draft, edit mode only */}
+        {isEditMode &&
+          (currentUser?.role === "ADMIN" ||
+            currentUser?.role === "MANAGER" ||
+            (currentUser?.role === "MEMBER" &&
+              isDraft &&
+              risk?.createdById === currentUser?.id)) && (
+            <DeleteRiskButton riskId={risk!.id} />
+          )}
       </div>
     </form>
   );
