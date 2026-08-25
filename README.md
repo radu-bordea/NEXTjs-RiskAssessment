@@ -38,6 +38,7 @@
 - npx shadcn@latest add popover
 - npx shadcn@latest add date-picker
 - npx shadcn@latest add alert-dialog
+- npx shadcn@latest add dialog
 
 # dark mode
 - npm install next-themes
