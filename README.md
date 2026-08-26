@@ -6,6 +6,11 @@
 - npm install @react-pdf/renderer
 - npm install --save-dev @types/react-pdf
 - npm install recharts
+- npm install -g vercel
+- npm install @vercel/blob
+- vercel env pull
+- npx tsx scripts/upload-manual.ts
+- npm install -D dotenv
 
 
 

@@ -324,7 +324,7 @@ export default function SafetyMeetingTable({
             <DialogTitle>Safety Manual</DialogTitle>
           </DialogHeader>
           <iframe
-            src="/documents/manual.pdf"
+            src="https://3ndlujwykffozodt.public.blob.vercel-storage.com/manual.pdf"
             className="w-full flex-1 rounded-lg border border-red-200"
             title="Safety Manual"
           />
