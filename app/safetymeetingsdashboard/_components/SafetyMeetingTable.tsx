@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 /**
  * SafetyMeetingTable — Safety Meetings / Toolbox Talks dashboard
@@ -10,54 +10,66 @@
  * States: DRAFT / COMPLETED (assumption — confirm with client)
  */
 
-import { useState, useMemo } from "react"
-import { useRouter } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import Link from "next/link"
-import Image from "next/image"
+import { useState, useMemo } from "react";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import Image from "next/image";
+
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 type Meeting = {
-  id:                  string
-  projectSurvey:       string
-  vesselInstallation:  string
-  activityTask:        string
-  toolboxTalkLeader:   string
-  date:                Date
-  state:               string
-}
+  id: string;
+  projectSurvey: string;
+  vesselInstallation: string;
+  activityTask: string;
+  toolboxTalkLeader: string;
+  date: Date;
+  state: string;
+};
 
 // ─── Status badge styles ──────────────────────────────────────────────────────
 const stateStyle: Record<string, string> = {
-  DRAFT:     "bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-400 whitespace-nowrap",
-  COMPLETED: "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 whitespace-nowrap",
-}
+  DRAFT:
+    "bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-400 whitespace-nowrap",
+  COMPLETED:
+    "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 whitespace-nowrap",
+};
 
 // ─── Shared Tailwind classes ──────────────────────────────────────────────────
 const inputClass =
-  "px-3 py-2 rounded-lg border border-red-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm text-slate-700 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-red-400 transition-colors"
+  "px-3 py-2 rounded-lg border border-red-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm text-slate-700 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-red-400 transition-colors";
 
 const selectClass =
-  "px-3 py-2 rounded-lg border border-red-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-red-400 transition-colors"
+  "px-3 py-2 rounded-lg border border-red-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-red-400 transition-colors";
 
 export default function SafetyMeetingTable({
   meetings,
 }: {
-  meetings: Meeting[]
+  meetings: Meeting[];
 }) {
-  const router = useRouter()
+  const router = useRouter();
 
   /** Filter state — all start empty */
   const [filters, setFilters] = useState({
-    projectSurvey:      "",
+    projectSurvey: "",
     vesselInstallation: "",
-    status:             "",
-  })
+    status: "",
+  });
+
+  /** Controls the Manual PDF viewer modal */
+  const [manualOpen, setManualOpen] = useState(false);
 
   const set = (key: string, value: string) =>
-    setFilters((prev) => ({ ...prev, [key]: value }))
+    setFilters((prev) => ({ ...prev, [key]: value }));
 
   const reset = () =>
-    setFilters({ projectSurvey: "", vesselInstallation: "", status: "" })
+    setFilters({ projectSurvey: "", vesselInstallation: "", status: "" });
 
   /**
    * filtered — applies all active filters and sorts by date descending
@@ -65,17 +77,28 @@ export default function SafetyMeetingTable({
   const filtered = useMemo(() => {
     return meetings
       .filter((m) => {
-        if (filters.projectSurvey && !m.projectSurvey.toLowerCase().includes(filters.projectSurvey.toLowerCase())) return false
-        if (filters.vesselInstallation && !m.vesselInstallation.toLowerCase().includes(filters.vesselInstallation.toLowerCase())) return false
-        if (filters.status && m.state !== filters.status) return false
-        return true
+        if (
+          filters.projectSurvey &&
+          !m.projectSurvey
+            .toLowerCase()
+            .includes(filters.projectSurvey.toLowerCase())
+        )
+          return false;
+        if (
+          filters.vesselInstallation &&
+          !m.vesselInstallation
+            .toLowerCase()
+            .includes(filters.vesselInstallation.toLowerCase())
+        )
+          return false;
+        if (filters.status && m.state !== filters.status) return false;
+        return true;
       })
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-  }, [meetings, filters])
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }, [meetings, filters]);
 
   return (
     <div className="min-h-screen bg-[#fff8f8] dark:bg-slate-950 text-slate-900 dark:text-slate-100 px-6 md:px-10 py-10 font-sans">
-
       {/* ── Page Header ───────────────────────────────────────────────── */}
       <div className="flex items-center justify-between mb-8 flex-wrap gap-4">
         <Link href="/">
@@ -99,20 +122,32 @@ export default function SafetyMeetingTable({
         <div>
           <h1 className="text-4xl font-extrabold tracking-tight text-slate-700 dark:text-white">
             Mobile Marine{" "}
-            <span className="text-slate-500">Safety Meetings / Toolbox Talks</span>
+            <span className="text-slate-500">
+              Safety Meetings / Toolbox Talks
+            </span>
           </h1>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-2">
             Displaying {filtered.length} of {meetings.length} toolbox talks
           </p>
         </div>
 
-        {/* New Toolbox Talk button */}
-        <button
-          onClick={() => router.push("/safetymeetingsdashboard/meetings/new")}
-          className="px-5 py-2.5 bg-red-300 hover:bg-red-400 text-red-900 border border-red-300 rounded-lg text-sm font-medium transition-colors cursor-pointer shadow-sm"
-        >
-          + New Toolbox Talk
-        </button>
+        <div className="flex items-center gap-2">
+          {/* Open Manual button — opens PDF viewer modal */}
+          <button
+            onClick={() => setManualOpen(true)}
+            className="px-5 py-2.5 bg-white hover:bg-red-50 text-red-900 border border-red-300 rounded-lg text-sm font-medium transition-colors cursor-pointer shadow-sm"
+          >
+            📖 Open Manual
+          </button>
+
+          {/* New Toolbox Talk button */}
+          <button
+            onClick={() => router.push("/safetymeetingsdashboard/meetings/new")}
+            className="px-5 py-2.5 bg-red-300 hover:bg-red-400 text-red-900 border border-red-300 rounded-lg text-sm font-medium transition-colors cursor-pointer shadow-sm"
+          >
+            + New Toolbox Talk
+          </button>
+        </div>
       </div>
 
       {/* ── Filters Panel ─────────────────────────────────────────────── */}
@@ -181,7 +216,10 @@ export default function SafetyMeetingTable({
             <tbody>
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-4 py-10 text-center text-slate-400 text-sm">
+                  <td
+                    colSpan={7}
+                    className="px-4 py-10 text-center text-slate-400 text-sm"
+                  >
                     No toolbox talks found matching your filters.
                   </td>
                 </tr>
@@ -197,7 +235,9 @@ export default function SafetyMeetingTable({
                   >
                     <td
                       className="px-4 py-3 font-medium text-red-600 dark:text-red-400 cursor-pointer hover:underline whitespace-nowrap"
-                      onClick={() => router.push(`/safetymeetingsdashboard/meetings/${m.id}`)}
+                      onClick={() =>
+                        router.push(`/safetymeetingsdashboard/meetings/${m.id}`)
+                      }
                     >
                       {m.projectSurvey}
                     </td>
@@ -214,7 +254,11 @@ export default function SafetyMeetingTable({
                       {new Date(m.date).toLocaleDateString("en-GB")}
                     </td>
                     <td className="px-4 py-3">
-                      <span className={`text-xs px-2 py-1 rounded-full font-medium ${stateStyle[m.state] ?? ""}`}>
+                      <span
+                        className={`text-xs px-2 py-1 rounded-full font-medium ${
+                          stateStyle[m.state] ?? ""
+                        }`}
+                      >
                         {m.state}
                       </span>
                     </td>
@@ -224,7 +268,11 @@ export default function SafetyMeetingTable({
                           title="View"
                           variant="ghost"
                           size="sm"
-                          onClick={() => router.push(`/safetymeetingsdashboard/meetings/${m.id}`)}
+                          onClick={() =>
+                            router.push(
+                              `/safetymeetingsdashboard/meetings/${m.id}`,
+                            )
+                          }
                           className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-slate-800"
                         >
                           👁
@@ -234,7 +282,11 @@ export default function SafetyMeetingTable({
                             title="Edit Draft"
                             variant="ghost"
                             size="sm"
-                            onClick={() => router.push(`/safetymeetingsdashboard/meetings/${m.id}/edit`)}
+                            onClick={() =>
+                              router.push(
+                                `/safetymeetingsdashboard/meetings/${m.id}/edit`,
+                              )
+                            }
                             className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-slate-800"
                           >
                             ✏️
@@ -245,7 +297,11 @@ export default function SafetyMeetingTable({
                             title="Download PDF"
                             variant="ghost"
                             size="sm"
-                            onClick={() => router.push(`/safetymeetingsdashboard/meetings/${m.id}/pdf`)}
+                            onClick={() =>
+                              router.push(
+                                `/safetymeetingsdashboard/meetings/${m.id}/pdf`,
+                              )
+                            }
                             className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-slate-800"
                           >
                             📄
@@ -260,6 +316,20 @@ export default function SafetyMeetingTable({
           </table>
         </div>
       </div>
+
+      {/* ── Manual PDF Viewer Modal ──────────────────────────────────────── */}
+      <Dialog open={manualOpen} onOpenChange={setManualOpen}>
+        <DialogContent className="sm:max-w-5xl h-[90vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle>Safety Manual</DialogTitle>
+          </DialogHeader>
+          <iframe
+            src="/documents/manual.pdf"
+            className="w-full flex-1 rounded-lg border border-red-200"
+            title="Safety Manual"
+          />
+        </DialogContent>
+      </Dialog>
     </div>
-  )
+  );
 }

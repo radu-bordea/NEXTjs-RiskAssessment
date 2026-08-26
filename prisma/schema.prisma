@@ -25,6 +25,9 @@ model User {
 
   observationsCreated      Observation[] @relation("ObservationCreatedBy")
   observationsStateUpdated Observation[] @relation("ObservationStateUpdatedBy")
+
+  safetyMeetingsCreated      SafetyMeeting[] @relation("SafetyMeetingCreatedBy")
+  safetyMeetingsStateUpdated SafetyMeeting[] @relation("SafetyMeetingStateUpdatedBy")
 }
 
 model Risk {
@@ -111,6 +114,9 @@ model AdditionalMeasure {
   order         Int      @default(0)
 }
 
+// NOTE: TeamMember (no prefix) is specific to Risk model — kept
+// for backward compatibility. All other models use prefixed names
+// e.g. SafetyMeetingTeamMember, WorkPermitTeamMember, etc.
 model TeamMember {
   id     String @id @default(cuid())
   riskId String
@@ -247,6 +253,102 @@ model Observation {
 
   stateUpdatedById String?
   stateUpdatedBy   User?   @relation("ObservationStateUpdatedBy", fields: [stateUpdatedById], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum SafetyMeetingState {
+  DRAFT
+  COMPLETED
+}
+
+model ToolboxTalkCard {
+  id    String   @id @default(cuid())
+  code  String   @unique
+  title String
+  tags  String[]
+
+  /**
+   * Stores the Vercel Blob public URL — not the image itself
+   */
+  imageUrl String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  /**
+   * Many-to-many — which SafetyMeetings selected this card
+   */
+  safetyMeetings SafetyMeetingCard[]
+}
+
+model SafetyMeetingCard {
+  id              String        @id @default(cuid())
+  safetyMeetingId String
+  safetyMeeting   SafetyMeeting @relation(fields: [safetyMeetingId], references: [id], onDelete: Cascade)
+
+  cardId String
+  card   ToolboxTalkCard @relation(fields: [cardId], references: [id])
+
+  @@unique([safetyMeetingId, cardId])
+}
+
+model SafetyMeetingTeamMember {
+  id              String        @id @default(cuid())
+  name            String
+  safetyMeetingId String
+  safetyMeeting   SafetyMeeting @relation(fields: [safetyMeetingId], references: [id], onDelete: Cascade)
+}
+
+model SafetyMeeting {
+  id String @id @default(cuid())
+
+  // ─── Task & Project Information ───────────────────────────────────
+  projectSurvey      String
+  contractNo         String?
+  vesselInstallation String
+  date               DateTime
+  locationAreaDeck   String
+  startTime          String?
+  expectedFinish     String?
+  activityTask       String
+  toolboxTalkLeader  String
+  taskObjective      String
+
+  firstTimeNonRoutine Boolean @default(false)
+  simopsInvolved      Boolean @default(false)
+
+  // ─── Operational Context (key/value pairs) ────────────────────────
+  vesselStatus     String?
+  weatherSeaState  String?
+  workAreaStatus   String?
+  dayNight         String?
+  nearbyOperations String?
+
+  // ─── Responsible Interfaces (key/value pairs) ─────────────────────
+  masterOowDpo               String?
+  deckPic                    String?
+  surveyLead                 String?
+  equipmentOperator          String?
+  responsibleInterfacesOther String?
+
+  // ─── Confirm with the Team ─────────────────────────────────────────
+  teamConfirmations      String[]
+  teamConfirmationsOther String?
+
+  // ─── State ─────────────────────────────────────────────────────────
+  state SafetyMeetingState @default(COMPLETED)
+
+  // ─── Relations ─────────────────────────────────────────────────────
+  createdById String
+  createdBy   User   @relation("SafetyMeetingCreatedBy", fields: [createdById], references: [id])
+
+  stateUpdatedById String?
+  stateUpdatedBy   User?   @relation("SafetyMeetingStateUpdatedBy", fields: [stateUpdatedById], references: [id])
+
+  selectedCards SafetyMeetingCard[]
+  teamMembers   SafetyMeetingTeamMember[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
