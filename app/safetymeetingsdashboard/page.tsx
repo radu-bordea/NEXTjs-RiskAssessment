@@ -1,38 +1,37 @@
+import { auth } from "@clerk/nextjs/server"
+import { redirect } from "next/navigation"
+import prisma from "@/lib/prisma"
 import SafetyMeetingTable from "./_components/SafetyMeetingTable"
 
 /**
  * SafetyMeetingsDashboardPage — Toolbox Talk dashboard
  *
- * Server component — will fetch from DB once Prisma model is wired up.
- * Currently uses fake data for UI development.
+ * Server component — fetches all safety meetings from DB.
  */
-export default function SafetyMeetingsDashboardPage() {
+export default async function SafetyMeetingsDashboardPage() {
+  const { userId } = await auth()
+  if (!userId) redirect("/sign-in")
 
-  /** Fake data — will be replaced with DB data after Prisma schema */
-  const meetings = [
-    {
-      id:              "1",
-      projectSurvey:   "North Sea Geophysical Survey",
-      vesselInstallation: "OSV Explorer",
-      activityTask:    "AUV Launch & Recovery",
-      toolboxTalkLeader: "Alexandru Popescu",
-      date:            new Date("2026-08-21"),
-      state:           "DRAFT",
+  const user = await prisma.user.findUnique({ where: { id: userId } })
+  if (!user) redirect("/sign-in")
+
+  const meetings = await prisma.safetyMeeting.findMany({
+    orderBy: { date: "desc" },
+    select: {
+      id:                 true,
+      projectSurvey:      true,
+      vesselInstallation: true,
+      activityTask:       true,
+      toolboxTalkLeader:  true,
+      date:               true,
+      state:              true,
+      createdById:        true,
     },
-    {
-      id:              "2",
-      projectSurvey:   "West Africa Pipeline Inspection",
-      vesselInstallation: "MV Cargowave",
-      activityTask:    "ROV Deployment",
-      toolboxTalkLeader: "Anna Jones",
-      date:            new Date("2026-08-18"),
-      state:           "COMPLETED",
-    },
-  ]
+  })
 
   return (
     <div className="min-h-screen bg-[#fff8f8] dark:bg-slate-950">
-      <SafetyMeetingTable meetings={meetings} />
+      <SafetyMeetingTable meetings={meetings} currentUser={user} />
     </div>
   )
 }

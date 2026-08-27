@@ -33,6 +33,10 @@ import {
   deleteToolboxTalkCard,
 } from "@/app/actions/toolboxTalkCard.actions";
 import { useEffect } from "react";
+import {
+  createSafetyMeeting,
+  saveSafetyMeetingDraft,
+} from "@/app/actions/safetyMeeting.actions";
 
 // ─── Operational Context rows — icon + label + editable value ────────────────
 const OPERATIONAL_CONTEXT_FIELDS = [
@@ -50,30 +54,6 @@ const RESPONSIBLE_INTERFACE_FIELDS = [
   { key: "surveyLead", icon: "🧍", label: "Survey Lead" },
   { key: "equipmentOperator", icon: "🤖", label: "Equipment Operator" },
 ];
-
-/** Real cards fetched from DB */
-const [cards, setCards] = useState<
-  {
-    id: string;
-    code: string;
-    title: string;
-    tags: string[];
-    imageUrl: string | null;
-  }[]
->([]);
-
-/** Loads cards from DB on mount */
-useEffect(() => {
-  getToolboxTalkCards().then(setCards);
-}, []);
-
-/** Controls the "Upload New Card" dialog */
-const [createCardOpen, setCreateCardOpen] = useState(false);
-const [newCardCode, setNewCardCode] = useState("");
-const [newCardTitle, setNewCardTitle] = useState("");
-const [newCardTags, setNewCardTags] = useState("");
-const [newCardImage, setNewCardImage] = useState<File | null>(null);
-const [creatingCard, setCreatingCard] = useState(false);
 
 // ─── Confirm with the Team — checklist options ────────────────────────────────
 /**
@@ -139,6 +119,30 @@ export default function SafetyMeetingForm() {
   const [responsibleInterfacesOther, setResponsibleInterfacesOther] =
     useState("");
 
+  /** Real cards fetched from DB */
+  const [cards, setCards] = useState<
+    {
+      id: string;
+      code: string;
+      title: string;
+      tags: string[];
+      imageUrl: string | null;
+    }[]
+  >([]);
+
+  /** Loads cards from DB on mount */
+  useEffect(() => {
+    getToolboxTalkCards().then(setCards);
+  }, []);
+
+  /** Controls the "Upload New Card" dialog */
+  const [createCardOpen, setCreateCardOpen] = useState(false);
+  const [newCardCode, setNewCardCode] = useState("");
+  const [newCardTitle, setNewCardTitle] = useState("");
+  const [newCardTags, setNewCardTags] = useState("");
+  const [newCardImage, setNewCardImage] = useState<File | null>(null);
+  const [creatingCard, setCreatingCard] = useState(false);
+
   // ─── Select Toolbox Talk Cards state ────────────────────────────────────
   const [previewCard, setPreviewCard] = useState<{
     code: string;
@@ -147,7 +151,7 @@ export default function SafetyMeetingForm() {
     tags: string[];
   } | null>(null);
 
-const [selectedCards, setSelectedCards] = useState<string[]>([]) // now stores card IDs
+  const [selectedCards, setSelectedCards] = useState<string[]>([]); // now stores card IDs
 
   const toggleCardSelection = (code: string) => {
     setSelectedCards((prev) =>
@@ -197,11 +201,81 @@ const [selectedCards, setSelectedCards] = useState<string[]>([]) // now stores c
   const inputStyle = "border-red-200 focus-visible:ring-red-400";
 
   const onSubmit = async () => {
+    if (!projectSurvey) {
+      toast.error("Project / Survey is required");
+      return;
+    }
+    if (!vesselInstallation) {
+      toast.error("Vessel / Installation is required");
+      return;
+    }
+
+    // Manual validation for required fields before submitting
+    if (!projectSurvey) {
+      toast.error("Project / Survey is required");
+      return;
+    }
+    if (!vesselInstallation) {
+      toast.error("Vessel / Installation is required");
+      return;
+    }
+    if (!date) {
+      toast.error("Date is required");
+      return;
+    }
+    if (!locationAreaDeck) {
+      toast.error("Location / Area / Deck is required");
+      return;
+    }
+    if (!startTime) {
+      toast.error("Start Time is required");
+      return;
+    }
+    if (!activityTask) {
+      toast.error("Activity / Task is required");
+      return;
+    }
+    if (!toolboxTalkLeader) {
+      toast.error("Toolbox Talk Leader is required");
+      return;
+    }
+    if (!taskObjective) {
+      toast.error("Task Objective is required");
+      return;
+    }
+
     setLoading(true);
     try {
-      // TODO: call createSafetyMeeting action once Prisma/Zod are wired
-      toast.success("Toolbox Talk submitted!");
-      router.push("/safetymeetingsdashboard");
+      const payload = {
+        projectSurvey,
+        contractNo,
+        vesselInstallation,
+        date: new Date(date),
+        locationAreaDeck,
+        startTime,
+        expectedFinish,
+        activityTask,
+        toolboxTalkLeader,
+        taskObjective,
+        firstTimeNonRoutine,
+        simopsInvolved,
+        ...operationalContext,
+        ...responsibleInterfaces,
+        responsibleInterfacesOther,
+        teamConfirmations,
+        teamConfirmationsOther,
+        selectedCardIds: selectedCards,
+        teamMembers: teamMembers.map((m) => ({ name: m.name })),
+      };
+
+      const result = await createSafetyMeeting(payload);
+
+      if (result.success) {
+        toast.success("Toolbox Talk submitted!");
+        router.push("/safetymeetingsdashboard");
+      } else {
+        toast.error(result.error ?? "Something went wrong");
+      }
     } catch {
       toast.error("Something went wrong");
     } finally {
@@ -212,18 +286,41 @@ const [selectedCards, setSelectedCards] = useState<string[]>([]) // now stores c
   const onSaveDraft = async () => {
     setDraftLoading(true);
     try {
-      // TODO: call saveSafetyMeetingDraft action once Prisma/Zod are wired
-      toast.success("Draft saved!");
-      router.push("/safetymeetingsdashboard");
+      const payload = {
+        projectSurvey,
+        contractNo,
+        vesselInstallation,
+        date: date ? new Date(date) : undefined,
+        locationAreaDeck,
+        startTime,
+        expectedFinish,
+        activityTask,
+        toolboxTalkLeader,
+        taskObjective,
+        firstTimeNonRoutine,
+        simopsInvolved,
+        ...operationalContext,
+        ...responsibleInterfaces,
+        responsibleInterfacesOther,
+        teamConfirmations,
+        teamConfirmationsOther,
+        selectedCardIds: selectedCards,
+        teamMembers: teamMembers.map((m) => ({ name: m.name })),
+      };
+
+      const result = await saveSafetyMeetingDraft(payload);
+
+      if (result.success) {
+        toast.success("Draft saved!");
+        router.push("/safetymeetingsdashboard");
+      } else {
+        toast.error(result.error ?? "Failed to save draft");
+      }
     } catch {
       toast.error("Something went wrong");
     } finally {
       setDraftLoading(false);
     }
-  };
-
-  const onPreviewPDF = () => {
-    toast.info("PDF preview will be available once the record is saved.");
   };
 
   const onUploadClick = () => {
