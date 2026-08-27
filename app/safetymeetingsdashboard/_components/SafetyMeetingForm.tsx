@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 /**
  * SafetyMeetingForm — Create or edit a Toolbox Talk / Safety Meeting
@@ -14,43 +14,66 @@
  * Roles/permissions and states (DRAFT/COMPLETED) will match Observation Card.
  */
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import { toast } from "sonner"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import Image from "next/image"
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import Image from "next/image";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
+} from "@/components/ui/dialog";
+import {
+  createToolboxTalkCard,
+  getToolboxTalkCards,
+  deleteToolboxTalkCard,
+} from "@/app/actions/toolboxTalkCard.actions";
+import { useEffect } from "react";
 
 // ─── Operational Context rows — icon + label + editable value ────────────────
 const OPERATIONAL_CONTEXT_FIELDS = [
-  { key: "vesselStatus",     icon: "⚓", label: "Vessel status"      },
-  { key: "weatherSeaState",  icon: "🌊", label: "Weather / Sea State" },
-  { key: "workAreaStatus",   icon: "✅", label: "Work area status"   },
-  { key: "dayNight",         icon: "☀️", label: "Day / Night"        },
-  { key: "nearbyOperations", icon: "📡", label: "Nearby operations"  },
-]
+  { key: "vesselStatus", icon: "⚓", label: "Vessel status" },
+  { key: "weatherSeaState", icon: "🌊", label: "Weather / Sea State" },
+  { key: "workAreaStatus", icon: "✅", label: "Work area status" },
+  { key: "dayNight", icon: "☀️", label: "Day / Night" },
+  { key: "nearbyOperations", icon: "📡", label: "Nearby operations" },
+];
 
 // ─── Responsible Interfaces rows — icon + label + editable value ──────────────
 const RESPONSIBLE_INTERFACE_FIELDS = [
-  { key: "masterOowDpo",      icon: "🧭", label: "Master / OOW / DPO"  },
-  { key: "deckPic",           icon: "🧍", label: "Deck PIC"            },
-  { key: "surveyLead",        icon: "🧍", label: "Survey Lead"         },
-  { key: "equipmentOperator", icon: "🤖", label: "Equipment Operator"  },
-]
+  { key: "masterOowDpo", icon: "🧭", label: "Master / OOW / DPO" },
+  { key: "deckPic", icon: "🧍", label: "Deck PIC" },
+  { key: "surveyLead", icon: "🧍", label: "Survey Lead" },
+  { key: "equipmentOperator", icon: "🤖", label: "Equipment Operator" },
+];
 
-// ─── Placeholder Toolbox Talk Cards — will come from DB/uploads later ────────
-const PLACEHOLDER_CARDS = [
-  { code: "SUR-22", title: "AUV and USV launch, mission and recovery", tags: ["AUV", "Recovery"],       image: "/assets/images/card1.jpg" },
-  { code: "SUR-07", title: "A-frame launch and recovery",              tags: ["A-Frame", "Lifting"],     image: "/assets/images/card2.jpg" },
-  { code: "SUR-08", title: "LARS and survey winch operations",         tags: ["LARS", "Winch"],           image: "/assets/images/card3.jpg" },
-]
+/** Real cards fetched from DB */
+const [cards, setCards] = useState<
+  {
+    id: string;
+    code: string;
+    title: string;
+    tags: string[];
+    imageUrl: string | null;
+  }[]
+>([]);
+
+/** Loads cards from DB on mount */
+useEffect(() => {
+  getToolboxTalkCards().then(setCards);
+}, []);
+
+/** Controls the "Upload New Card" dialog */
+const [createCardOpen, setCreateCardOpen] = useState(false);
+const [newCardCode, setNewCardCode] = useState("");
+const [newCardTitle, setNewCardTitle] = useState("");
+const [newCardTags, setNewCardTags] = useState("");
+const [newCardImage, setNewCardImage] = useState<File | null>(null);
+const [creatingCard, setCreatingCard] = useState(false);
 
 // ─── Confirm with the Team — checklist options ────────────────────────────────
 /**
@@ -58,60 +81,79 @@ const PLACEHOLDER_CARDS = [
  * Stored as string[] in state → will be saved as array in DB.
  */
 const TEAM_CONFIRMATION_ITEMS = [
-  { key: "taskSequenceRoles",    label: "Task sequence and individual roles are understood"          },
-  { key: "criticalHazards",      label: "Critical hazards and controls have been discussed"          },
-  { key: "stopMakeSafe",         label: "Stop / Make Safe / Reassess criteria are understood"         },
-  { key: "emergencyActions",     label: "Emergency actions and communication method are understood"  },
-  { key: "lmraRequired",         label: "LMRA Required at work site"                                  },
-]
+  {
+    key: "taskSequenceRoles",
+    label: "Task sequence and individual roles are understood",
+  },
+  {
+    key: "criticalHazards",
+    label: "Critical hazards and controls have been discussed",
+  },
+  {
+    key: "stopMakeSafe",
+    label: "Stop / Make Safe / Reassess criteria are understood",
+  },
+  {
+    key: "emergencyActions",
+    label: "Emergency actions and communication method are understood",
+  },
+  { key: "lmraRequired", label: "LMRA Required at work site" },
+];
 
 /** A single team member row — name only for now, matches Risk's TeamMember pattern */
 type TeamMemberRow = {
-  id:   string
-  name: string
-}
+  id: string;
+  name: string;
+};
 
 export default function SafetyMeetingForm() {
-  const router = useRouter()
+  const router = useRouter();
 
-  const [loading,      setLoading]      = useState(false)
-  const [draftLoading, setDraftLoading] = useState(false)
+  const [loading, setLoading] = useState(false);
+  const [draftLoading, setDraftLoading] = useState(false);
 
   // ─── Section 1 — Task & Project Information ────────────────────────────
-  const [projectSurvey,      setProjectSurvey]      = useState("")
-  const [contractNo,         setContractNo]         = useState("")
-  const [vesselInstallation, setVesselInstallation] = useState("")
-  const [date,                setDate]              = useState(new Date().toISOString().split("T")[0])
-  const [locationAreaDeck,   setLocationAreaDeck]   = useState("")
-  const [startTime,          setStartTime]          = useState("")
-  const [expectedFinish,     setExpectedFinish]     = useState("")
-  const [activityTask,       setActivityTask]       = useState("")
-  const [toolboxTalkLeader,  setToolboxTalkLeader]  = useState("")
-  const [taskObjective,      setTaskObjective]      = useState("")
+  const [projectSurvey, setProjectSurvey] = useState("");
+  const [contractNo, setContractNo] = useState("");
+  const [vesselInstallation, setVesselInstallation] = useState("");
+  const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
+  const [locationAreaDeck, setLocationAreaDeck] = useState("");
+  const [startTime, setStartTime] = useState("");
+  const [expectedFinish, setExpectedFinish] = useState("");
+  const [activityTask, setActivityTask] = useState("");
+  const [toolboxTalkLeader, setToolboxTalkLeader] = useState("");
+  const [taskObjective, setTaskObjective] = useState("");
 
-  const [firstTimeNonRoutine, setFirstTimeNonRoutine] = useState(false)
-  const [simopsInvolved,      setSimopsInvolved]      = useState(false)
+  const [firstTimeNonRoutine, setFirstTimeNonRoutine] = useState(false);
+  const [simopsInvolved, setSimopsInvolved] = useState(false);
 
   // ─── Section 2 — Operational Context (dynamic key/value) ───────────────
-  const [operationalContext, setOperationalContext] = useState<Record<string, string>>(
-    Object.fromEntries(OPERATIONAL_CONTEXT_FIELDS.map((f) => [f.key, ""]))
-  )
+  const [operationalContext, setOperationalContext] = useState<
+    Record<string, string>
+  >(Object.fromEntries(OPERATIONAL_CONTEXT_FIELDS.map((f) => [f.key, ""])));
 
   // ─── Section 3 — Responsible Interfaces (dynamic key/value) ────────────
-  const [responsibleInterfaces, setResponsibleInterfaces] = useState<Record<string, string>>(
-    Object.fromEntries(RESPONSIBLE_INTERFACE_FIELDS.map((f) => [f.key, ""]))
-  )
-  const [responsibleInterfacesOther, setResponsibleInterfacesOther] = useState("")
+  const [responsibleInterfaces, setResponsibleInterfaces] = useState<
+    Record<string, string>
+  >(Object.fromEntries(RESPONSIBLE_INTERFACE_FIELDS.map((f) => [f.key, ""])));
+  const [responsibleInterfacesOther, setResponsibleInterfacesOther] =
+    useState("");
 
   // ─── Select Toolbox Talk Cards state ────────────────────────────────────
-  const [previewCard, setPreviewCard] = useState<{ code: string; title: string; image: string; tags: string[] } | null>(null)
-  const [selectedCards, setSelectedCards] = useState<string[]>([])
+  const [previewCard, setPreviewCard] = useState<{
+    code: string;
+    title: string;
+    image: string;
+    tags: string[];
+  } | null>(null);
+
+const [selectedCards, setSelectedCards] = useState<string[]>([]) // now stores card IDs
 
   const toggleCardSelection = (code: string) => {
     setSelectedCards((prev) =>
-      prev.includes(code) ? prev.filter((c) => c !== code) : [...prev, code]
-    )
-  }
+      prev.includes(code) ? prev.filter((c) => c !== code) : [...prev, code],
+    );
+  };
 
   // ─── Confirm with the Team state ────────────────────────────────────────
   /**
@@ -119,87 +161,119 @@ export default function SafetyMeetingForm() {
    * Multiple checkboxes — user can select more than one
    * e.g. ["taskSequenceRoles", "criticalHazards"]
    */
-  const [teamConfirmations, setTeamConfirmations] = useState<string[]>([])
-  const [teamConfirmationsOther, setTeamConfirmationsOther] = useState("")
+  const [teamConfirmations, setTeamConfirmations] = useState<string[]>([]);
+  const [teamConfirmationsOther, setTeamConfirmationsOther] = useState("");
 
   const toggleTeamConfirmation = (key: string) => {
     setTeamConfirmations((prev) =>
-      prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]
-    )
-  }
+      prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key],
+    );
+  };
 
   // ─── Add Team Member state — dynamic array, same pattern as Risk ───────
-  const [teamMembers, setTeamMembers] = useState<TeamMemberRow[]>([])
+  const [teamMembers, setTeamMembers] = useState<TeamMemberRow[]>([]);
 
   const addTeamMember = () => {
-    setTeamMembers((prev) => [...prev, { id: crypto.randomUUID(), name: "" }])
-  }
+    setTeamMembers((prev) => [...prev, { id: crypto.randomUUID(), name: "" }]);
+  };
 
   const updateTeamMember = (id: string, name: string) => {
     setTeamMembers((prev) =>
-      prev.map((m) => (m.id === id ? { ...m, name } : m))
-    )
-  }
+      prev.map((m) => (m.id === id ? { ...m, name } : m)),
+    );
+  };
 
   const removeTeamMember = (id: string) => {
-    setTeamMembers((prev) => prev.filter((m) => m.id !== id))
-  }
+    setTeamMembers((prev) => prev.filter((m) => m.id !== id));
+  };
 
   // ─── Shared Tailwind classes — red theme ────────────────────────────────
   const labelClass =
-    "block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1"
+    "block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1";
   const sectionClass =
-    "rounded-xl border border-red-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-sm p-6 mb-6"
+    "rounded-xl border border-red-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-sm p-6 mb-6";
   const sectionHeadingClass =
-    "text-xs font-bold uppercase tracking-widest text-red-900 dark:text-white bg-red-300 dark:bg-red-700 -mx-6 -mt-6 mb-5 px-6 py-3 rounded-t-xl"
-  const inputStyle = "border-red-200 focus-visible:ring-red-400"
+    "text-xs font-bold uppercase tracking-widest text-red-900 dark:text-white bg-red-300 dark:bg-red-700 -mx-6 -mt-6 mb-5 px-6 py-3 rounded-t-xl";
+  const inputStyle = "border-red-200 focus-visible:ring-red-400";
 
   const onSubmit = async () => {
-    setLoading(true)
+    setLoading(true);
     try {
       // TODO: call createSafetyMeeting action once Prisma/Zod are wired
-      toast.success("Toolbox Talk submitted!")
-      router.push("/safetymeetingsdashboard")
+      toast.success("Toolbox Talk submitted!");
+      router.push("/safetymeetingsdashboard");
     } catch {
-      toast.error("Something went wrong")
+      toast.error("Something went wrong");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const onSaveDraft = async () => {
-    setDraftLoading(true)
+    setDraftLoading(true);
     try {
       // TODO: call saveSafetyMeetingDraft action once Prisma/Zod are wired
-      toast.success("Draft saved!")
-      router.push("/safetymeetingsdashboard")
+      toast.success("Draft saved!");
+      router.push("/safetymeetingsdashboard");
     } catch {
-      toast.error("Something went wrong")
+      toast.error("Something went wrong");
     } finally {
-      setDraftLoading(false)
+      setDraftLoading(false);
     }
-  }
+  };
 
   const onPreviewPDF = () => {
-    toast.info("PDF preview will be available once the record is saved.")
-  }
+    toast.info("PDF preview will be available once the record is saved.");
+  };
 
   const onUploadClick = () => {
-    toast.info("Upload storage (Vercel Blob) will be wired up in a future session.")
-  }
+    setCreateCardOpen(true);
+  };
+
+  const onCreateCard = async () => {
+    if (!newCardCode || !newCardTitle) {
+      toast.error("Code and Title are required");
+      return;
+    }
+
+    setCreatingCard(true);
+    try {
+      const formData = new FormData();
+      formData.append("code", newCardCode);
+      formData.append("title", newCardTitle);
+      formData.append("tags", newCardTags);
+      if (newCardImage) formData.append("image", newCardImage);
+
+      const result = await createToolboxTalkCard(formData);
+
+      if (result.success) {
+        toast.success("Card created!");
+        const updated = await getToolboxTalkCards();
+        setCards(updated);
+        setCreateCardOpen(false);
+        setNewCardCode("");
+        setNewCardTitle("");
+        setNewCardTags("");
+        setNewCardImage(null);
+      } else {
+        toast.error(result.error ?? "Failed to create card");
+      }
+    } catch {
+      toast.error("Something went wrong");
+    } finally {
+      setCreatingCard(false);
+    }
+  };
 
   return (
     <div className="space-y-6">
-
       {/* ── Section 1 — Task & Project Info + Operational Context / Interfaces ── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-
         {/* ── Left column — Task & Project Information ─────────────────── */}
         <div className={sectionClass}>
           <h2 className={sectionHeadingClass}>Task & Project Information</h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-
             <div>
               <label className={labelClass}>Project / Survey *</label>
               <Input
@@ -292,7 +366,9 @@ export default function SafetyMeetingForm() {
 
           {/* Task Objective — full width textarea */}
           <div className="mt-4">
-            <label className={labelClass}>Task Objective / Brief Description *</label>
+            <label className={labelClass}>
+              Task Objective / Brief Description *
+            </label>
             <Textarea
               value={taskObjective}
               onChange={(e) => setTaskObjective(e.target.value)}
@@ -312,7 +388,9 @@ export default function SafetyMeetingForm() {
                 type="button"
                 onClick={() => setFirstTimeNonRoutine((v) => !v)}
                 className={`relative w-10 h-5 rounded-full transition-colors ${
-                  firstTimeNonRoutine ? "bg-red-400" : "bg-slate-200 dark:bg-slate-700"
+                  firstTimeNonRoutine
+                    ? "bg-red-400"
+                    : "bg-slate-200 dark:bg-slate-700"
                 }`}
               >
                 <span
@@ -331,7 +409,9 @@ export default function SafetyMeetingForm() {
                 type="button"
                 onClick={() => setSimopsInvolved((v) => !v)}
                 className={`relative w-10 h-5 rounded-full transition-colors ${
-                  simopsInvolved ? "bg-red-400" : "bg-slate-200 dark:bg-slate-700"
+                  simopsInvolved
+                    ? "bg-red-400"
+                    : "bg-slate-200 dark:bg-slate-700"
                 }`}
               >
                 <span
@@ -346,20 +426,24 @@ export default function SafetyMeetingForm() {
 
         {/* ── Right column — Operational Context + Responsible Interfaces ── */}
         <div className="space-y-6">
-
           <div className={sectionClass}>
             <h2 className={sectionHeadingClass}>Operational Context</h2>
             <div className="space-y-3">
               {OPERATIONAL_CONTEXT_FIELDS.map((field) => (
                 <div key={field.key} className="flex items-center gap-3">
-                  <span className="text-lg w-8 text-center shrink-0">{field.icon}</span>
+                  <span className="text-lg w-8 text-center shrink-0">
+                    {field.icon}
+                  </span>
                   <span className="text-xs font-medium text-slate-500 dark:text-slate-400 w-32 shrink-0">
                     {field.label}
                   </span>
                   <Input
                     value={operationalContext[field.key]}
                     onChange={(e) =>
-                      setOperationalContext((prev) => ({ ...prev, [field.key]: e.target.value }))
+                      setOperationalContext((prev) => ({
+                        ...prev,
+                        [field.key]: e.target.value,
+                      }))
                     }
                     placeholder={`Enter ${field.label.toLowerCase()}...`}
                     className={inputStyle}
@@ -374,14 +458,19 @@ export default function SafetyMeetingForm() {
             <div className="space-y-3">
               {RESPONSIBLE_INTERFACE_FIELDS.map((field) => (
                 <div key={field.key} className="flex items-center gap-3">
-                  <span className="text-lg w-8 text-center shrink-0">{field.icon}</span>
+                  <span className="text-lg w-8 text-center shrink-0">
+                    {field.icon}
+                  </span>
                   <span className="text-xs font-medium text-slate-500 dark:text-slate-400 w-32 shrink-0">
                     {field.label}
                   </span>
                   <Input
                     value={responsibleInterfaces[field.key]}
                     onChange={(e) =>
-                      setResponsibleInterfaces((prev) => ({ ...prev, [field.key]: e.target.value }))
+                      setResponsibleInterfaces((prev) => ({
+                        ...prev,
+                        [field.key]: e.target.value,
+                      }))
                     }
                     placeholder={`Enter ${field.label.toLowerCase()}...`}
                     className={inputStyle}
@@ -422,21 +511,19 @@ export default function SafetyMeetingForm() {
         </div>
 
         <div className="divide-y divide-red-50 dark:divide-slate-800">
-          {PLACEHOLDER_CARDS.map((card) => {
-            const isSelected = selectedCards.includes(card.code)
+          {cards.map((card) => {
+            const isSelected = selectedCards.includes(card.id);
             return (
               <div
-                key={card.code}
+                key={card.id}
                 className="flex items-center justify-between gap-4 py-3"
               >
                 <span className="text-xs font-mono font-semibold text-red-600 dark:text-red-400 w-16 shrink-0">
                   {card.code}
                 </span>
-
                 <span className="text-sm text-slate-700 dark:text-slate-200 flex-1 min-w-0">
                   {card.title}
                 </span>
-
                 <div className="flex items-center gap-1.5 shrink-0">
                   {card.tags.map((tag) => (
                     <span
@@ -447,19 +534,24 @@ export default function SafetyMeetingForm() {
                     </span>
                   ))}
                 </div>
-
                 <button
                   type="button"
-                  onClick={() => setPreviewCard(card)}
+                  onClick={() =>
+                    setPreviewCard({
+                      code: card.code,
+                      title: card.title,
+                      image: card.imageUrl ?? "/assets/images/logo2.png",
+                      tags: card.tags,
+                    })
+                  }
                   className="text-xs text-red-600 hover:text-red-800 dark:text-red-400 underline shrink-0"
                 >
                   Preview
                 </button>
-
                 <Button
                   type="button"
                   size="sm"
-                  onClick={() => toggleCardSelection(card.code)}
+                  onClick={() => toggleCardSelection(card.id)}
                   className={`text-xs shrink-0 ${
                     isSelected
                       ? "bg-red-500 hover:bg-red-600 text-white"
@@ -469,12 +561,13 @@ export default function SafetyMeetingForm() {
                   {isSelected ? "✓ Selected" : "+ Add"}
                 </Button>
               </div>
-            )
+            );
           })}
         </div>
 
         <p className="text-xs text-slate-400 mt-3">
-          Note: card upload and storage integration will be added in a future update.
+          Note: card upload and storage integration will be added in a future
+          update.
         </p>
       </div>
 
@@ -579,9 +672,63 @@ export default function SafetyMeetingForm() {
         </DialogContent>
       </Dialog>
 
+      {/* ── Create New Card Dialog ────────────────────────────────────── */}
+      <Dialog open={createCardOpen} onOpenChange={setCreateCardOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Upload New Toolbox Talk Card</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <label className={labelClass}>Code *</label>
+              <Input
+                value={newCardCode}
+                onChange={(e) => setNewCardCode(e.target.value)}
+                placeholder="e.g. SUR-25"
+                className={inputStyle}
+              />
+            </div>
+            <div>
+              <label className={labelClass}>Title *</label>
+              <Input
+                value={newCardTitle}
+                onChange={(e) => setNewCardTitle(e.target.value)}
+                placeholder="e.g. Winch Operations Safety"
+                className={inputStyle}
+              />
+            </div>
+            <div>
+              <label className={labelClass}>Tags (comma separated)</label>
+              <Input
+                value={newCardTags}
+                onChange={(e) => setNewCardTags(e.target.value)}
+                placeholder="e.g. Winch, Lifting"
+                className={inputStyle}
+              />
+            </div>
+            <div>
+              <label className={labelClass}>Image</label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => setNewCardImage(e.target.files?.[0] ?? null)}
+                className="text-sm"
+              />
+            </div>
+            <Button
+              type="button"
+              disabled={creatingCard}
+              onClick={onCreateCard}
+              className="w-full bg-red-300 hover:bg-red-400 text-red-900 border border-red-300"
+            >
+              {creatingCard ? "Creating..." : "Create Card"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* ── Submit / Save Draft / Preview PDF / Cancel ─────────────────── */}
       <div className="flex items-center gap-4 pb-10 flex-wrap">
-
         <Button
           type="button"
           disabled={loading || draftLoading}
@@ -600,7 +747,6 @@ export default function SafetyMeetingForm() {
           {draftLoading ? "Saving..." : "Save Draft"}
         </Button>
 
-
         <Button
           type="button"
           variant="outline"
@@ -612,5 +758,5 @@ export default function SafetyMeetingForm() {
         </Button>
       </div>
     </div>
-  )
+  );
 }
