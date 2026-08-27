@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 /**
  * SafetyMeetingTable — Safety Meetings / Toolbox Talks dashboard
@@ -12,13 +12,13 @@
  *  - MEMBER        → can edit/delete only their own drafts
  */
 
-import { useState, useMemo } from "react"
-import { useRouter } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import Link from "next/link"
-import Image from "next/image"
-import { toast } from "sonner"
-import { deleteSafetyMeeting } from "@/app/actions/safetyMeeting.actions"
+import { useState, useMemo } from "react";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import Image from "next/image";
+import { toast } from "sonner";
+import { deleteSafetyMeeting } from "@/app/actions/safetyMeeting.actions";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -29,66 +29,76 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
+} from "@/components/ui/alert-dialog";
+
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 type Meeting = {
-  id:                  string
-  projectSurvey:       string
-  vesselInstallation:  string
-  activityTask:        string
-  toolboxTalkLeader:   string
-  date:                Date
-  state:               string
-  createdById:         string
-}
+  id: string;
+  projectSurvey: string;
+  vesselInstallation: string;
+  activityTask: string;
+  toolboxTalkLeader: string;
+  date: Date;
+  state: string;
+  createdById: string;
+};
 
 type CurrentUser = {
-  id:   string
-  role: string
-} | null
+  id: string;
+  role: string;
+} | null;
 
 // ─── Status badge styles ──────────────────────────────────────────────────────
 const stateStyle: Record<string, string> = {
-  DRAFT:     "bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-400 whitespace-nowrap",
-  COMPLETED: "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 whitespace-nowrap",
-}
+  DRAFT:
+    "bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-400 whitespace-nowrap",
+  COMPLETED:
+    "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 whitespace-nowrap",
+};
 
 // ─── Shared Tailwind classes ──────────────────────────────────────────────────
 const inputClass =
-  "px-3 py-2 rounded-lg border border-red-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm text-slate-700 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-red-400 transition-colors"
+  "px-3 py-2 rounded-lg border border-red-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm text-slate-700 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-red-400 transition-colors";
 
 const selectClass =
-  "px-3 py-2 rounded-lg border border-red-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-red-400 transition-colors"
+  "px-3 py-2 rounded-lg border border-red-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-red-400 transition-colors";
 
 export default function SafetyMeetingTable({
   meetings,
   currentUser,
 }: {
-  meetings: Meeting[]
-  currentUser: CurrentUser
+  meetings: Meeting[];
+  currentUser: CurrentUser;
 }) {
-  const router = useRouter()
+  const router = useRouter();
 
   /** True when logged in user is ADMIN or MANAGER */
-  const isAdminOrManager = currentUser?.role === "ADMIN" || currentUser?.role === "MANAGER"
+  const isAdminOrManager =
+    currentUser?.role === "ADMIN" || currentUser?.role === "MANAGER";
 
   /** Track which meeting is currently being deleted — for loading state */
-  const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   /** Filter state — all start empty */
   const [filters, setFilters] = useState({
-    projectSurvey:      "",
+    projectSurvey: "",
     vesselInstallation: "",
-    status:             "",
-  })
+    status: "",
+  });
 
-  const [manualOpen, setManualOpen] = useState(false)
+  const [manualOpen, setManualOpen] = useState(false);
 
   const set = (key: string, value: string) =>
-    setFilters((prev) => ({ ...prev, [key]: value }))
+    setFilters((prev) => ({ ...prev, [key]: value }));
 
   const reset = () =>
-    setFilters({ projectSurvey: "", vesselInstallation: "", status: "" })
+    setFilters({ projectSurvey: "", vesselInstallation: "", status: "" });
 
   /**
    * filtered — applies all active filters and sorts by date descending
@@ -96,38 +106,49 @@ export default function SafetyMeetingTable({
   const filtered = useMemo(() => {
     return meetings
       .filter((m) => {
-        if (filters.projectSurvey && !m.projectSurvey.toLowerCase().includes(filters.projectSurvey.toLowerCase())) return false
-        if (filters.vesselInstallation && !m.vesselInstallation.toLowerCase().includes(filters.vesselInstallation.toLowerCase())) return false
-        if (filters.status && m.state !== filters.status) return false
-        return true
+        if (
+          filters.projectSurvey &&
+          !m.projectSurvey
+            .toLowerCase()
+            .includes(filters.projectSurvey.toLowerCase())
+        )
+          return false;
+        if (
+          filters.vesselInstallation &&
+          !m.vesselInstallation
+            .toLowerCase()
+            .includes(filters.vesselInstallation.toLowerCase())
+        )
+          return false;
+        if (filters.status && m.state !== filters.status) return false;
+        return true;
       })
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-  }, [meetings, filters])
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }, [meetings, filters]);
 
   /**
    * handleDelete — deletes a safety meeting
    * Server action enforces the actual permission rules.
    */
   const handleDelete = async (id: string) => {
-    setDeletingId(id)
+    setDeletingId(id);
     try {
-      const result = await deleteSafetyMeeting(id)
+      const result = await deleteSafetyMeeting(id);
       if (result.success) {
-        toast.success("Safety meeting deleted.")
-        router.refresh()
+        toast.success("Safety meeting deleted.");
+        router.refresh();
       } else {
-        toast.error(result.error ?? "Failed to delete")
+        toast.error(result.error ?? "Failed to delete");
       }
     } catch {
-      toast.error("Something went wrong")
+      toast.error("Something went wrong");
     } finally {
-      setDeletingId(null)
+      setDeletingId(null);
     }
-  }
+  };
 
   return (
     <div className="min-h-screen bg-[#fff8f8] dark:bg-slate-950 text-slate-900 dark:text-slate-100 px-6 md:px-10 py-10 font-sans">
-
       {/* ── Page Header ───────────────────────────────────────────────── */}
       <div className="flex items-center justify-between mb-8 flex-wrap gap-4">
         <Link href="/">
@@ -151,7 +172,9 @@ export default function SafetyMeetingTable({
         <div>
           <h1 className="text-4xl font-extrabold tracking-tight text-slate-700 dark:text-white">
             Mobile Marine{" "}
-            <span className="text-slate-500">Safety Meetings / Toolbox Talks</span>
+            <span className="text-slate-500">
+              Safety Meetings / Toolbox Talks
+            </span>
           </h1>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-2">
             Displaying {filtered.length} of {meetings.length} toolbox talks
@@ -243,7 +266,10 @@ export default function SafetyMeetingTable({
             <tbody>
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-4 py-10 text-center text-slate-400 text-sm">
+                  <td
+                    colSpan={7}
+                    className="px-4 py-10 text-center text-slate-400 text-sm"
+                  >
                     No toolbox talks found matching your filters.
                   </td>
                 </tr>
@@ -259,7 +285,9 @@ export default function SafetyMeetingTable({
                   >
                     <td
                       className="px-4 py-3 font-medium text-red-600 dark:text-red-400 cursor-pointer hover:underline whitespace-nowrap"
-                      onClick={() => router.push(`/safetymeetingsdashboard/meetings/${m.id}`)}
+                      onClick={() =>
+                        router.push(`/safetymeetingsdashboard/meetings/${m.id}`)
+                      }
                     >
                       {m.projectSurvey}
                     </td>
@@ -276,7 +304,9 @@ export default function SafetyMeetingTable({
                       {new Date(m.date).toLocaleDateString("en-GB")}
                     </td>
                     <td className="px-4 py-3">
-                      <span className={`text-xs px-2 py-1 rounded-full font-medium ${stateStyle[m.state] ?? ""}`}>
+                      <span
+                        className={`text-xs px-2 py-1 rounded-full font-medium ${stateStyle[m.state] ?? ""}`}
+                      >
                         {m.state}
                       </span>
                     </td>
@@ -287,8 +317,12 @@ export default function SafetyMeetingTable({
                           title="View"
                           variant="ghost"
                           size="sm"
-                          onClick={() => router.push(`/safetymeetingsdashboard/meetings/${m.id}`)}
-                          className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-slate-800"
+                          onClick={() =>
+                            router.push(
+                              `/safetymeetingsdashboard/meetings/${m.id}`,
+                            )
+                          }
+                          className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-slate-800 cursor-pointer"
                         >
                           👁
                         </Button>
@@ -299,8 +333,12 @@ export default function SafetyMeetingTable({
                             title="Edit Draft"
                             variant="ghost"
                             size="sm"
-                            onClick={() => router.push(`/safetymeetingsdashboard/meetings/${m.id}/edit`)}
-                            className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-slate-800"
+                            onClick={() =>
+                              router.push(
+                                `/safetymeetingsdashboard/meetings/${m.id}/edit`,
+                              )
+                            }
+                            className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-slate-800 cursor-pointer"
                           >
                             ✏️
                           </Button>
@@ -312,8 +350,12 @@ export default function SafetyMeetingTable({
                             title="Download PDF"
                             variant="ghost"
                             size="sm"
-                            onClick={() => router.push(`/safetymeetingsdashboard/meetings/${m.id}/pdf`)}
-                            className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-slate-800"
+                            onClick={() =>
+                              router.push(
+                                `/safetymeetingsdashboard/meetings/${m.id}/pdf`,
+                              )
+                            }
+                            className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-slate-800 cursor-pointer"
                           >
                             📄
                           </Button>
@@ -328,16 +370,20 @@ export default function SafetyMeetingTable({
                                 variant="ghost"
                                 size="sm"
                                 disabled={deletingId === m.id}
-                                className="p-1.5 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-slate-800"
+                                className="p-1.5 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-slate-800 cursor-pointer"
                               >
                                 {deletingId === m.id ? "..." : "🗑️"}
                               </Button>
                             </AlertDialogTrigger>
                             <AlertDialogContent>
                               <AlertDialogHeader>
-                                <AlertDialogTitle>Delete Safety Meeting?</AlertDialogTitle>
+                                <AlertDialogTitle>
+                                  Delete Safety Meeting?
+                                </AlertDialogTitle>
                                 <AlertDialogDescription>
-                                  This action cannot be undone. The meeting &quot;{m.projectSurvey}&quot; and all its data will be permanently deleted.
+                                  This action cannot be undone. The meeting
+                                  &quot;{m.projectSurvey}&quot; and all its data
+                                  will be permanently deleted.
                                 </AlertDialogDescription>
                               </AlertDialogHeader>
                               <AlertDialogFooter>
@@ -354,38 +400,44 @@ export default function SafetyMeetingTable({
                         )}
 
                         {/* Delete — DRAFT, own draft only for MEMBER */}
-                        {m.state === "DRAFT" && (isAdminOrManager || m.createdById === currentUser?.id) && (
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button
-                                title="Delete"
-                                variant="ghost"
-                                size="sm"
-                                disabled={deletingId === m.id}
-                                className="p-1.5 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-slate-800"
-                              >
-                                {deletingId === m.id ? "..." : "🗑️"}
-                              </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>Delete Draft?</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  This action cannot be undone. The draft &quot;{m.projectSurvey}&quot; will be permanently deleted.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction
-                                  onClick={() => handleDelete(m.id)}
-                                  className="bg-red-500 hover:bg-red-600 text-white"
+                        {m.state === "DRAFT" &&
+                          (isAdminOrManager ||
+                            m.createdById === currentUser?.id) && (
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button
+                                  title="Delete"
+                                  variant="ghost"
+                                  size="sm"
+                                  disabled={deletingId === m.id}
+                                  className="p-1.5 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-slate-800"
                                 >
-                                  Yes, delete
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        )}
+                                  {deletingId === m.id ? "..." : "🗑️"}
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>
+                                    Delete Draft?
+                                  </AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    This action cannot be undone. The draft
+                                    &quot;{m.projectSurvey}&quot; will be
+                                    permanently deleted.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={() => handleDelete(m.id)}
+                                    className="bg-red-500 hover:bg-red-600 text-white"
+                                  >
+                                    Yes, delete
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          )}
                       </div>
                     </td>
                   </tr>
@@ -398,6 +450,19 @@ export default function SafetyMeetingTable({
 
       {/* ── Manual PDF Viewer Modal ──────────────────────────────────────── */}
       {/* TODO: update src to your actual Vercel Blob manual.pdf URL */}
+      {/* ── Manual PDF Viewer Modal ──────────────────────────────────────── */}
+      <Dialog open={manualOpen} onOpenChange={setManualOpen}>
+        <DialogContent className="sm:max-w-5xl h-[90vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle>Safety Manual</DialogTitle>
+          </DialogHeader>
+          <iframe
+            src="https://3ndlujwykffozodt.public.blob.vercel-storage.com/manual.pdf"
+            className="w-full flex-1 rounded-lg border border-red-200"
+            title="Safety Manual"
+          />
+        </DialogContent>
+      </Dialog>
     </div>
-  )
+  );
 }
