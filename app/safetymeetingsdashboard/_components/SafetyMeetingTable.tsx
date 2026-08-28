@@ -195,7 +195,7 @@ export default function SafetyMeetingTable({
             onClick={() => router.push("/safetymeetingsdashboard/meetings/new")}
             className="px-5 py-2.5 bg-red-300 hover:bg-red-400 text-red-900 border border-red-300 rounded-lg text-sm font-medium transition-colors cursor-pointer shadow-sm"
           >
-            + New Toolbox Talk
+            + New Safety Meetings / Toolbox Talks
           </button>
         </div>
       </div>
