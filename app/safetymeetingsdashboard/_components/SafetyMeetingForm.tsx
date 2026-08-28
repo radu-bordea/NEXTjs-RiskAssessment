@@ -38,6 +38,32 @@ import {
   saveSafetyMeetingDraft,
 } from "@/app/actions/safetyMeeting.actions";
 
+import {
+  updateSafetyMeeting,
+  deleteSafetyMeeting,
+} from "@/app/actions/safetyMeeting.actions";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+
+type CurrentUser = {
+  id: string;
+  role: string;
+} | null;
+
+type Props = {
+  meeting?: any;
+  currentUser?: CurrentUser;
+};
+
 // ─── Operational Context rows — icon + label + editable value ────────────────
 const OPERATIONAL_CONTEXT_FIELDS = [
   { key: "vesselStatus", icon: "⚓", label: "Vessel status" },
@@ -86,38 +112,70 @@ type TeamMemberRow = {
   name: string;
 };
 
-export default function SafetyMeetingForm() {
+export default function SafetyMeetingForm({ meeting, currentUser }: Props) {
   const router = useRouter();
+
+  /** True when editing an existing DRAFT */
+  const isEditMode = !!meeting;
 
   const [loading, setLoading] = useState(false);
   const [draftLoading, setDraftLoading] = useState(false);
 
   // ─── Section 1 — Task & Project Information ────────────────────────────
-  const [projectSurvey, setProjectSurvey] = useState("");
-  const [contractNo, setContractNo] = useState("");
-  const [vesselInstallation, setVesselInstallation] = useState("");
-  const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
-  const [locationAreaDeck, setLocationAreaDeck] = useState("");
-  const [startTime, setStartTime] = useState("");
-  const [expectedFinish, setExpectedFinish] = useState("");
-  const [activityTask, setActivityTask] = useState("");
-  const [toolboxTalkLeader, setToolboxTalkLeader] = useState("");
-  const [taskObjective, setTaskObjective] = useState("");
+  const [projectSurvey, setProjectSurvey] = useState(
+    meeting?.projectSurvey ?? "",
+  );
+  const [contractNo, setContractNo] = useState(meeting?.contractNo ?? "");
+  const [vesselInstallation, setVesselInstallation] = useState(
+    meeting?.vesselInstallation ?? "",
+  );
+  const [date, setDate] = useState(
+    meeting?.date
+      ? new Date(meeting.date).toISOString().split("T")[0]
+      : new Date().toISOString().split("T")[0],
+  );
+  const [locationAreaDeck, setLocationAreaDeck] = useState(
+    meeting?.locationAreaDeck ?? "",
+  );
+  const [startTime, setStartTime] = useState(meeting?.startTime ?? "");
+  const [expectedFinish, setExpectedFinish] = useState(
+    meeting?.expectedFinish ?? "",
+  );
+  const [activityTask, setActivityTask] = useState(meeting?.activityTask ?? "");
+  const [toolboxTalkLeader, setToolboxTalkLeader] = useState(
+    meeting?.toolboxTalkLeader ?? "",
+  );
+  const [taskObjective, setTaskObjective] = useState(
+    meeting?.taskObjective ?? "",
+  );
 
-  const [firstTimeNonRoutine, setFirstTimeNonRoutine] = useState(false);
-  const [simopsInvolved, setSimopsInvolved] = useState(false);
+  const [firstTimeNonRoutine, setFirstTimeNonRoutine] = useState(
+    meeting?.firstTimeNonRoutine ?? false,
+  );
+  const [simopsInvolved, setSimopsInvolved] = useState(
+    meeting?.simopsInvolved ?? false,
+  );
 
   // ─── Section 2 — Operational Context (dynamic key/value) ───────────────
   const [operationalContext, setOperationalContext] = useState<
     Record<string, string>
-  >(Object.fromEntries(OPERATIONAL_CONTEXT_FIELDS.map((f) => [f.key, ""])));
+  >(
+    Object.fromEntries(
+      OPERATIONAL_CONTEXT_FIELDS.map((f) => [f.key, meeting?.[f.key] ?? ""]),
+    ),
+  );
 
   // ─── Section 3 — Responsible Interfaces (dynamic key/value) ────────────
   const [responsibleInterfaces, setResponsibleInterfaces] = useState<
     Record<string, string>
-  >(Object.fromEntries(RESPONSIBLE_INTERFACE_FIELDS.map((f) => [f.key, ""])));
-  const [responsibleInterfacesOther, setResponsibleInterfacesOther] =
-    useState("");
+  >(
+    Object.fromEntries(
+      RESPONSIBLE_INTERFACE_FIELDS.map((f) => [f.key, meeting?.[f.key] ?? ""]),
+    ),
+  );
+  const [responsibleInterfacesOther, setResponsibleInterfacesOther] = useState(
+    meeting?.responsibleInterfacesOther ?? "",
+  );
 
   /** Real cards fetched from DB */
   const [cards, setCards] = useState<
@@ -154,7 +212,9 @@ export default function SafetyMeetingForm() {
     tags: string[];
   } | null>(null);
 
-  const [selectedCards, setSelectedCards] = useState<string[]>([]); // now stores card IDs
+  const [selectedCards, setSelectedCards] = useState<string[]>(
+    meeting?.selectedCards?.map((sc: any) => sc.cardId) ?? [],
+  );
 
   const toggleCardSelection = (code: string) => {
     setSelectedCards((prev) =>
@@ -198,8 +258,13 @@ export default function SafetyMeetingForm() {
    * Multiple checkboxes — user can select more than one
    * e.g. ["taskSequenceRoles", "criticalHazards"]
    */
-  const [teamConfirmations, setTeamConfirmations] = useState<string[]>([]);
-  const [teamConfirmationsOther, setTeamConfirmationsOther] = useState("");
+  // ─── Confirm with the Team state ────────────────────────────────────────
+  const [teamConfirmations, setTeamConfirmations] = useState<string[]>(
+    meeting?.teamConfirmations ?? [],
+  );
+  const [teamConfirmationsOther, setTeamConfirmationsOther] = useState(
+    meeting?.teamConfirmationsOther ?? "",
+  );
 
   const toggleTeamConfirmation = (key: string) => {
     setTeamConfirmations((prev) =>
@@ -208,7 +273,10 @@ export default function SafetyMeetingForm() {
   };
 
   // ─── Add Team Member state — dynamic array, same pattern as Risk ───────
-  const [teamMembers, setTeamMembers] = useState<TeamMemberRow[]>([]);
+  // ─── Add Team Member state ──────────────────────────────────────────────
+  const [teamMembers, setTeamMembers] = useState<TeamMemberRow[]>(
+    meeting?.teamMembers?.map((m: any) => ({ id: m.id, name: m.name })) ?? [],
+  );
 
   const addTeamMember = () => {
     setTeamMembers((prev) => [...prev, { id: crypto.randomUUID(), name: "" }]);
@@ -234,16 +302,6 @@ export default function SafetyMeetingForm() {
   const inputStyle = "border-red-200 focus-visible:ring-red-400";
 
   const onSubmit = async () => {
-    if (!projectSurvey) {
-      toast.error("Project / Survey is required");
-      return;
-    }
-    if (!vesselInstallation) {
-      toast.error("Vessel / Installation is required");
-      return;
-    }
-
-    // Manual validation for required fields before submitting
     if (!projectSurvey) {
       toast.error("Project / Survey is required");
       return;
@@ -298,13 +356,21 @@ export default function SafetyMeetingForm() {
         teamConfirmations,
         teamConfirmationsOther,
         selectedCardIds: selectedCards,
-        teamMembers: teamMembers.map((m) => ({ name: m.name })),
+        teamMembers: teamMembers
+          .filter((m) => m.name.trim() !== "")
+          .map((m) => ({ name: m.name })),
       };
 
-      const result = await createSafetyMeeting(payload);
+      // Edit mode → updateSafetyMeeting (submitAsCompleted = true)
+      // Create mode → createSafetyMeeting
+      const result = isEditMode
+        ? await updateSafetyMeeting(meeting.id, payload, true)
+        : await createSafetyMeeting(payload);
 
       if (result.success) {
-        toast.success("Toolbox Talk submitted!");
+        toast.success(
+          isEditMode ? "Toolbox Talk submitted!" : "Toolbox Talk created!",
+        );
         router.push("/safetymeetingsdashboard");
       } else {
         toast.error(result.error ?? "Something went wrong");
@@ -316,45 +382,49 @@ export default function SafetyMeetingForm() {
     }
   };
 
-  const onSaveDraft = async () => {
-    setDraftLoading(true);
-    try {
-      const payload = {
-        projectSurvey,
-        contractNo,
-        vesselInstallation,
-        date: date ? new Date(date) : undefined,
-        locationAreaDeck,
-        startTime,
-        expectedFinish,
-        activityTask,
-        toolboxTalkLeader,
-        taskObjective,
-        firstTimeNonRoutine,
-        simopsInvolved,
-        ...operationalContext,
-        ...responsibleInterfaces,
-        responsibleInterfacesOther,
-        teamConfirmations,
-        teamConfirmationsOther,
-        selectedCardIds: selectedCards,
-        teamMembers: teamMembers.map((m) => ({ name: m.name })),
-      };
+const onSaveDraft = async () => {
+  setDraftLoading(true)
+  try {
+    const emptyToUndefined = (val: string) => (val === "" ? undefined : val)
 
-      const result = await saveSafetyMeetingDraft(payload);
-
-      if (result.success) {
-        toast.success("Draft saved!");
-        router.push("/safetymeetingsdashboard");
-      } else {
-        toast.error(result.error ?? "Failed to save draft");
-      }
-    } catch {
-      toast.error("Something went wrong");
-    } finally {
-      setDraftLoading(false);
+    const payload = {
+      projectSurvey,
+      contractNo,
+      vesselInstallation,
+      date: date ? new Date(date) : undefined,
+      locationAreaDeck: emptyToUndefined(locationAreaDeck),
+      startTime: emptyToUndefined(startTime),
+      expectedFinish,
+      activityTask: emptyToUndefined(activityTask),
+      toolboxTalkLeader: emptyToUndefined(toolboxTalkLeader),
+      taskObjective: emptyToUndefined(taskObjective),
+      firstTimeNonRoutine,
+      simopsInvolved,
+      ...operationalContext,
+      ...responsibleInterfaces,
+      responsibleInterfacesOther,
+      teamConfirmations,
+      teamConfirmationsOther,
+      selectedCardIds: selectedCards,
+      teamMembers: teamMembers.filter((m) => m.name.trim() !== "").map((m) => ({ name: m.name })),
     }
-  };
+
+    const result = isEditMode
+      ? await updateSafetyMeeting(meeting.id, payload, false)
+      : await saveSafetyMeetingDraft(payload)
+
+    if (result.success) {
+      toast.success("Draft saved!")
+      router.push("/safetymeetingsdashboard")
+    } else {
+      toast.error(result.error ?? "Failed to save draft")
+    }
+  } catch {
+    toast.error("Something went wrong")
+  } finally {
+    setDraftLoading(false)
+  }
+}
 
   const onUploadClick = () => {
     setCreateCardOpen(true);
@@ -518,7 +588,7 @@ export default function SafetyMeetingForm() {
               </span>
               <button
                 type="button"
-                onClick={() => setFirstTimeNonRoutine((v) => !v)}
+                onClick={() => setFirstTimeNonRoutine((v: any) => !v)}
                 className={`relative w-10 h-5 rounded-full transition-colors ${
                   firstTimeNonRoutine
                     ? "bg-red-400"
@@ -539,7 +609,7 @@ export default function SafetyMeetingForm() {
               </span>
               <button
                 type="button"
-                onClick={() => setSimopsInvolved((v) => !v)}
+                onClick={() => setSimopsInvolved((v: any) => !v)}
                 className={`relative w-10 h-5 rounded-full transition-colors ${
                   simopsInvolved
                     ? "bg-red-400"
@@ -669,7 +739,7 @@ export default function SafetyMeetingForm() {
           </div>
         </div>
 
-        <div className="divide-y divide-red-50 dark:divide-slate-800">
+        <div className="max-h-100 overflow-y-auto divide-y divide-red-50 dark:divide-slate-800">
           {filteredCards.map((card) => {
             const isSelected = selectedCards.includes(card.id);
             return (
@@ -724,11 +794,6 @@ export default function SafetyMeetingForm() {
             );
           })}
         </div>
-
-        <p className="text-xs text-slate-400 mt-3">
-          Note: card upload and storage integration will be added in a future
-          update.
-        </p>
       </div>
 
       {/* ── Section — Confirm with the Team ─────────────────────────────── */}
@@ -896,36 +961,108 @@ export default function SafetyMeetingForm() {
         </DialogContent>
       </Dialog>
 
-      {/* ── Submit / Save Draft / Preview PDF / Cancel ─────────────────── */}
-      <div className="flex items-center gap-4 pb-10 flex-wrap">
-        <Button
-          type="button"
-          disabled={loading || draftLoading}
-          onClick={onSubmit}
-          className="px-8 py-3 bg-red-300 hover:bg-red-400 text-red-900 border border-red-300 shadow-sm"
-        >
-          {loading ? "Submitting..." : "Submit"}
-        </Button>
+      {/* ── Submit / Save Draft / Preview PDF / Delete / Cancel ─────────────────── */}
+      <div className="flex items-center justify-between flex-wrap gap-4 pb-10">
+        <div className="flex items-center gap-4 flex-wrap">
+          <Button
+            type="button"
+            disabled={loading || draftLoading}
+            onClick={onSubmit}
+            className="px-8 py-3 bg-red-300 hover:bg-red-400 text-red-900 border border-red-300 shadow-sm"
+          >
+            {loading ? "Submitting..." : "Submit"}
+          </Button>
 
-        <Button
-          type="button"
-          disabled={loading || draftLoading}
-          onClick={onSaveDraft}
-          className="px-8 py-3 bg-white hover:bg-red-50 text-red-900 border border-red-300 shadow-sm"
-        >
-          {draftLoading ? "Saving..." : "Save Draft"}
-        </Button>
+          <Button
+            type="button"
+            disabled={loading || draftLoading}
+            onClick={onSaveDraft}
+            className="px-8 py-3 bg-white hover:bg-red-50 text-red-900 border border-red-300 shadow-sm"
+          >
+            {draftLoading ? "Saving..." : "Save Draft"}
+          </Button>
 
+          <Button
+            type="button"
+            variant="outline"
+            disabled={loading || draftLoading}
+            onClick={() => router.push("/safetymeetingsdashboard")}
+            className="border-red-200 text-slate-600 hover:bg-red-50"
+          >
+            Cancel
+          </Button>
+        </div>
+
+        {/* Delete — ADMIN/MANAGER any, MEMBER only their own draft, edit mode only */}
+        {isEditMode &&
+          (currentUser?.role === "ADMIN" ||
+            currentUser?.role === "MANAGER" ||
+            (currentUser?.role === "MEMBER" &&
+              meeting?.createdById === currentUser?.id)) && (
+            <DeleteSafetyMeetingButton meetingId={meeting.id} />
+          )}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * DeleteSafetyMeetingButton — Confirmation dialog before deleting
+ *
+ * Visibility rules handled by parent — only rendered when:
+ * ADMIN/MANAGER (any state) or MEMBER (own draft only)
+ */
+function DeleteSafetyMeetingButton({ meetingId }: { meetingId: string }) {
+  const router = useRouter();
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDelete = async () => {
+    setDeleting(true);
+    try {
+      const result = await deleteSafetyMeeting(meetingId);
+      if (result.success) {
+        toast.success("Safety meeting deleted.");
+        router.push("/safetymeetingsdashboard");
+      } else {
+        toast.error(result.error ?? "Failed to delete");
+      }
+    } catch {
+      toast.error("Something went wrong");
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  return (
+    <AlertDialog>
+      <AlertDialogTrigger asChild>
         <Button
           type="button"
           variant="outline"
-          disabled={loading || draftLoading}
-          onClick={() => router.push("/safetymeetingsdashboard")}
-          className="border-red-200 text-slate-600 hover:bg-red-50"
+          className="border-red-200 text-red-500 hover:bg-red-50 hover:text-red-600"
         >
-          Cancel
+          Delete Safety Meeting
         </Button>
-      </div>
-    </div>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Delete Safety Meeting?</AlertDialogTitle>
+          <AlertDialogDescription>
+            This action cannot be undone. The safety meeting and all its data
+            will be permanently deleted.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction
+            onClick={handleDelete}
+            disabled={deleting}
+            className="bg-red-500 hover:bg-red-600 text-white"
+          >
+            {deleting ? "Deleting..." : "Yes, delete"}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }
