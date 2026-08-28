@@ -47,11 +47,12 @@ export async function createToolboxTalkCard(formData: FormData) {
 
   const code  = formData.get("code") as string
   const title = formData.get("title") as string
+  const department = formData.get("department") as string
   const tagsRaw = formData.get("tags") as string
   const tags = tagsRaw ? tagsRaw.split(",").map((t) => t.trim()).filter(Boolean) : []
   const imageFile = formData.get("image") as File | null
 
-  const validated = toolboxTalkCardSchema.safeParse({ code, title, tags })
+  const validated = toolboxTalkCardSchema.safeParse({ code, title, department, tags })
   if (!validated.success) {
     console.log("Zod validation errors:", validated.error.flatten())
     return { success: false, error: "Validation failed" }
@@ -72,6 +73,7 @@ export async function createToolboxTalkCard(formData: FormData) {
       data: {
         code:     validated.data.code,
         title:    validated.data.title,
+         department: validated.data.department ?? null,  // ← add
         tags:     validated.data.tags,
         imageUrl,
       },

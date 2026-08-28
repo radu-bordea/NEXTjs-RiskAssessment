@@ -79,6 +79,7 @@ export const safetyMeetingDraftSchema = safetyMeetingSchema.partial({
 export const toolboxTalkCardSchema = z.object({
   code:     z.string().min(1, "Code is required"),
   title:    z.string().min(1, "Title is required"),
+  department: z.string().optional().nullable(),
   tags:     z.array(z.string()).optional().default([]),
   imageUrl: z.string().optional().nullable(),
 })

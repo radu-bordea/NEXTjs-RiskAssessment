@@ -267,6 +267,7 @@ model ToolboxTalkCard {
   id    String   @id @default(cuid())
   code  String   @unique
   title String
+  department String?  // ← add this
   tags  String[]
 
   /**

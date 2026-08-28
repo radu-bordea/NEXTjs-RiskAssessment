@@ -125,6 +125,7 @@ export default function SafetyMeetingForm() {
       id: string;
       code: string;
       title: string;
+      department: string | null;
       tags: string[];
       imageUrl: string | null;
     }[]
@@ -139,6 +140,7 @@ export default function SafetyMeetingForm() {
   const [createCardOpen, setCreateCardOpen] = useState(false);
   const [newCardCode, setNewCardCode] = useState("");
   const [newCardTitle, setNewCardTitle] = useState("");
+  const [newCardDepartment, setNewCardDepartment] = useState("");
   const [newCardTags, setNewCardTags] = useState("");
   const [newCardImage, setNewCardImage] = useState<File | null>(null);
   const [creatingCard, setCreatingCard] = useState(false);
@@ -147,6 +149,7 @@ export default function SafetyMeetingForm() {
   const [previewCard, setPreviewCard] = useState<{
     code: string;
     title: string;
+    department: string | null;
     image: string;
     tags: string[];
   } | null>(null);
@@ -158,6 +161,36 @@ export default function SafetyMeetingForm() {
       prev.includes(code) ? prev.filter((c) => c !== code) : [...prev, code],
     );
   };
+
+  /** Search filter — matches title or tags */
+  const [cardSearchQuery, setCardSearchQuery] = useState("");
+
+  /** Selected department filter — "All" shows everything */
+  const [cardDepartmentFilter, setCardDepartmentFilter] = useState("All");
+
+  /** Unique departments from current card data, for filter buttons */
+  const availableDepartments = [
+    "All",
+    ...Array.from(
+      new Set(cards.map((c) => c.department).filter((d): d is string => !!d)),
+    ),
+  ];
+
+  /** Filtered cards based on search + department */
+  const filteredCards = cards.filter((card) => {
+    const matchesSearch =
+      !cardSearchQuery ||
+      card.title.toLowerCase().includes(cardSearchQuery.toLowerCase()) ||
+      card.tags.some((tag) =>
+        tag.toLowerCase().includes(cardSearchQuery.toLowerCase()),
+      );
+
+    const matchesDepartment =
+      cardDepartmentFilter === "All" ||
+      card.department === cardDepartmentFilter;
+
+    return matchesSearch && matchesDepartment;
+  });
 
   // ─── Confirm with the Team state ────────────────────────────────────────
   /**
@@ -338,6 +371,7 @@ export default function SafetyMeetingForm() {
       const formData = new FormData();
       formData.append("code", newCardCode);
       formData.append("title", newCardTitle);
+      formData.append("department", newCardDepartment);
       formData.append("tags", newCardTags);
       if (newCardImage) formData.append("image", newCardImage);
 
@@ -350,6 +384,7 @@ export default function SafetyMeetingForm() {
         setCreateCardOpen(false);
         setNewCardCode("");
         setNewCardTitle("");
+        setNewCardDepartment(""); // ← add this
         setNewCardTags("");
         setNewCardImage(null);
       } else {
@@ -607,8 +642,35 @@ export default function SafetyMeetingForm() {
           </Button>
         </div>
 
+        {/* Filters */}
+        <div className="mb-4 space-y-3">
+          <input
+            type="text"
+            value={cardSearchQuery}
+            onChange={(e) => setCardSearchQuery(e.target.value)}
+            placeholder="Search by title or tag..."
+            className="w-full px-3 py-2 rounded-lg border border-red-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-red-400"
+          />
+          <div className="flex flex-wrap gap-2">
+            {availableDepartments.map((dept) => (
+              <button
+                key={dept}
+                type="button"
+                onClick={() => setCardDepartmentFilter(dept)}
+                className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
+                  cardDepartmentFilter === dept
+                    ? "bg-red-400 text-white border-red-400"
+                    : "bg-white text-red-700 border-red-200 hover:bg-red-50"
+                }`}
+              >
+                {dept}
+              </button>
+            ))}
+          </div>
+        </div>
+
         <div className="divide-y divide-red-50 dark:divide-slate-800">
-          {cards.map((card) => {
+          {filteredCards.map((card) => {
             const isSelected = selectedCards.includes(card.id);
             return (
               <div
@@ -637,6 +699,7 @@ export default function SafetyMeetingForm() {
                     setPreviewCard({
                       code: card.code,
                       title: card.title,
+                      department: card.department,
                       image: card.imageUrl ?? "/assets/images/logo2.png",
                       tags: card.tags,
                     })
@@ -791,6 +854,15 @@ export default function SafetyMeetingForm() {
                 value={newCardTitle}
                 onChange={(e) => setNewCardTitle(e.target.value)}
                 placeholder="e.g. Winch Operations Safety"
+                className={inputStyle}
+              />
+            </div>
+            <div>
+              <label className={labelClass}>Department</label>
+              <Input
+                value={newCardDepartment}
+                onChange={(e) => setNewCardDepartment(e.target.value)}
+                placeholder="e.g. Survey, Deck, Engine"
                 className={inputStyle}
               />
             </div>
