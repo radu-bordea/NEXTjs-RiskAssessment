@@ -1,7 +1,5 @@
 "use client";
 
-import Image from "next/image";
-
 /**
  * SafetyMeetingView — Read-only view of a single Safety Meeting / Toolbox Talk
  *
@@ -199,47 +197,36 @@ export default function SafetyMeetingView({ meeting }: SafetyMeetingViewProps) {
         </div>
       )}
 
-      {/* ── Selected Toolbox Talk Cards ──────────────────────────────── */}
-      {meeting.selectedCards?.length > 0 && (
-        <div className={sectionClass}>
-          <h2 className={sectionHeadingClass}>Selected Toolbox Talk Cards</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {meeting.selectedCards.map((sc: any) => (
-              <div
-                key={sc.id}
-                className="rounded-lg border border-red-200 dark:border-slate-700 overflow-hidden"
-              >
-                {sc.card.imageUrl && (
-                  <Image
-                    src={sc.card.imageUrl}
-                    alt={sc.card.title}
-                    width={500}
-                    height={350}
-                    className="w-full h-auto object-cover"
-                  />
-                )}
-                <div className="p-3">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-xs font-mono font-semibold text-red-600 dark:text-red-400">
-                      {sc.card.code}
-                    </span>
-                    <span className="text-sm text-slate-700 dark:text-slate-200">
-                      {sc.card.title}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-1.5 flex-wrap">
-                    {sc.card.tags.map((tag: string) => (
-                      <span key={tag} className={tagClass}>
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              </div>
+{/* ── Selected Toolbox Talk Cards ──────────────────────────────── */}
+{meeting.selectedCards?.length > 0 && (
+  <div className={sectionClass}>
+    <h2 className={sectionHeadingClass}>Selected Toolbox Talk Cards</h2>
+    <div className="rounded-lg border border-red-100 dark:border-slate-800 overflow-hidden shadow-sm">
+      {meeting.selectedCards.map((sc: any, index: number) => (
+        <div
+          key={sc.id}
+          className={`flex items-center gap-3 px-4 py-3 transition-colors ${
+            index % 2 === 0
+              ? "bg-white dark:bg-slate-900"
+              : "bg-red-50/40 dark:bg-slate-900/50"
+          } ${index !== meeting.selectedCards.length - 1 ? "border-b border-red-50 dark:border-slate-800" : ""}`}
+        >
+          <span className="text-xs font-mono font-bold text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 px-2 py-1 rounded-md shrink-0">
+            {sc.card.code}
+          </span>
+          <span className="text-sm text-slate-700 dark:text-slate-200 flex-1 font-medium">
+            {sc.card.title}
+          </span>
+          <div className="flex items-center gap-1.5 flex-wrap shrink-0">
+            {sc.card.tags.map((tag: string) => (
+              <span key={tag} className={tagClass}>{tag}</span>
             ))}
           </div>
         </div>
-      )}
+      ))}
+    </div>
+  </div>
+)}
 
       {/* ── Confirm with the Team ────────────────────────────────────── */}
       {(meeting.teamConfirmations?.length > 0 ||
