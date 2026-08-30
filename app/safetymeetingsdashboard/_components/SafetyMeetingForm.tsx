@@ -66,19 +66,19 @@ type Props = {
 
 // ─── Operational Context rows — icon + label + editable value ────────────────
 const OPERATIONAL_CONTEXT_FIELDS = [
-  { key: "vesselStatus", icon: "⚓", label: "Vessel status" },
-  { key: "weatherSeaState", icon: "🌊", label: "Weather / Sea State" },
-  { key: "workAreaStatus", icon: "✅", label: "Work area status" },
-  { key: "dayNight", icon: "☀️", label: "Day / Night" },
-  { key: "nearbyOperations", icon: "📡", label: "Nearby operations" },
+  { key: "vesselStatus", label: "Vessel status" },
+  { key: "weatherSeaState", label: "Weather / Sea State" },
+  { key: "workAreaStatus", label: "Work area status" },
+  { key: "dayNight", label: "Day / Night" },
+  { key: "nearbyOperations", label: "Nearby operations" },
 ];
 
 // ─── Responsible Interfaces rows — icon + label + editable value ──────────────
 const RESPONSIBLE_INTERFACE_FIELDS = [
-  { key: "masterOowDpo", icon: "🧭", label: "Master / OOW / DPO" },
-  { key: "deckPic", icon: "🧍", label: "PIC" },
-  { key: "surveyLead", icon: "🧍", label: "Authorized Team Leader / Survey Lead" },
-  { key: "equipmentOperator", icon: "🤖", label: "Equipment Operator" },
+  { key: "masterOowDpo", label: "Master / OOW / DPO" },
+  { key: "deckPic", label: "PIC" },
+  { key: "surveyLead", label: "Authorized Team Leader / Survey Lead" },
+  { key: "equipmentOperator", label: "Equipment Operator" },
 ];
 
 // ─── Confirm with the Team — checklist options ────────────────────────────────
@@ -633,9 +633,6 @@ const onSaveDraft = async () => {
             <div className="space-y-3">
               {OPERATIONAL_CONTEXT_FIELDS.map((field) => (
                 <div key={field.key} className="flex items-center gap-3">
-                  <span className="text-lg w-8 text-center shrink-0">
-                    {field.icon}
-                  </span>
                   <span className="text-xs font-medium text-slate-500 dark:text-slate-400 w-32 shrink-0">
                     {field.label}
                   </span>
@@ -660,9 +657,6 @@ const onSaveDraft = async () => {
             <div className="space-y-3">
               {RESPONSIBLE_INTERFACE_FIELDS.map((field) => (
                 <div key={field.key} className="flex items-center gap-3">
-                  <span className="text-lg w-8 text-center shrink-0">
-                    {field.icon}
-                  </span>
                   <span className="text-xs font-medium text-slate-500 dark:text-slate-400 w-32 shrink-0">
                     {field.label}
                   </span>
