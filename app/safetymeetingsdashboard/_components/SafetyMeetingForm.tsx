@@ -76,8 +76,8 @@ const OPERATIONAL_CONTEXT_FIELDS = [
 // ─── Responsible Interfaces rows — icon + label + editable value ──────────────
 const RESPONSIBLE_INTERFACE_FIELDS = [
   { key: "masterOowDpo", icon: "🧭", label: "Master / OOW / DPO" },
-  { key: "deckPic", icon: "🧍", label: "Deck PIC" },
-  { key: "surveyLead", icon: "🧍", label: "Survey Lead" },
+  { key: "deckPic", icon: "🧍", label: "PIC" },
+  { key: "surveyLead", icon: "🧍", label: "Authorized Team Leader / Survey Lead" },
   { key: "equipmentOperator", icon: "🤖", label: "Equipment Operator" },
 ];
 

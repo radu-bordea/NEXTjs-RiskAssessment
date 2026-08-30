@@ -105,6 +105,8 @@ const styles = StyleSheet.create({
     marginTop: 4,
     fontSize: 9,
     color: "#334155",
+    width: "100%",
+    flexShrink: 1,
   },
 
   // ── Tags ──────────────────────────────────────────────────────────────────
@@ -265,12 +267,12 @@ export default function SafetyMeetingPDF({ meeting }: { meeting: any }) {
             ))}
           </View>
 
-          <View style={{ marginTop: 6 }}>
+          <View style={{ marginTop: 6, width: "100%" }}>
             <Text style={styles.fieldLabel}>
               Task Objective / Brief Description
             </Text>
             <View style={styles.textBox}>
-              <Text>{meeting.taskObjective}</Text>
+              <Text style={{ width: "100%" }}>{meeting.taskObjective}</Text>
             </View>
           </View>
         </View>
