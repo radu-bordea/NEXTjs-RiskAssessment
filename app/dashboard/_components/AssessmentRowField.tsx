@@ -33,15 +33,15 @@ type Props = {
 };
 
 const RF_COLORS = [
-  { value: "GREEN",  bg: "bg-green-500",  border: "border-green-600"  },
+  { value: "GREEN", bg: "bg-green-500", border: "border-green-600" },
   { value: "YELLOW", bg: "bg-yellow-400", border: "border-yellow-500" },
-  { value: "RED",    bg: "bg-red-600",    border: "border-red-700"    },
+  { value: "RED", bg: "bg-red-600", border: "border-red-700" },
 ];
 
 const getRFDisplayColor = (color: string | null | undefined) => {
-  if (color === "GREEN")  return "bg-green-500 text-white";
+  if (color === "GREEN") return "bg-green-500 text-white";
   if (color === "YELLOW") return "bg-yellow-400 text-white";
-  if (color === "RED")    return "bg-red-600 text-white";
+  if (color === "RED") return "bg-red-600 text-white";
   return "bg-zinc-100 text-zinc-400";
 };
 
@@ -56,15 +56,14 @@ export default function AssessmentRowField({
   setValue,
   isExistingRow = false,
   originalMeasureCount = 0,
-  
 }: Props) {
-
   // ─── Classes — switch between editable and locked ─────────────────────
   const inputClass = isExistingRow
     ? "px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm w-full text-slate-400 dark:text-slate-500 cursor-not-allowed"
     : "px-3 py-2 rounded-lg border border-[#A8D5B5] dark:border-zinc-700 bg-white dark:bg-zinc-950 text-sm w-full focus:outline-none focus:ring-2 focus:ring-[#1A7A4A] transition-colors";
 
-  const labelClass = "block text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-1";
+  const labelClass =
+    "block text-xs font-medium text-zinc-500 dark:text-zinc-400 mb-1";
 
   const {
     fields: measureFields,
@@ -76,17 +75,21 @@ export default function AssessmentRowField({
   });
 
   const rowValues = useWatch({ control, name: `assessmentRows.${index}` });
-  const measures  = useWatch({ control, name: `assessmentRows.${index}.additionalMeasures` });
+  const measures = useWatch({
+    control,
+    name: `assessmentRows.${index}.additionalMeasures`,
+  });
 
   const rfColor = rowValues?.rfColor;
 
   return (
-    <div className={`rounded-xl border p-5 ${
-      isExistingRow
-        ? "border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50"
-        : "border-[#A8D5B5] dark:border-zinc-700 bg-white dark:bg-zinc-950"
-    }`}>
-
+    <div
+      className={`rounded-xl border p-5 ${
+        isExistingRow
+          ? "border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50"
+          : "border-[#A8D5B5] dark:border-zinc-700 bg-white dark:bg-zinc-950"
+      }`}
+    >
       {/* ── Row header ──────────────────────────────────────────────────── */}
       <div className="flex items-center justify-between mb-4 pb-2 border-b border-[#D4EAD9] dark:border-slate-700">
         <div className="flex items-center gap-2">
@@ -153,6 +156,18 @@ export default function AssessmentRowField({
         </div>
       </div>
 
+      {/* ── Responsible Person ────────────────────────────────────────── */}
+      <div className="mb-4">
+        <label className={labelClass}>Responsible Person</label>
+        <input
+          type="text"
+          {...register(`assessmentRows.${index}.responsiblePerson`)}
+          disabled={isExistingRow}
+          placeholder="Responsible person"
+          className={inputClass}
+        />
+      </div>
+
       {/* ── SCT / C / F / RF / RF Color ─────────────────────────────────── */}
       <div className="flex items-end gap-3 mb-5 flex-wrap">
         <div className="flex-1 min-w-40">
@@ -163,7 +178,9 @@ export default function AssessmentRowField({
             className={inputClass}
           >
             {sctOptions.map((o) => (
-              <option key={o.value} value={o.value}>{o.label}</option>
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
             ))}
           </select>
         </div>
@@ -171,7 +188,9 @@ export default function AssessmentRowField({
         <div className="w-20">
           <label className={labelClass}>C (1-5)</label>
           <input
-            type="number" min={1} max={5}
+            type="number"
+            min={1}
+            max={5}
             {...register(`assessmentRows.${index}.c`, { valueAsNumber: true })}
             disabled={isExistingRow}
             className={inputClass}
@@ -181,7 +200,9 @@ export default function AssessmentRowField({
         <div className="w-20">
           <label className={labelClass}>F (1-10)</label>
           <input
-            type="number" min={1} max={10}
+            type="number"
+            min={1}
+            max={10}
             {...register(`assessmentRows.${index}.f`, { valueAsNumber: true })}
             disabled={isExistingRow}
             className={inputClass}
@@ -191,7 +212,9 @@ export default function AssessmentRowField({
         <div className="w-24">
           <label className={labelClass}>RF (1-25)</label>
           <input
-            type="number" min={1} max={25}
+            type="number"
+            min={1}
+            max={25}
             {...register(`assessmentRows.${index}.rf`, { valueAsNumber: true })}
             disabled={isExistingRow}
             className={inputClass}
@@ -217,15 +240,18 @@ export default function AssessmentRowField({
                   );
                 }}
                 className={`w-8 h-8 rounded-lg transition-all ${c.bg} ${
-                  isExistingRow ? "opacity-30 cursor-not-allowed" :
-                  rfColor === c.value
-                    ? `border-2 ${c.border} scale-110`
-                    : "border-2 border-transparent opacity-50"
+                  isExistingRow
+                    ? "opacity-30 cursor-not-allowed"
+                    : rfColor === c.value
+                      ? `border-2 ${c.border} scale-110`
+                      : "border-2 border-transparent opacity-50"
                 }`}
               />
             ))}
             {rfColor && (
-              <span className={`text-xs px-2 py-1 rounded-full font-medium ${getRFDisplayColor(rfColor)}`}>
+              <span
+                className={`text-xs px-2 py-1 rounded-full font-medium ${getRFDisplayColor(rfColor)}`}
+              >
                 {rfColor}
               </span>
             )}
@@ -241,12 +267,13 @@ export default function AssessmentRowField({
           </p>
           <div className="space-y-3">
             {measureFields.map((measure, mIndex) => {
-              const mRfColor  = measures?.[mIndex]?.rfColor;
+              const mRfColor = measures?.[mIndex]?.rfColor;
               /**
                * isExistingMeasure — true if measure came from DB
                * New measures added during editing are always editable
                */
-              const isExistingMeasure = isExistingRow && mIndex < originalMeasureCount;
+              const isExistingMeasure =
+                isExistingRow && mIndex < originalMeasureCount;
 
               const measureInputClass = isExistingMeasure
                 ? "px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm w-full text-slate-400 cursor-not-allowed"
@@ -270,7 +297,9 @@ export default function AssessmentRowField({
                   <div className="mb-3">
                     <label className={labelClass}>Further Action</label>
                     <textarea
-                      {...register(`assessmentRows.${index}.additionalMeasures.${mIndex}.furtherAction`)}
+                      {...register(
+                        `assessmentRows.${index}.additionalMeasures.${mIndex}.furtherAction`,
+                      )}
                       rows={2}
                       disabled={isExistingMeasure}
                       className={measureInputClass}
@@ -281,8 +310,13 @@ export default function AssessmentRowField({
                     <div className="w-20">
                       <label className={labelClass}>C (1-5)</label>
                       <input
-                        type="number" min={1} max={5}
-                        {...register(`assessmentRows.${index}.additionalMeasures.${mIndex}.c`, { valueAsNumber: true })}
+                        type="number"
+                        min={1}
+                        max={5}
+                        {...register(
+                          `assessmentRows.${index}.additionalMeasures.${mIndex}.c`,
+                          { valueAsNumber: true },
+                        )}
                         disabled={isExistingMeasure}
                         className={measureInputClass}
                       />
@@ -291,8 +325,13 @@ export default function AssessmentRowField({
                     <div className="w-20">
                       <label className={labelClass}>F (1-10)</label>
                       <input
-                        type="number" min={1} max={10}
-                        {...register(`assessmentRows.${index}.additionalMeasures.${mIndex}.f`, { valueAsNumber: true })}
+                        type="number"
+                        min={1}
+                        max={10}
+                        {...register(
+                          `assessmentRows.${index}.additionalMeasures.${mIndex}.f`,
+                          { valueAsNumber: true },
+                        )}
                         disabled={isExistingMeasure}
                         className={measureInputClass}
                       />
@@ -301,8 +340,13 @@ export default function AssessmentRowField({
                     <div className="w-24">
                       <label className={labelClass}>RF (1-25)</label>
                       <input
-                        type="number" min={1} max={25}
-                        {...register(`assessmentRows.${index}.additionalMeasures.${mIndex}.rf`, { valueAsNumber: true })}
+                        type="number"
+                        min={1}
+                        max={25}
+                        {...register(
+                          `assessmentRows.${index}.additionalMeasures.${mIndex}.rf`,
+                          { valueAsNumber: true },
+                        )}
                         disabled={isExistingMeasure}
                         className={measureInputClass}
                       />
@@ -327,15 +371,18 @@ export default function AssessmentRowField({
                               );
                             }}
                             className={`w-8 h-8 rounded-lg transition-all ${c.bg} ${
-                              isExistingMeasure ? "opacity-30 cursor-not-allowed" :
-                              mRfColor === c.value
-                                ? `border-2 ${c.border} scale-110`
-                                : "border-2 border-transparent opacity-50"
+                              isExistingMeasure
+                                ? "opacity-30 cursor-not-allowed"
+                                : mRfColor === c.value
+                                  ? `border-2 ${c.border} scale-110`
+                                  : "border-2 border-transparent opacity-50"
                             }`}
                           />
                         ))}
                         {mRfColor && (
-                          <span className={`text-xs px-2 py-1 rounded-full font-medium ${getRFDisplayColor(mRfColor)}`}>
+                          <span
+                            className={`text-xs px-2 py-1 rounded-full font-medium ${getRFDisplayColor(mRfColor)}`}
+                          >
                             {mRfColor}
                           </span>
                         )}
@@ -368,11 +415,11 @@ export default function AssessmentRowField({
         onClick={() =>
           appendMeasure({
             furtherAction: "",
-            c:       null,
-            f:       null,
-            rf:      null,
+            c: null,
+            f: null,
+            rf: null,
             rfColor: null,
-            order:   measureFields.length,
+            order: measureFields.length,
           })
         }
         className="text-xs border-[#A8D5B5] text-[#1A7A4A] hover:bg-[#EEF5F0] hover:text-[#145f39]"

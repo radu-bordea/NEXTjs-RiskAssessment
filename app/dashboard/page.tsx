@@ -14,7 +14,6 @@ export default async function DashboardPage() {
       stateUpdatedBy: { select: { name: true } },
       assessmentRows: true,
       teamMembers: true, // ← add
-      responsiblePersons: true, // ← add
     },
   });
 

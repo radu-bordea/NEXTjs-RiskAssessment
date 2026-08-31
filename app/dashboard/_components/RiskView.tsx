@@ -164,7 +164,10 @@ export default function RiskView({ risk }: RiskViewProps) {
         {/* Emergency Response */}
         {risk.emergencyResponse && (
           <div className="mt-3">
-            <span className={labelClass}>General Requirements / <span className="font-bold text-red-500">EMERGENCY RESPONSE</span></span>
+            <span className={labelClass}>
+              General Requirements /{" "}
+              <span className="font-bold text-red-500">EMERGENCY RESPONSE</span>
+            </span>
             <div className={fieldClass}>{risk.emergencyResponse}</div>
           </div>
         )}
@@ -266,6 +269,14 @@ export default function RiskView({ risk }: RiskViewProps) {
                         </p>
                       </div>
                     )}
+                    {row.responsiblePerson && (
+                      <div>
+                        <span className={labelClass}>Responsible Person</span>
+                        <p className="text-sm text-slate-500">
+                          {row.responsiblePerson}
+                        </p>
+                      </div>
+                    )}
                   </div>
                   <div className="flex items-center gap-4 flex-wrap">
                     {row.sct && (
@@ -356,8 +367,18 @@ export default function RiskView({ risk }: RiskViewProps) {
                     <div className="flex-1 min-w-25 px-3 py-3 text-sm text-slate-900 dark:text-white whitespace-pre-wrap">
                       {row.impact}
                     </div>
-                    <div className="flex-2 min-w-25 px-3 py-3 text-sm text-slate-500 dark:text-slate-400 whitespace-pre-wrap">
+                    <div className="flex-1 min-w-25 px-3 py-3 text-sm text-slate-500 dark:text-slate-400 whitespace-pre-wrap">
                       {row.existingControls ?? "—"}
+                      {row.responsiblePerson && (
+                        <div className="mt-2 pt-2 border-t border-[#D4EAD9] dark:border-slate-700">
+                          <span className="text-[10px] uppercase text-slate-400">
+                            Responsible:{" "}
+                          </span>
+                          <span className="text-xs text-slate-600 dark:text-slate-300">
+                            {row.responsiblePerson}
+                          </span>
+                        </div>
+                      )}
                     </div>
                     <div className="flex-1 min-w-25 px-3 py-3 text-xs text-slate-600 dark:text-slate-400 wrap-break-word">
                       {row.sct ?? "—"}
@@ -445,24 +466,50 @@ export default function RiskView({ risk }: RiskViewProps) {
         )}
       </div>
 
-      {/* ── Responsible Persons ───────────────────────────────────────────── */}
-      <div className={sectionClass}>
-        <h2 className={sectionHeadingClass}>Responsible Persons</h2>
-        {!risk.responsiblePersons?.length ? (
-          <p className="text-sm text-slate-400">No responsible persons.</p>
-        ) : (
-          <div className="flex flex-wrap gap-2">
-            {risk.responsiblePersons?.map((p: any) => (
-              <span
-                key={p.id}
-                className="text-sm px-3 py-1.5 rounded-full border border-[#A8D5B5] dark:border-slate-700 text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-950"
-              >
-                {p.name}
-              </span>
-            ))}
+      {/* ── Responsible Interfaces ────────────────────────────────────────── */}
+      {(risk.masterOowDpo ||
+        risk.personInCharge ||
+        risk.authorizedTeamLeader ||
+        risk.equipmentOperator ||
+        risk.attendeesWorkTeam) && (
+        <div className={sectionClass}>
+          <h2 className={sectionHeadingClass}>Responsible Interfaces</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+            {risk.masterOowDpo && (
+              <div>
+                <span className={labelClass}>Master / OOW / DPO</span>
+                <p className={valueClass}>{risk.masterOowDpo}</p>
+              </div>
+            )}
+            {risk.personInCharge && (
+              <div>
+                <span className={labelClass}>Person in Charge (PIC)</span>
+                <p className={valueClass}>{risk.personInCharge}</p>
+              </div>
+            )}
+            {risk.authorizedTeamLeader && (
+              <div>
+                <span className={labelClass}>
+                  Authorized Team Leader / Survey Lead
+                </span>
+                <p className={valueClass}>{risk.authorizedTeamLeader}</p>
+              </div>
+            )}
+            {risk.equipmentOperator && (
+              <div>
+                <span className={labelClass}>Equipment Operator</span>
+                <p className={valueClass}>{risk.equipmentOperator}</p>
+              </div>
+            )}
+            {risk.attendeesWorkTeam && (
+              <div>
+                <span className={labelClass}>Attendees / Work Team</span>
+                <p className={valueClass}>{risk.attendeesWorkTeam}</p>
+              </div>
+            )}
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* ── Risk Assessment Team ──────────────────────────────────────────── */}
       <div className={sectionClass}>

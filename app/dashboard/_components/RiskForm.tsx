@@ -148,6 +148,11 @@ export default function RiskForm({ currentUser, risk }: Props) {
       libraryCategory: risk?.libraryCategory ?? "",
       reviewDate: risk?.reviewDate ?? null,
       approvedBy: risk?.approvedBy ?? "",
+      masterOowDpo: risk?.masterOowDpo ?? "",
+      personInCharge: risk?.personInCharge ?? "",
+      authorizedTeamLeader: risk?.authorizedTeamLeader ?? "",
+      equipmentOperator: risk?.equipmentOperator ?? "",
+      attendeesWorkTeam: risk?.attendeesWorkTeam ?? "",
       emergencyResponse: risk?.emergencyResponse ?? "",
 
       assessmentRows: risk?.assessmentRows?.map((row) => ({
@@ -161,6 +166,7 @@ export default function RiskForm({ currentUser, risk }: Props) {
         rf: row.rf ?? null,
         rfColor: (row.rfColor as "GREEN" | "YELLOW" | "RED" | null) ?? null,
         order: row.order,
+        responsiblePerson: row.responsiblePerson ?? "",
         additionalMeasures:
           row.additionalMeasures?.map((m) => ({
             id: m.id,
@@ -182,15 +188,13 @@ export default function RiskForm({ currentUser, risk }: Props) {
           rf: null,
           rfColor: null,
           order: 0,
+          responsiblePerson: "",
           additionalMeasures: [],
         },
       ],
 
       teamMembers:
         risk?.teamMembers?.map((m) => ({ id: m.id, name: m.name })) ?? [],
-      responsiblePersons:
-        risk?.responsiblePersons?.map((p) => ({ id: p.id, name: p.name })) ??
-        [],
     },
   });
 
@@ -205,12 +209,6 @@ export default function RiskForm({ currentUser, risk }: Props) {
     append: appendTeam,
     remove: removeTeam,
   } = useFieldArray({ control, name: "teamMembers" });
-
-  const {
-    fields: responsibleFields,
-    append: appendResponsible,
-    remove: removeResponsible,
-  } = useFieldArray({ control, name: "responsiblePersons" });
 
   const alternativeWays = watch("alternativeWays");
 
@@ -621,6 +619,7 @@ export default function RiskForm({ currentUser, risk }: Props) {
                 rf: null,
                 rfColor: null,
                 order: assessmentFields.length,
+                responsiblePerson: "",
                 additionalMeasures: [],
               })
             }
@@ -690,37 +689,58 @@ export default function RiskForm({ currentUser, risk }: Props) {
         </div>
       )}
 
-      {/* ── Section 4 — Responsible Persons — locked for COMPLETED ────────── */}
+      {/* ── Section 4 — Responsible Interfaces — locked for COMPLETED ──────── */}
       {!isCompleted && (
         <div className={sectionClass}>
-          <h2 className={sectionHeadingClass}>Responsible Persons</h2>
-          <div className="space-y-3">
-            {responsibleFields.map((field, index) => (
-              <div key={field.id} className="flex items-center gap-3">
-                <Input
-                  {...register(`responsiblePersons.${index}.name`)}
-                  placeholder="Person name"
-                  className="border-[#A8D5B5] focus-visible:ring-[#1A7A4A]"
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => removeResponsible(index)}
-                  className="border-red-200 text-red-500 hover:bg-red-50 hover:text-red-600 whitespace-nowrap"
-                >
-                  Remove
-                </Button>
-              </div>
-            ))}
+          <h2 className={sectionHeadingClass}>Responsible Interfaces</h2>
+          <div className="space-y-4">
+            <div>
+              <label className={labelClass}>Master / OOW / DPO</label>
+              <Input
+                {...register("masterOowDpo")}
+                placeholder="Responsible for navigational safety, vessel position, weather limits, and the authority to suspend or stop the operation"
+                className="border-[#A8D5B5] focus-visible:ring-[#1A7A4A]"
+              />
+            </div>
+
+            <div>
+              <label className={labelClass}>Person in Charge (PIC)</label>
+              <Input
+                {...register("personInCharge")}
+                placeholder="Responsible for overall coordination and verification that all control measures are properly implemented"
+                className="border-[#A8D5B5] focus-visible:ring-[#1A7A4A]"
+              />
+            </div>
+
+            <div>
+              <label className={labelClass}>
+                Authorized Team Leader / Survey Lead
+              </label>
+              <Input
+                {...register("authorizedTeamLeader")}
+                placeholder="Responsible for supervising the work team and ensuring the operation is carried out in accordance with the Risk Assessment"
+                className="border-[#A8D5B5] focus-visible:ring-[#1A7A4A]"
+              />
+            </div>
+
+            <div>
+              <label className={labelClass}>Equipment Operator</label>
+              <Input
+                {...register("equipmentOperator")}
+                placeholder="Responsible for pre-use checks and the safe operation of the equipment"
+                className="border-[#A8D5B5] focus-visible:ring-[#1A7A4A]"
+              />
+            </div>
+
+            <div>
+              <label className={labelClass}>Attendees / Work Team</label>
+              <Input
+                {...register("attendeesWorkTeam")}
+                placeholder="Responsible for complying with the control measures, reporting hazards or unsafe conditions, and exercising Stop Work Authority when necessary"
+                className="border-[#A8D5B5] focus-visible:ring-[#1A7A4A]"
+              />
+            </div>
           </div>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => appendResponsible({ name: "" })}
-            className="mt-4 border-[#1A7A4A] text-[#1A7A4A] hover:bg-[#EEF5F0] hover:text-[#145f39]"
-          >
-            + Add responsible person
-          </Button>
         </div>
       )}
 

@@ -400,9 +400,21 @@ export default function RiskPDF({ risk }: { risk: any }) {
                   <Text style={[styles.tableCell, styles.colImpact]}>
                     {row.impact}
                   </Text>
-                  <Text style={[styles.tableCell, styles.colControls]}>
-                    {row.existingControls ?? "—"}
-                  </Text>
+                  <View style={styles.colControls}>
+                    <Text style={styles.tableCell}>
+                      {row.existingControls ?? "—"}
+                    </Text>
+                    {row.responsiblePerson && (
+                      <Text
+                        style={[
+                          styles.tableCell,
+                          { marginTop: 3, fontSize: 6, color: "#94a3b8" },
+                        ]}
+                      >
+                        Responsible: {row.responsiblePerson}
+                      </Text>
+                    )}
+                  </View>
                   <Text style={[styles.tableCell, styles.colSct]}>
                     {row.sct ?? "—"}
                   </Text>
@@ -482,18 +494,61 @@ export default function RiskPDF({ risk }: { risk: any }) {
           </View>
         </View>
 
-        {/* ── Responsible Persons ───────────────────────────────────────── */}
-        {risk.responsiblePersons?.length > 0 && (
+        {/* ── Responsible Interfaces ────────────────────────────────────── */}
+        {(risk.masterOowDpo ||
+          risk.personInCharge ||
+          risk.authorizedTeamLeader ||
+          risk.equipmentOperator ||
+          risk.attendeesWorkTeam) && (
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
-              <Text style={styles.sectionHeaderText}>Responsible Persons</Text>
+              <Text style={styles.sectionHeaderText}>
+                Responsible Interfaces
+              </Text>
             </View>
-            <View style={[styles.sectionBody, styles.pillRow]}>
-              {risk.responsiblePersons.map((p: any) => (
-                <View key={p.id} style={styles.pill}>
-                  <Text>{p.name}</Text>
-                </View>
-              ))}
+            <View style={styles.sectionBody}>
+              <View style={styles.grid}>
+                {risk.masterOowDpo && (
+                  <View style={styles.gridItem}>
+                    <Text style={styles.fieldLabel}>Master / OOW / DPO</Text>
+                    <Text style={styles.fieldValue}>{risk.masterOowDpo}</Text>
+                  </View>
+                )}
+                {risk.personInCharge && (
+                  <View style={styles.gridItem}>
+                    <Text style={styles.fieldLabel}>
+                      Person in Charge (PIC)
+                    </Text>
+                    <Text style={styles.fieldValue}>{risk.personInCharge}</Text>
+                  </View>
+                )}
+                {risk.authorizedTeamLeader && (
+                  <View style={styles.gridItem}>
+                    <Text style={styles.fieldLabel}>
+                      Authorized Team Leader / Survey Lead
+                    </Text>
+                    <Text style={styles.fieldValue}>
+                      {risk.authorizedTeamLeader}
+                    </Text>
+                  </View>
+                )}
+                {risk.equipmentOperator && (
+                  <View style={styles.gridItem}>
+                    <Text style={styles.fieldLabel}>Equipment Operator</Text>
+                    <Text style={styles.fieldValue}>
+                      {risk.equipmentOperator}
+                    </Text>
+                  </View>
+                )}
+                {risk.attendeesWorkTeam && (
+                  <View style={styles.gridItem}>
+                    <Text style={styles.fieldLabel}>Attendees / Work Team</Text>
+                    <Text style={styles.fieldValue}>
+                      {risk.attendeesWorkTeam}
+                    </Text>
+                  </View>
+                )}
+              </View>
             </View>
           </View>
         )}
