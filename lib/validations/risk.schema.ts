@@ -23,6 +23,7 @@ const assessmentRowSchema = z.object({
   rf: z.number().int().min(1).max(25).optional().nullable(),
   rfColor: rfColorSchema,
   order: z.number().int().default(0),
+  responsiblePerson: z.string().optional().nullable(), // ← add
   additionalMeasures: z.array(additionalMeasureSchema).default([]),
 });
 
@@ -31,10 +32,6 @@ const teamMemberSchema = z.object({
   name: z.string().min(1, "Team member name is required"),
 });
 
-const responsiblePersonsSchema = z.object({
-  id: z.string().optional(),
-  name: z.string().min(1, "Responsible person name is required"),
-});
 
 // Full validation for Submit
 export const riskSchema = z.object({
@@ -60,14 +57,20 @@ export const riskSchema = z.object({
   .min(1, "At least one assessment row is required"),
   approvedBy: z.string().optional().nullable(),
   teamMembers: z.array(teamMemberSchema).default([]),
-  responsiblePersons: z.array(responsiblePersonsSchema).default([]),
+
+    // ─── Responsible Interfaces (replaces responsiblePersons array) ────
+  masterOowDpo:          z.string().optional().nullable(),
+  personInCharge:        z.string().optional().nullable(),
+  authorizedTeamLeader:  z.string().optional().nullable(),
+  equipmentOperator:     z.string().optional().nullable(),
+  attendeesWorkTeam:     z.string().optional().nullable(),
+  
 });
 
 // Relaxed validation for Draft — almost everything optional
 export const riskDraftSchema = riskSchema.partial().extend({
   ref: z.string().min(1, "Ref is required"),
   initiator: z.string().min(1, "Initiator is required"),
-  emeregencyResponse: z.string().optional().nullable(),
   initiationDate: z.date().refine((date) => date !== undefined, {
     message: "Initiation date is required",
   }),
