@@ -182,7 +182,7 @@ export default function RiskView({ risk }: RiskViewProps) {
       <div className="rounded-xl border border-[#A8D5B5] dark:border-slate-700 overflow-hidden shadow-sm shadow-[#A8D5B5]/40">
         <div className="overflow-x-auto">
           {/* Desktop table header — hidden on mobile */}
-          <div className="hidden md:flex bg-[#1A7A4A] dark:bg-[#0d4a2b] border-b border-[#145f39] dark:border-[#0a3520] min-w-225">
+          <div className="hidden md:flex bg-[#1A7A4A] dark:bg-[#0d4a2b] border-b border-[#145f39] dark:border-[#0a3520] min-w-300">
             <div className="w-8 shrink-0 bg-[#145f39] dark:bg-[#0a3520]" />
             <div className="flex flex-1 min-w-0">
               <div className="flex-1 min-w-25 px-3 py-2.5 text-xs font-bold uppercase tracking-wide text-white border-r border-[#145f39]">
@@ -191,10 +191,13 @@ export default function RiskView({ risk }: RiskViewProps) {
               <div className="flex-1 min-w-25 px-3 py-2.5 text-xs font-bold uppercase tracking-wide text-white border-r border-[#145f39] wrap-break-word">
                 Impact
               </div>
-              <div className="flex-2 min-w-25 px-3 py-2.5 text-xs font-bold uppercase tracking-wide text-white border-r border-[#145f39]">
+              <div className="flex-1 min-w-25 px-3 py-2.5 text-xs font-bold uppercase tracking-wide text-white border-r border-[#145f39]">
                 Existing Controls
               </div>
-              <div className="flex-1 min-w-25 px-3 py-2.5 text-xs font-bold uppercase tracking-wide text-white border-r border-[#145f39] wrap-break-word">
+              <div className="w-28 shrink-0 px-3 py-2.5 text-xs font-bold uppercase tracking-wide text-white border-r border-[#145f39]">
+                Responsible
+              </div>
+              <div className="w-20 shrink-0 px-3 py-2.5 text-xs font-bold uppercase tracking-wide text-white border-r border-[#145f39]">
                 SCT
               </div>
               <div className="w-10 shrink-0 px-2 py-2.5 text-xs font-bold uppercase tracking-wide text-white border-r border-[#145f39] text-center">
@@ -353,7 +356,7 @@ export default function RiskView({ risk }: RiskViewProps) {
                 </div>
 
                 {/* ── Desktop layout ─────────────────────────────────────── */}
-                <div className="hidden md:flex min-w-225">
+                <div className="hidden md:flex min-w-300">
                   {/* Row number */}
                   <div className="w-8 shrink-0 flex items-start justify-center pt-3.5 text-xs text-slate-300 dark:text-slate-600 font-bold border-r border-[#D4EAD9] dark:border-slate-800">
                     {index + 1}
@@ -369,18 +372,11 @@ export default function RiskView({ risk }: RiskViewProps) {
                     </div>
                     <div className="flex-1 min-w-25 px-3 py-3 text-sm text-slate-500 dark:text-slate-400 whitespace-pre-wrap">
                       {row.existingControls ?? "—"}
-                      {row.responsiblePerson && (
-                        <div className="mt-2 pt-2 border-t border-[#D4EAD9] dark:border-slate-700">
-                          <span className="text-[10px] uppercase text-slate-400">
-                            Responsible:{" "}
-                          </span>
-                          <span className="text-xs text-slate-600 dark:text-slate-300">
-                            {row.responsiblePerson}
-                          </span>
-                        </div>
-                      )}
                     </div>
-                    <div className="flex-1 min-w-25 px-3 py-3 text-xs text-slate-600 dark:text-slate-400 wrap-break-word">
+                    <div className="w-28 shrink-0 px-3 py-3 text-sm text-slate-600 dark:text-slate-300 whitespace-pre-wrap break-words">
+                      {row.responsiblePerson ?? "—"}
+                    </div>
+                    <div className="w-20 shrink-0 px-3 py-3 text-xs text-slate-600 dark:text-slate-400 wrap-break-word">
                       {row.sct ?? "—"}
                     </div>
                     <div className="w-10 shrink-0 px-2 py-3 text-sm text-center text-slate-700 dark:text-slate-300 font-medium">

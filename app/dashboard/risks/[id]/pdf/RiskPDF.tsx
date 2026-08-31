@@ -139,15 +139,15 @@ const styles = StyleSheet.create({
     color: "#334155",
   },
 
-  // Column widths for assessment table
-  colHazard: { width: "15%", paddingRight: 4 },
+  colHazard: { width: "16%", paddingRight: 4 },
   colImpact: { width: "13%", paddingRight: 4 },
-  colControls: { width: "19%", paddingRight: 4 },
-  colSct: { width: "9%", paddingRight: 4 },
+  colControls: { width: "13%", paddingRight: 4 },
+  colResponsible: { width: "13%", paddingRight: 4 },
+  colSct: { width: "8%", paddingRight: 4 },
   colC: { width: "4%", textAlign: "center" },
   colF: { width: "4%", textAlign: "center" },
   colRf: { width: "6%", textAlign: "center" },
-  colMeasures: { width: "30%", paddingLeft: 4 },
+  colMeasures: { width: "20%", paddingLeft: 4 },
 
   // ── RF color badge ────────────────────────────────────────────────────────
   rfBadge: {
@@ -374,6 +374,9 @@ export default function RiskPDF({ risk }: { risk: any }) {
               <Text style={[styles.tableHeaderCell, styles.colControls]}>
                 Existing Controls
               </Text>
+              <Text style={[styles.tableHeaderCell, styles.colResponsible]}>
+                Responsible
+              </Text>
               <Text style={[styles.tableHeaderCell, styles.colSct]}>SCT</Text>
               <Text style={[styles.tableHeaderCell, styles.colC]}>C</Text>
               <Text style={[styles.tableHeaderCell, styles.colF]}>F</Text>
@@ -400,21 +403,12 @@ export default function RiskPDF({ risk }: { risk: any }) {
                   <Text style={[styles.tableCell, styles.colImpact]}>
                     {row.impact}
                   </Text>
-                  <View style={styles.colControls}>
-                    <Text style={styles.tableCell}>
-                      {row.existingControls ?? "—"}
-                    </Text>
-                    {row.responsiblePerson && (
-                      <Text
-                        style={[
-                          styles.tableCell,
-                          { marginTop: 3, fontSize: 6, color: "#94a3b8" },
-                        ]}
-                      >
-                        Responsible: {row.responsiblePerson}
-                      </Text>
-                    )}
-                  </View>
+                  <Text style={[styles.tableCell, styles.colControls]}>
+                    {row.existingControls ?? "—"}
+                  </Text>
+                  <Text style={[styles.tableCell, styles.colResponsible]}>
+                    {row.responsiblePerson ?? "—"}
+                  </Text>
                   <Text style={[styles.tableCell, styles.colSct]}>
                     {row.sct ?? "—"}
                   </Text>
@@ -452,6 +446,7 @@ export default function RiskPDF({ risk }: { risk: any }) {
                             <Text style={styles.measureMetaText}>
                               F: {m.f ?? "—"}
                             </Text>
+                            <Text style={styles.measureMetaText}>RF:</Text>
                             <View
                               style={[
                                 styles.rfBadge,
