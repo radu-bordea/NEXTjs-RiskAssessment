@@ -6,7 +6,7 @@ export type AdditionalMeasure = {
   c: number | null;
   f: number | null;
   rf: number | null;
-  rfColor: "GREEN" | "YELLOW" | "RED" | null; // ← make sure this exists
+  rfColor: "GREEN" | "YELLOW" | "RED" | null;
   order: number;
 };
 
@@ -19,14 +19,10 @@ export type AssessmentRow = {
   c: number | null;
   f: number | null;
   rf: number | null;
-  rfColor: "GREEN" | "YELLOW" | "RED" | null; // ← make sure this exists
+  rfColor: "GREEN" | "YELLOW" | "RED" | null;
   order: number;
+  responsiblePerson: string | null; // ← added
   additionalMeasures: AdditionalMeasure[];
-};
-
-export type ResponsiblePerson = {
-  id: string;
-  name: string;
 };
 
 export type TeamMember = {
@@ -56,10 +52,17 @@ export type Risk = {
   createdById: string;
   createdBy: { name: string | null; email: string };
   stateUpdatedBy: { name: string | null } | null;
-  approvedBy: string | null
+  approvedBy: string | null;
+
+  // ─── Responsible Interfaces (replaces responsiblePersons array) ────
+  masterOowDpo: string | null;
+  personInCharge: string | null;
+  authorizedTeamLeader: string | null;
+  equipmentOperator: string | null;
+  attendeesWorkTeam: string | null;
+
   assessmentRows: AssessmentRow[];
   teamMembers: TeamMember[];
-  responsiblePersons: ResponsiblePerson[];
 };
 
 export type User = {
