@@ -139,15 +139,16 @@ const styles = StyleSheet.create({
     color: "#334155",
   },
 
-  colHazard: { width: "16%", paddingRight: 4 },
-  colImpact: { width: "13%", paddingRight: 4 },
-  colControls: { width: "13%", paddingRight: 4 },
-  colResponsible: { width: "13%", paddingRight: 4 },
+  colNumber: { width: "3%", textAlign: "center" },
+  colResponsible: { width: "12%", paddingRight: 4 },
+  colHazard: { width: "14%", paddingRight: 4 },
+  colImpact: { width: "12%", paddingRight: 4 },
+  colControls: { width: "12%", paddingRight: 4 },
   colSct: { width: "8%", paddingRight: 4 },
   colC: { width: "4%", textAlign: "center" },
   colF: { width: "4%", textAlign: "center" },
   colRf: { width: "6%", textAlign: "center" },
-  colMeasures: { width: "20%", paddingLeft: 4 },
+  colMeasures: { width: "22%", paddingLeft: 4 },
 
   // ── RF color badge ────────────────────────────────────────────────────────
   rfBadge: {
@@ -365,6 +366,10 @@ export default function RiskPDF({ risk }: { risk: any }) {
 
             {/* Table header */}
             <View style={styles.tableHeader}>
+              <Text style={[styles.tableHeaderCell, styles.colNumber]}>#</Text>
+              <Text style={[styles.tableHeaderCell, styles.colResponsible]}>
+                Responsible
+              </Text>
               <Text style={[styles.tableHeaderCell, styles.colHazard]}>
                 Hazard
               </Text>
@@ -373,9 +378,6 @@ export default function RiskPDF({ risk }: { risk: any }) {
               </Text>
               <Text style={[styles.tableHeaderCell, styles.colControls]}>
                 Existing Controls
-              </Text>
-              <Text style={[styles.tableHeaderCell, styles.colResponsible]}>
-                Responsible
               </Text>
               <Text style={[styles.tableHeaderCell, styles.colSct]}>SCT</Text>
               <Text style={[styles.tableHeaderCell, styles.colC]}>C</Text>
@@ -397,6 +399,12 @@ export default function RiskPDF({ risk }: { risk: any }) {
                     index % 2 !== 0 ? styles.tableRowAlt : {},
                   ]}
                 >
+                  <Text style={[styles.tableCell, styles.colNumber]}>
+                    {index + 1}
+                  </Text>
+                  <Text style={[styles.tableCell, styles.colResponsible]}>
+                    {row.responsiblePerson ?? "—"}
+                  </Text>
                   <Text style={[styles.tableCell, styles.colHazard]}>
                     {row.hazard}
                   </Text>
@@ -406,9 +414,7 @@ export default function RiskPDF({ risk }: { risk: any }) {
                   <Text style={[styles.tableCell, styles.colControls]}>
                     {row.existingControls ?? "—"}
                   </Text>
-                  <Text style={[styles.tableCell, styles.colResponsible]}>
-                    {row.responsiblePerson ?? "—"}
-                  </Text>
+
                   <Text style={[styles.tableCell, styles.colSct]}>
                     {row.sct ?? "—"}
                   </Text>

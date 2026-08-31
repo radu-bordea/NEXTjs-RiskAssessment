@@ -185,6 +185,9 @@ export default function RiskView({ risk }: RiskViewProps) {
           <div className="hidden md:flex bg-[#1A7A4A] dark:bg-[#0d4a2b] border-b border-[#145f39] dark:border-[#0a3520] min-w-300">
             <div className="w-8 shrink-0 bg-[#145f39] dark:bg-[#0a3520]" />
             <div className="flex flex-1 min-w-0">
+              <div className="w-28 shrink-0 px-3 py-2.5 text-xs font-bold uppercase tracking-wide text-white border-r border-[#145f39]">
+                Responsible
+              </div>
               <div className="flex-1 min-w-25 px-3 py-2.5 text-xs font-bold uppercase tracking-wide text-white border-r border-[#145f39]">
                 Hazard
               </div>
@@ -194,9 +197,7 @@ export default function RiskView({ risk }: RiskViewProps) {
               <div className="flex-1 min-w-25 px-3 py-2.5 text-xs font-bold uppercase tracking-wide text-white border-r border-[#145f39]">
                 Existing Controls
               </div>
-              <div className="w-28 shrink-0 px-3 py-2.5 text-xs font-bold uppercase tracking-wide text-white border-r border-[#145f39]">
-                Responsible
-              </div>
+
               <div className="w-20 shrink-0 px-3 py-2.5 text-xs font-bold uppercase tracking-wide text-white border-r border-[#145f39]">
                 SCT
               </div>
@@ -252,6 +253,14 @@ export default function RiskView({ risk }: RiskViewProps) {
                     )}
                   </div>
                   <div className="grid grid-cols-1 gap-3">
+                    {row.responsiblePerson && (
+                      <div>
+                        <span className={labelClass}>Responsible Person</span>
+                        <p className="text-sm text-slate-500">
+                          {row.responsiblePerson}
+                        </p>
+                      </div>
+                    )}
                     <div>
                       <span className={labelClass}>Hazard</span>
                       <p className="text-sm text-slate-900 dark:text-white">
@@ -269,14 +278,6 @@ export default function RiskView({ risk }: RiskViewProps) {
                         <span className={labelClass}>Existing Controls</span>
                         <p className="text-sm text-slate-500">
                           {row.existingControls}
-                        </p>
-                      </div>
-                    )}
-                    {row.responsiblePerson && (
-                      <div>
-                        <span className={labelClass}>Responsible Person</span>
-                        <p className="text-sm text-slate-500">
-                          {row.responsiblePerson}
                         </p>
                       </div>
                     )}
@@ -364,6 +365,9 @@ export default function RiskView({ risk }: RiskViewProps) {
 
                   {/* Main columns */}
                   <div className="flex flex-1 min-w-0 divide-x divide-[#D4EAD9] dark:divide-slate-800">
+                    <div className="w-28 shrink-0 px-3 py-3 text-sm text-slate-600 dark:text-slate-300 whitespace-pre-wrap break-words">
+                      {row.responsiblePerson ?? "—"}
+                    </div>
                     <div className="flex-1 min-w-25 px-3 py-3 text-sm text-slate-900 dark:text-white wrap-break-word whitespace-pre-wrap">
                       {row.hazard}
                     </div>
@@ -373,9 +377,7 @@ export default function RiskView({ risk }: RiskViewProps) {
                     <div className="flex-1 min-w-25 px-3 py-3 text-sm text-slate-500 dark:text-slate-400 whitespace-pre-wrap">
                       {row.existingControls ?? "—"}
                     </div>
-                    <div className="w-28 shrink-0 px-3 py-3 text-sm text-slate-600 dark:text-slate-300 whitespace-pre-wrap break-words">
-                      {row.responsiblePerson ?? "—"}
-                    </div>
+
                     <div className="w-20 shrink-0 px-3 py-3 text-xs text-slate-600 dark:text-slate-400 wrap-break-word">
                       {row.sct ?? "—"}
                     </div>
@@ -506,7 +508,6 @@ export default function RiskView({ risk }: RiskViewProps) {
           </div>
         </div>
       )}
-
 
       {/* ── Approved By ──────────────────────────────────────────────────── */}
       {risk.approvedBy && (
