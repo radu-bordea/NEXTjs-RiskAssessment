@@ -52,6 +52,11 @@ export async function createRisk(data: RiskFormValues) {
         state: "TEMPLATE",
         createdById: userId, // ⚠️ important fix
         approvedBy: values.approvedBy ?? null,
+        masterOowDpo: values.masterOowDpo ?? null,
+        personInCharge: values.personInCharge ?? null,
+        authorizedTeamLeader: values.authorizedTeamLeader ?? null,
+        equipmentOperator: values.equipmentOperator ?? null,
+        attendeesWorkTeam: values.attendeesWorkTeam ?? null,
         emergencyResponse: values.emergencyResponse ?? null, // ← add this field
 
         assessmentRows: {
@@ -66,6 +71,7 @@ export async function createRisk(data: RiskFormValues) {
             rf: row.rf ?? null,
             rfColor: row.rfColor ?? null,
             order: index,
+            responsiblePerson: row.responsiblePerson ?? null,
 
             additionalMeasures: {
               create: row.additionalMeasures.map((m, mIndex) => ({
@@ -84,12 +90,6 @@ export async function createRisk(data: RiskFormValues) {
         teamMembers: {
           create: values.teamMembers.map((member) => ({
             name: member.name,
-          })),
-        },
-
-        responsiblePersons: {
-          create: values.responsiblePersons.map((person) => ({
-            name: person.name,
           })),
         },
       },
@@ -121,7 +121,6 @@ export async function getRiskById(id: string) {
         orderBy: { order: "asc" },
       },
       teamMembers: true,
-      responsiblePersons: true,
       createdBy: true,
       stateUpdatedBy: true, // ← was missing, caused "—" in view
     },
@@ -151,7 +150,6 @@ export async function updateTemplate(id: string, data: RiskFormValues) {
   try {
     await prisma.riskAssessmentRow.deleteMany({ where: { riskId: id } });
     await prisma.teamMember.deleteMany({ where: { riskId: id } });
-    await prisma.responsiblePersons.deleteMany({ where: { riskId: id } });
 
     const risk = await prisma.risk.update({
       where: { id },
@@ -170,8 +168,13 @@ export async function updateTemplate(id: string, data: RiskFormValues) {
         initiatorComment: values.initiatorComment ?? null,
         alternativeWays: values.alternativeWays ?? false,
         alternativeWaysText: values.alternativeWaysText ?? null,
-        approvedBy: values.approvedBy ?? null, // ← add this
-        emergencyResponse: values.emergencyResponse ?? null, // ← add this field
+        approvedBy: values.approvedBy ?? null,
+        emergencyResponse: values.emergencyResponse ?? null,
+        masterOowDpo: values.masterOowDpo ?? null,
+        personInCharge: values.personInCharge ?? null,
+        authorizedTeamLeader: values.authorizedTeamLeader ?? null,
+        equipmentOperator: values.equipmentOperator ?? null,
+        attendeesWorkTeam: values.attendeesWorkTeam ?? null,
         state: "TEMPLATE", // always stays TEMPLATE
         stateUpdatedById: userId,
 
@@ -186,6 +189,7 @@ export async function updateTemplate(id: string, data: RiskFormValues) {
             rf: row.rf ?? null,
             rfColor: row.rfColor ?? null,
             order: index,
+            responsiblePerson: row.responsiblePerson ?? null,
             additionalMeasures: {
               create: (row.additionalMeasures ?? []).map((m, mIndex) => ({
                 furtherAction: m.furtherAction ?? null,
@@ -202,12 +206,6 @@ export async function updateTemplate(id: string, data: RiskFormValues) {
         teamMembers: {
           create: (values.teamMembers ?? []).map((m) => ({ name: m.name })),
         },
-
-        responsiblePersons: {
-          create: (values.responsiblePersons ?? []).map((p) => ({
-            name: p.name,
-          })),
-        },
       },
     });
 
@@ -218,25 +216,7 @@ export async function updateTemplate(id: string, data: RiskFormValues) {
   }
 }
 
-/**
- * createDraftFromTemplate — Creates a DRAFT copy from a TEMPLATE risk
- *
- * Clones all data from the template into a new risk with state: DRAFT
- * The original template is never modified.
- * cloneOf field stores the template's ref for traceability.
- *
- * All roles can create a draft from a template.
- *
- * @param templateId - The id of the TEMPLATE risk to clone from
- * @returns { success: true, id: string } or { success: false, error: string }
- */
-
-export async function createDraftFromTemplate(templateId: string): Promise<{
-  success: boolean;
-  error?: string;
-  id?: string;
-  existingDraftId?: string;
-}> {
+export async function createDraftFromTemplate(templateId: string) {
   const { userId } = await auth();
   if (!userId) redirect("/sign-in");
 
@@ -255,7 +235,6 @@ export async function createDraftFromTemplate(templateId: string): Promise<{
           },
         },
         teamMembers: true,
-        responsiblePersons: true,
       },
     });
 
@@ -263,17 +242,6 @@ export async function createDraftFromTemplate(templateId: string): Promise<{
     if (template.state !== "TEMPLATE") {
       return { success: false, error: "Only templates can be cloned" };
     }
-
-    // ── Build ref using the SOURCE's initiationDate, not today ───────────
-    //
-    // The client wants the ref date to reflect when the original work
-    // assessment was initiated, not when the draft was created.
-    //
-    // Example: template initiated on 15/03/2026
-    //   First draft that day  → "RA-N-001 - 15/03/2026"
-    //   Second draft same day → "RA-N-001 - 15/03/2026/1"
-    //   Third draft same day  → "RA-N-001 - 15/03/2026/2"
-    //   Draft on a new date   → "RA-N-001 - 02/06/2026"  (no counter)
 
     // Count existing drafts/completed from this template to get next number
     const existingCount = await prisma.risk.count({
@@ -300,7 +268,12 @@ export async function createDraftFromTemplate(templateId: string): Promise<{
         initiatorComment: template.initiatorComment,
         alternativeWays: template.alternativeWays,
         alternativeWaysText: template.alternativeWaysText,
-        emergencyResponse: template.emergencyResponse ?? null, // ← add
+        emergencyResponse: template.emergencyResponse,
+        masterOowDpo: template.masterOowDpo,
+        personInCharge: template.personInCharge,
+        authorizedTeamLeader: template.authorizedTeamLeader,
+        equipmentOperator: template.equipmentOperator,
+        attendeesWorkTeam: template.attendeesWorkTeam,
         state: "DRAFT",
         createdById: userId,
 
@@ -316,6 +289,7 @@ export async function createDraftFromTemplate(templateId: string): Promise<{
             rf: row.rf,
             rfColor: row.rfColor,
             order: index,
+            responsiblePerson: row.responsiblePerson,
             additionalMeasures: {
               create: row.additionalMeasures.map((m, mIndex) => ({
                 furtherAction: m.furtherAction,
@@ -332,11 +306,6 @@ export async function createDraftFromTemplate(templateId: string): Promise<{
         // Clone team members
         teamMembers: {
           create: template.teamMembers.map((m) => ({ name: m.name })),
-        },
-
-        // Clone responsible persons
-        responsiblePersons: {
-          create: template.responsiblePersons.map((p) => ({ name: p.name })),
         },
       },
     });
@@ -390,7 +359,6 @@ export async function submitDraft(id: string, data: RiskFormValues) {
     // Delete existing nested records and recreate from form data
     await prisma.riskAssessmentRow.deleteMany({ where: { riskId: id } });
     await prisma.teamMember.deleteMany({ where: { riskId: id } });
-    await prisma.responsiblePersons.deleteMany({ where: { riskId: id } });
 
     // Update draft → COMPLETED
     const risk = await prisma.risk.update({
@@ -404,6 +372,11 @@ export async function submitDraft(id: string, data: RiskFormValues) {
         alternativeWays: values.alternativeWays,
         alternativeWaysText: values.alternativeWaysText ?? null,
         approvedBy: values.approvedBy ?? null,
+        masterOowDpo: values.masterOowDpo ?? null,
+        personInCharge: values.personInCharge ?? null,
+        authorizedTeamLeader: values.authorizedTeamLeader ?? null,
+        equipmentOperator: values.equipmentOperator ?? null,
+        attendeesWorkTeam: values.attendeesWorkTeam ?? null,
         state: "COMPLETED",
         stateUpdatedById: userId,
 
@@ -418,6 +391,7 @@ export async function submitDraft(id: string, data: RiskFormValues) {
             rf: row.rf ?? null,
             rfColor: row.rfColor ?? null,
             order: index,
+            responsiblePerson: row.responsiblePerson ?? null,
             additionalMeasures: {
               create: (row.additionalMeasures ?? []).map((m, mIndex) => ({
                 furtherAction: m.furtherAction ?? null,
@@ -433,12 +407,6 @@ export async function submitDraft(id: string, data: RiskFormValues) {
 
         teamMembers: {
           create: (values.teamMembers ?? []).map((m) => ({ name: m.name })),
-        },
-
-        responsiblePersons: {
-          create: (values.responsiblePersons ?? []).map((p) => ({
-            name: p.name,
-          })),
         },
       },
     });
@@ -459,7 +427,7 @@ export async function submitDraft(id: string, data: RiskFormValues) {
  *  - MEMBER → cannot delete anything
  *
  * Cascade delete handles all related records automatically:
- * RiskAssessmentRow, AdditionalMeasure, TeamMember, ResponsiblePerson
+ * RiskAssessmentRow, AdditionalMeasure, TeamMember
  *
  * @param id - The cuid of the risk to delete
  * @returns { success: true } or { success: false, error: string }
@@ -504,21 +472,6 @@ export async function deleteRisk(id: string) {
 }
 
 /**
- * updateRisk — Updates an existing risk assessment
- *
- * Used for both:
- *  - Submitting a DRAFT risk (state → IN_PROGRESS)
- *  - Editing an existing IN_PROGRESS risk (state stays IN_PROGRESS)
- *  - Saving an edit as draft (state → DRAFT)
- *
- * Deletes existing nested records and recreates them from form data.
- * Cascade handles cleanup automatically.
- *
- * @param id - The cuid of the risk to update
- * @param data - Full form values
- * @param state - Target state: "DRAFT" or "IN_PROGRESS"
- */
-/**
  * updateRisk — Updates an existing DRAFT risk assessment
  *
  * Always saves as DRAFT state — for saving progress while editing.
@@ -529,7 +482,6 @@ export async function deleteRisk(id: string) {
  * @param data - Form values
  * @returns { success: true, id: string } or { success: false, error: string }
  */
-
 export async function updateRisk(id: string, data: RiskFormValues) {
   // 1. Check authentication
   const { userId } = await auth();
@@ -551,7 +503,6 @@ export async function updateRisk(id: string, data: RiskFormValues) {
     // 4. Delete existing nested records — cascade handles additionalMeasures
     await prisma.riskAssessmentRow.deleteMany({ where: { riskId: id } });
     await prisma.teamMember.deleteMany({ where: { riskId: id } });
-    await prisma.responsiblePersons.deleteMany({ where: { riskId: id } });
 
     // 5. Update the risk — always keeps DRAFT state
     const risk = await prisma.risk.update({
@@ -572,7 +523,12 @@ export async function updateRisk(id: string, data: RiskFormValues) {
         alternativeWays: values.alternativeWays ?? false,
         alternativeWaysText: values.alternativeWaysText ?? null,
         approvedBy: values.approvedBy ?? null,
-        emergencyResponse: values.emergencyResponse ?? null, // ← add this field
+        emergencyResponse: values.emergencyResponse ?? null,
+        masterOowDpo: values.masterOowDpo ?? null,
+        personInCharge: values.personInCharge ?? null,
+        authorizedTeamLeader: values.authorizedTeamLeader ?? null,
+        equipmentOperator: values.equipmentOperator ?? null,
+        attendeesWorkTeam: values.attendeesWorkTeam ?? null,
         state: "DRAFT", // always DRAFT when saving progress
         stateUpdatedById: userId,
 
@@ -587,6 +543,7 @@ export async function updateRisk(id: string, data: RiskFormValues) {
             rf: row.rf ?? null,
             rfColor: row.rfColor ?? null,
             order: index,
+            responsiblePerson: row.responsiblePerson ?? null,
             additionalMeasures: {
               create: (row.additionalMeasures ?? []).map((m, mIndex) => ({
                 furtherAction: m.furtherAction ?? null,
@@ -602,12 +559,6 @@ export async function updateRisk(id: string, data: RiskFormValues) {
 
         teamMembers: {
           create: (values.teamMembers ?? []).map((m) => ({ name: m.name })),
-        },
-
-        responsiblePersons: {
-          create: (values.responsiblePersons ?? []).map((p) => ({
-            name: p.name,
-          })),
         },
       },
     });
