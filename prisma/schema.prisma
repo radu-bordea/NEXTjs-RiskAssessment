@@ -67,7 +67,6 @@ model Risk {
   updatedAt DateTime @updatedAt
 
   assessmentRows RiskAssessmentRow[]
-  teamMembers    TeamMember[]
 
   masterOowDpo         String?
   personInCharge       String?
@@ -121,15 +120,6 @@ model AdditionalMeasure {
   order         Int      @default(0)
 }
 
-// NOTE: TeamMember (no prefix) is specific to Risk model — kept
-// for backward compatibility. All other models use prefixed names
-// e.g. SafetyMeetingTeamMember, WorkPermitTeamMember, etc.
-model TeamMember {
-  id     String @id @default(cuid())
-  riskId String
-  risk   Risk   @relation(fields: [riskId], references: [id], onDelete: Cascade)
-  name   String
-}
 
 enum Role {
   ADMIN

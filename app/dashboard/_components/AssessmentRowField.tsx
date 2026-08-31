@@ -115,58 +115,58 @@ export default function AssessmentRowField({
         )}
       </div>
 
-      {/* ── Hazard / Impact / Existing Controls ─────────────────────────── */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-        <div>
-          <label className={labelClass}>Hazard *</label>
-          <textarea
-            {...register(`assessmentRows.${index}.hazard`)}
-            rows={3}
-            disabled={isExistingRow}
-            className={inputClass}
-          />
-          {errors.assessmentRows?.[index]?.hazard && (
-            <p className="text-xs text-red-500 mt-1">
-              {errors.assessmentRows[index]?.hazard?.message}
-            </p>
-          )}
-        </div>
-        <div>
-          <label className={labelClass}>Impact *</label>
-          <textarea
-            {...register(`assessmentRows.${index}.impact`)}
-            rows={3}
-            disabled={isExistingRow}
-            className={inputClass}
-          />
-          {errors.assessmentRows?.[index]?.impact && (
-            <p className="text-xs text-red-500 mt-1">
-              {errors.assessmentRows[index]?.impact?.message}
-            </p>
-          )}
-        </div>
-        <div>
-          <label className={labelClass}>Existing Control Measures</label>
-          <textarea
-            {...register(`assessmentRows.${index}.existingControls`)}
-            rows={3}
-            disabled={isExistingRow}
-            className={inputClass}
-          />
-        </div>
-      </div>
+{/* ── Responsible Person ────────────────────────────────────────── */}
+<div className="mb-4">
+  <label className={labelClass}>Responsible Person</label>
+  <input
+    type="text"
+    {...register(`assessmentRows.${index}.responsiblePerson`)}
+    disabled={isExistingRow}
+    placeholder="Responsible person"
+    className={inputClass}
+  />
+</div>
 
-      {/* ── Responsible Person ────────────────────────────────────────── */}
-      <div className="mb-4">
-        <label className={labelClass}>Responsible Person</label>
-        <input
-          type="text"
-          {...register(`assessmentRows.${index}.responsiblePerson`)}
-          disabled={isExistingRow}
-          placeholder="Responsible person"
-          className={inputClass}
-        />
-      </div>
+{/* ── Hazard / Impact / Existing Controls ─────────────────────────── */}
+<div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+  <div>
+    <label className={labelClass}>Hazard *</label>
+    <textarea
+      {...register(`assessmentRows.${index}.hazard`)}
+      rows={3}
+      disabled={isExistingRow}
+      className={inputClass}
+    />
+    {errors.assessmentRows?.[index]?.hazard && (
+      <p className="text-xs text-red-500 mt-1">
+        {errors.assessmentRows[index]?.hazard?.message}
+      </p>
+    )}
+  </div>
+  <div>
+    <label className={labelClass}>Impact *</label>
+    <textarea
+      {...register(`assessmentRows.${index}.impact`)}
+      rows={3}
+      disabled={isExistingRow}
+      className={inputClass}
+    />
+    {errors.assessmentRows?.[index]?.impact && (
+      <p className="text-xs text-red-500 mt-1">
+        {errors.assessmentRows[index]?.impact?.message}
+      </p>
+    )}
+  </div>
+  <div>
+    <label className={labelClass}>Existing Control Measures</label>
+    <textarea
+      {...register(`assessmentRows.${index}.existingControls`)}
+      rows={3}
+      disabled={isExistingRow}
+      className={inputClass}
+    />
+  </div>
+</div>
 
       {/* ── SCT / C / F / RF / RF Color ─────────────────────────────────── */}
       <div className="flex items-end gap-3 mb-5 flex-wrap">

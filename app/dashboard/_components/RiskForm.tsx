@@ -192,9 +192,6 @@ export default function RiskForm({ currentUser, risk }: Props) {
           additionalMeasures: [],
         },
       ],
-
-      teamMembers:
-        risk?.teamMembers?.map((m) => ({ id: m.id, name: m.name })) ?? [],
     },
   });
 
@@ -204,11 +201,6 @@ export default function RiskForm({ currentUser, risk }: Props) {
     remove: removeRow,
   } = useFieldArray({ control, name: "assessmentRows" });
 
-  const {
-    fields: teamFields,
-    append: appendTeam,
-    remove: removeTeam,
-  } = useFieldArray({ control, name: "teamMembers" });
 
   const alternativeWays = watch("alternativeWays");
 
@@ -744,41 +736,7 @@ export default function RiskForm({ currentUser, risk }: Props) {
         </div>
       )}
 
-      {/* ── Section 5 — Risk Assessment Team — locked for COMPLETED ───────── */}
-      {!isCompleted && (
-        <div className={sectionClass}>
-          <h2 className={sectionHeadingClass}>Risk Assessment Team</h2>
-          <div className="space-y-3">
-            {teamFields.map((field, index) => (
-              <div key={field.id} className="flex items-center gap-3">
-                <Input
-                  {...register(`teamMembers.${index}.name`)}
-                  placeholder="Person name"
-                  className="border-[#A8D5B5] focus-visible:ring-[#1A7A4A]"
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => removeTeam(index)}
-                  className="border-red-200 text-red-500 hover:bg-red-50 hover:text-red-600 whitespace-nowrap"
-                >
-                  Remove
-                </Button>
-              </div>
-            ))}
-          </div>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => appendTeam({ name: "" })}
-            className="mt-4 border-[#1A7A4A] text-[#1A7A4A] hover:bg-[#EEF5F0] hover:text-[#145f39]"
-          >
-            + Add team representative
-          </Button>
-        </div>
-      )}
-
-      {/* ── Section 6 — Approved By (Admin + Manager only) ────────────────── */}
+      {/* ── Section 5 — Approved By (Admin + Manager only) ────────────────── */}
       {(currentUser?.role === "ADMIN" || currentUser?.role === "MANAGER") && (
         <div className={sectionClass}>
           <h2 className={sectionHeadingClass}>Approval</h2>

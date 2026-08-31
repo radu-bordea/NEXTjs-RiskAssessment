@@ -507,24 +507,6 @@ export default function RiskView({ risk }: RiskViewProps) {
         </div>
       )}
 
-      {/* ── Risk Assessment Team ──────────────────────────────────────────── */}
-      <div className={sectionClass}>
-        <h2 className={sectionHeadingClass}>Risk Assessment Team</h2>
-        {!risk.teamMembers?.length ? (
-          <p className="text-sm text-slate-400">No team members.</p>
-        ) : (
-          <div className="flex flex-wrap gap-2">
-            {risk.teamMembers?.map((m: any) => (
-              <span
-                key={m.id}
-                className="text-sm px-3 py-1.5 rounded-full border border-[#A8D5B5] dark:border-slate-700 text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-950"
-              >
-                {m.name}
-              </span>
-            ))}
-          </div>
-        )}
-      </div>
 
       {/* ── Approved By ──────────────────────────────────────────────────── */}
       {risk.approvedBy && (

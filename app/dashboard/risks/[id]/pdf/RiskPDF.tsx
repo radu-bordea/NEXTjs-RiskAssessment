@@ -548,22 +548,6 @@ export default function RiskPDF({ risk }: { risk: any }) {
           </View>
         )}
 
-        {/* ── Risk Assessment Team ──────────────────────────────────────── */}
-        {risk.teamMembers?.length > 0 && (
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionHeaderText}>Risk Assessment Team</Text>
-            </View>
-            <View style={[styles.sectionBody, styles.pillRow]}>
-              {risk.teamMembers.map((m: any) => (
-                <View key={m.id} style={styles.pill}>
-                  <Text>{m.name}</Text>
-                </View>
-              ))}
-            </View>
-          </View>
-        )}
-
         {/* ── Approved By ───────────────────────────────────────────────── */}
         {risk.approvedBy && (
           <View style={styles.section}>

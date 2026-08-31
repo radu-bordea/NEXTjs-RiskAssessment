@@ -25,10 +25,6 @@ export type AssessmentRow = {
   additionalMeasures: AdditionalMeasure[];
 };
 
-export type TeamMember = {
-  id: string;
-  name: string;
-};
 
 export type Risk = {
   id: string;
@@ -62,7 +58,6 @@ export type Risk = {
   attendeesWorkTeam: string | null;
 
   assessmentRows: AssessmentRow[];
-  teamMembers: TeamMember[];
 };
 
 export type User = {

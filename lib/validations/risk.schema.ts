@@ -27,11 +27,6 @@ const assessmentRowSchema = z.object({
   additionalMeasures: z.array(additionalMeasureSchema).default([]),
 });
 
-const teamMemberSchema = z.object({
-  id: z.string().optional(),
-  name: z.string().min(1, "Team member name is required"),
-});
-
 
 // Full validation for Submit
 export const riskSchema = z.object({
@@ -56,7 +51,6 @@ export const riskSchema = z.object({
   .array(assessmentRowSchema)
   .min(1, "At least one assessment row is required"),
   approvedBy: z.string().optional().nullable(),
-  teamMembers: z.array(teamMemberSchema).default([]),
 
     // ─── Responsible Interfaces (replaces responsiblePersons array) ────
   masterOowDpo:          z.string().optional().nullable(),

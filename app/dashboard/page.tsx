@@ -13,7 +13,6 @@ export default async function DashboardPage() {
       createdBy: { select: { name: true, email: true } },
       stateUpdatedBy: { select: { name: true } },
       assessmentRows: true,
-      teamMembers: true, // ← add
     },
   });
 

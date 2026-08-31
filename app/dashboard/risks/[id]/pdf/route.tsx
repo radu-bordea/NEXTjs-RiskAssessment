@@ -33,7 +33,6 @@ export async function GET(
           additionalMeasures: { orderBy: { order: "asc" } },
         },
       },
-      teamMembers: true,
       createdBy: { select: { name: true, email: true } },
       stateUpdatedBy: { select: { name: true } },
     },

@@ -86,12 +86,6 @@ export async function createRisk(data: RiskFormValues) {
             },
           })),
         },
-
-        teamMembers: {
-          create: values.teamMembers.map((member) => ({
-            name: member.name,
-          })),
-        },
       },
     });
 
@@ -120,7 +114,6 @@ export async function getRiskById(id: string) {
         },
         orderBy: { order: "asc" },
       },
-      teamMembers: true,
       createdBy: true,
       stateUpdatedBy: true, // ← was missing, caused "—" in view
     },
@@ -149,7 +142,6 @@ export async function updateTemplate(id: string, data: RiskFormValues) {
 
   try {
     await prisma.riskAssessmentRow.deleteMany({ where: { riskId: id } });
-    await prisma.teamMember.deleteMany({ where: { riskId: id } });
 
     const risk = await prisma.risk.update({
       where: { id },
@@ -202,10 +194,6 @@ export async function updateTemplate(id: string, data: RiskFormValues) {
             },
           })),
         },
-
-        teamMembers: {
-          create: (values.teamMembers ?? []).map((m) => ({ name: m.name })),
-        },
       },
     });
 
@@ -234,7 +222,6 @@ export async function createDraftFromTemplate(templateId: string) {
             additionalMeasures: { orderBy: { order: "asc" } },
           },
         },
-        teamMembers: true,
       },
     });
 
@@ -302,11 +289,6 @@ export async function createDraftFromTemplate(templateId: string) {
             },
           })),
         },
-
-        // Clone team members
-        teamMembers: {
-          create: template.teamMembers.map((m) => ({ name: m.name })),
-        },
       },
     });
     // Revalidate dashboard so new draft appears immediately
@@ -358,7 +340,6 @@ export async function submitDraft(id: string, data: RiskFormValues) {
 
     // Delete existing nested records and recreate from form data
     await prisma.riskAssessmentRow.deleteMany({ where: { riskId: id } });
-    await prisma.teamMember.deleteMany({ where: { riskId: id } });
 
     // Update draft → COMPLETED
     const risk = await prisma.risk.update({
@@ -403,10 +384,6 @@ export async function submitDraft(id: string, data: RiskFormValues) {
               })),
             },
           })),
-        },
-
-        teamMembers: {
-          create: (values.teamMembers ?? []).map((m) => ({ name: m.name })),
         },
       },
     });
@@ -502,7 +479,6 @@ export async function updateRisk(id: string, data: RiskFormValues) {
   try {
     // 4. Delete existing nested records — cascade handles additionalMeasures
     await prisma.riskAssessmentRow.deleteMany({ where: { riskId: id } });
-    await prisma.teamMember.deleteMany({ where: { riskId: id } });
 
     // 5. Update the risk — always keeps DRAFT state
     const risk = await prisma.risk.update({
@@ -555,10 +531,6 @@ export async function updateRisk(id: string, data: RiskFormValues) {
               })),
             },
           })),
-        },
-
-        teamMembers: {
-          create: (values.teamMembers ?? []).map((m) => ({ name: m.name })),
         },
       },
     });
