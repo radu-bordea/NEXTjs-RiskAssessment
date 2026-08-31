@@ -34,7 +34,6 @@ export async function GET(
         },
       },
       teamMembers: true,
-      responsiblePersons: true,
       createdBy: { select: { name: true, email: true } },
       stateUpdatedBy: { select: { name: true } },
     },
