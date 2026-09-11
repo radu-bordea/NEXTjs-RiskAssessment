@@ -23,6 +23,13 @@ import { toast } from "sonner";
 import { createDraftFromTemplate } from "@/app/actions/risk.actions";
 import { title } from "process";
 
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+
 // ─── State badge styles ───────────────────────────────────────────────────────
 const stateStyle: Record<string, string> = {
   TEMPLATE:
@@ -90,6 +97,9 @@ export default function RiskTable({
 
   /** Track which template is currently being cloned — for loading state */
   const [cloningId, setCloningId] = useState<string | null>(null);
+
+  /** Controls the Manual PDF viewer modal */
+  const [manualOpen, setManualOpen] = useState(false);
 
   const router = useRouter();
 
@@ -262,15 +272,24 @@ export default function RiskTable({
           </p>
         </div>
 
-        {/* New Template button — ADMIN only */}
-        {isAdmin && (
+        <div className="flex items-center gap-2">
+          {/* Open Manual button — opens PDF viewer modal */}
           <button
-            onClick={() => router.push("/dashboard/risks/new")}
-            className="px-5 py-2.5 bg-[#1A7A4A] hover:bg-[#145f39] text-white rounded-lg text-sm font-medium transition-colors shadow-sm shadow-[#1A7A4A]/20 cursor-pointer"
+            onClick={() => setManualOpen(true)}
+            className="px-5 py-2.5 bg-white hover:bg-[#EEF5F0] text-[#1A7A4A] border border-[#A8D5B5] rounded-lg text-sm font-medium transition-colors cursor-pointer shadow-sm"
           >
-            + New Risk Assessment
+            📖 Open Manual
           </button>
-        )}
+
+          {isAdmin && (
+            <button
+              onClick={() => router.push("/dashboard/risks/new")}
+              className="px-5 py-2.5 bg-[#1A7A4A] hover:bg-[#145f39] text-white rounded-lg text-sm font-medium transition-colors shadow-sm shadow-[#1A7A4A]/20"
+            >
+              + New Template
+            </button>
+          )}
+        </div>
       </div>
 
       {/* ── Filters Panel ─────────────────────────────────────────────────── */}
@@ -604,6 +623,20 @@ export default function RiskTable({
           </table>
         </div>
       </div>
+
+      {/* ── Manual PDF Viewer Modal ──────────────────────────────────────── */}
+      <Dialog open={manualOpen} onOpenChange={setManualOpen}>
+        <DialogContent className="sm:max-w-5xl h-[90vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle>Risk Assessment Manual</DialogTitle>
+          </DialogHeader>
+          <iframe
+            src="https://3ndlujwykffozodt.public.blob.vercel-storage.com/risk-manual.pdf"
+            className="w-full flex-1 rounded-lg border border-[#A8D5B5]"
+            title="Risk Assessment Manual"
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
