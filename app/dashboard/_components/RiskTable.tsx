@@ -93,6 +93,7 @@ export default function RiskTable({
     libraryCategory: "",
     libraryIndex: "",
     defectRelated: "",
+    state: "",
   });
 
   /** Track which template is currently being cloned — for loading state */
@@ -182,6 +183,7 @@ export default function RiskTable({
         return false;
       if (filters.defectRelated === "yes" && !r.defectRelated) return false;
       if (filters.defectRelated === "no" && r.defectRelated) return false;
+      if (filters.state && r.state !== filters.state) return false;
       return true;
     });
   }, [risks, filters]);
@@ -210,6 +212,7 @@ export default function RiskTable({
       libraryCategory: "",
       libraryIndex: "",
       defectRelated: "",
+      state: "",
     });
 
   /**
@@ -407,6 +410,17 @@ export default function RiskTable({
             <option value="">Defect Related</option>
             <option value="yes">Yes</option>
             <option value="no">No</option>
+          </select>
+
+          <select
+            value={filters.state}
+            onChange={(e) => set("state", e.target.value)}
+            className={selectClass}
+          >
+            <option value="">All States</option>
+            <option value="TEMPLATE">Template</option>
+            <option value="DRAFT">Draft</option>
+            <option value="COMPLETED">Completed</option>
           </select>
         </div>
 
