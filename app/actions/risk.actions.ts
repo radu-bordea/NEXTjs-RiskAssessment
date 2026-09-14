@@ -235,7 +235,12 @@ export async function createDraftFromTemplate(templateId: string) {
       where: { cloneOf: template.ref },
     });
     const draftNumber = existingCount + 1;
-    const draftRef = `${template.ref} - DRAFT_${draftNumber}`;
+
+    // New draft's initiation date defaults to today — used in the ref
+    const initiationDate = new Date();
+    const dateStr = initiationDate.toISOString().split("T")[0]; // YYYY-MM-DD
+
+    const draftRef = `${template.ref}_${dateStr}_DRAFT_${draftNumber}`;
 
     // Create the draft as a clone of the template
     const draft = await prisma.risk.create({
@@ -244,7 +249,7 @@ export async function createDraftFromTemplate(templateId: string) {
         cloneOf: template.ref,
         workActivity: template.workActivity,
         initiator: user.name ?? user.email,
-        initiationDate: new Date(),
+        initiationDate: initiationDate, // ← now matches the ref's date
         reviewDate: template.reviewDate,
         vesselDepartment: template.vesselDepartment,
         fleet: template.fleet,
@@ -335,8 +340,17 @@ export async function submitDraft(id: string, data: RiskFormValues) {
       return { success: false, error: "Only drafts can be submitted" };
     }
 
-    // Replace "DRAFT_N" with "COMPLETED_N", preserving the draft's number
-    const cleanRef = existing.ref.replace(/DRAFT_(\d+)$/, "COMPLETED_$1");
+    // Build new ref: base ref + initiation date + COMPLETED_N (preserving the draft's number)
+    const dateStr = values.initiationDate.toISOString().split("T")[0]; // YYYY-MM-DD
+
+    // Extract the base ref (everything before the first "_" if it exists, otherwise the whole existing ref)
+    const baseRefMatch = existing.ref.match(
+      /^(.+?)_\d{4}-\d{2}-\d{2}_DRAFT_(\d+)$/,
+    );
+    const baseRef = baseRefMatch ? baseRefMatch[1] : existing.ref;
+    const draftNumber = baseRefMatch ? baseRefMatch[2] : "1";
+
+    const cleanRef = `${baseRef}_${dateStr}_COMPLETED_${draftNumber}`;
 
     // Delete existing nested records and recreate from form data
     await prisma.riskAssessmentRow.deleteMany({ where: { riskId: id } });
@@ -460,15 +474,12 @@ export async function deleteRisk(id: string) {
  * @returns { success: true, id: string } or { success: false, error: string }
  */
 export async function updateRisk(id: string, data: RiskFormValues) {
-  // 1. Check authentication
   const { userId } = await auth();
   if (!userId) redirect("/sign-in");
 
-  // 2. Get current user — all roles can update
   const user = await prisma.user.findUnique({ where: { id: userId } });
   if (!user) return { success: false, error: "User not found" };
 
-  // 3. Validate with draft schema — relaxed validation for saving progress
   const validated = riskDraftSchema.safeParse(data);
   if (!validated.success) {
     return { success: false, error: "Validation failed" };
@@ -477,14 +488,26 @@ export async function updateRisk(id: string, data: RiskFormValues) {
   const values = validated.data;
 
   try {
-    // 4. Delete existing nested records — cascade handles additionalMeasures
     await prisma.riskAssessmentRow.deleteMany({ where: { riskId: id } });
 
-    // 5. Update the risk — always keeps DRAFT state
+    // Rebuild ref using the CURRENT initiation date, preserving base ref + draft number
+    const existing = await prisma.risk.findUnique({ where: { id } });
+    let refToSave = values.ref!;
+
+    if (existing && values.initiationDate) {
+      const dateStr = values.initiationDate.toISOString().split("T")[0];
+      const baseRefMatch = existing.ref.match(/^(.+?)_\d{4}-\d{2}-\d{2}_DRAFT_(\d+)$/);
+      if (baseRefMatch) {
+        const baseRef = baseRefMatch[1];
+        const draftNumber = baseRefMatch[2];
+        refToSave = `${baseRef}_${dateStr}_DRAFT_${draftNumber}`;
+      }
+    }
+
     const risk = await prisma.risk.update({
       where: { id },
       data: {
-        ref: values.ref!,
+        ref: refToSave,
         workActivity: values.workActivity ?? "",
         initiator: values.initiator!,
         initiationDate: values.initiationDate!,
@@ -505,7 +528,7 @@ export async function updateRisk(id: string, data: RiskFormValues) {
         authorizedTeamLeader: values.authorizedTeamLeader ?? null,
         equipmentOperator: values.equipmentOperator ?? null,
         attendeesWorkTeam: values.attendeesWorkTeam ?? null,
-        state: "DRAFT", // always DRAFT when saving progress
+        state: "DRAFT",
         stateUpdatedById: userId,
 
         assessmentRows: {
@@ -547,6 +570,7 @@ export async function updateRisk(id: string, data: RiskFormValues) {
  *
  * COMPLETED risks are mostly locked — only initiationDate and
  * reviewDate can be modified. All roles can do this.
+ * Ref is rebuilt to reflect the updated initiation date.
  *
  * @param id - The cuid of the COMPLETED risk
  * @param initiationDate - New initiation date
@@ -576,10 +600,22 @@ export async function updateCompleted(
       };
     }
 
-    // 3. Only update the two date fields — everything else stays locked
+    // 3. Rebuild ref using the new initiation date, preserving base ref + completed number
+    const dateStr = initiationDate.toISOString().split("T")[0];
+    const baseRefMatch = existing.ref.match(/^(.+?)_\d{4}-\d{2}-\d{2}_COMPLETED_(\d+)$/);
+    let refToSave = existing.ref;
+
+    if (baseRefMatch) {
+      const baseRef = baseRefMatch[1];
+      const completedNumber = baseRefMatch[2];
+      refToSave = `${baseRef}_${dateStr}_COMPLETED_${completedNumber}`;
+    }
+
+    // 4. Update ref + the two date fields — everything else stays locked
     await prisma.risk.update({
       where: { id },
       data: {
+        ref: refToSave,
         initiationDate,
         reviewDate: reviewDate ?? null,
         stateUpdatedById: userId,
