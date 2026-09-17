@@ -32,6 +32,7 @@ const assessmentRowSchema = z.object({
 export const riskSchema = z.object({
   ref: z.string().min(1, "Ref is required"),
   workActivity: z.string().min(1, "Work activity is required"),
+  projectVoyage: z.string().min(1, "Project / Voyage is required"),
   initiator: z.string().min(1, "Initiator is required"),
   initiationDate: z.date().refine((date) => date !== undefined, {
     message: "Initiation date is required",

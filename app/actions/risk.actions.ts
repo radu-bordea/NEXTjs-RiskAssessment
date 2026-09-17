@@ -37,6 +37,7 @@ export async function createRisk(data: RiskFormValues) {
       data: {
         ref: values.ref,
         workActivity: values.workActivity,
+        projectVoyage: values.projectVoyage,
         initiator: values.initiator,
         initiationDate: values.initiationDate,
         reviewDate: values.reviewDate ?? null,
@@ -148,6 +149,7 @@ export async function updateTemplate(id: string, data: RiskFormValues) {
       data: {
         ref: values.ref!,
         workActivity: values.workActivity ?? "",
+        projectVoyage: values.projectVoyage ?? "",
         initiator: values.initiator!,
         initiationDate: values.initiationDate!,
         reviewDate: values.reviewDate ?? null,
@@ -248,6 +250,7 @@ export async function createDraftFromTemplate(templateId: string) {
         ref: draftRef,
         cloneOf: template.ref,
         workActivity: template.workActivity,
+        projectVoyage: template.projectVoyage,
         initiator: user.name ?? user.email,
         initiationDate: initiationDate, // ← now matches the ref's date
         reviewDate: template.reviewDate,
@@ -361,6 +364,7 @@ export async function submitDraft(id: string, data: RiskFormValues) {
       data: {
         ref: cleanRef,
         workActivity: values.workActivity,
+        projectVoyage: values.projectVoyage,
         initiationDate: values.initiationDate,
         reviewDate: values.reviewDate ?? null,
         initiatorComment: values.initiatorComment ?? null,
@@ -509,6 +513,7 @@ export async function updateRisk(id: string, data: RiskFormValues) {
       data: {
         ref: refToSave,
         workActivity: values.workActivity ?? "",
+        projectVoyage: values.projectVoyage ?? "",
         initiator: values.initiator!,
         initiationDate: values.initiationDate!,
         reviewDate: values.reviewDate ?? null,

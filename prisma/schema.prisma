@@ -36,6 +36,7 @@ model Risk {
   cloneOf String? // ref of the original if this was cloned
 
   workActivity     String // Work Activity Being Assessed
+  projectVoyage    String? // Project / Voyage name
   initiator        String // name of person who initiated
   initiationDate   DateTime
   reviewDate       DateTime?
@@ -119,7 +120,6 @@ model AdditionalMeasure {
   rfColor       RFColor? // manual color choice
   order         Int      @default(0)
 }
-
 
 enum Role {
   ADMIN
