@@ -208,7 +208,7 @@ export default function SafetyMeetingTable({
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-4">
           <input
             type="text"
-            placeholder="Project / Survey"
+            placeholder="Project / Voyage"
             value={filters.projectSurvey}
             onChange={(e) => set("projectSurvey", e.target.value)}
             className={inputClass}
@@ -245,7 +245,7 @@ export default function SafetyMeetingTable({
             <thead className="bg-red-300 dark:bg-red-700 border-b border-red-400">
               <tr>
                 {[
-                  "Project / Survey",
+                  "Project / Voyage",
                   "Vessel / Installation",
                   "Activity / Task",
                   "Toolbox Talk Leader",

@@ -228,7 +228,7 @@ export default function SafetyMeetingPDF({ meeting }: { meeting: any }) {
           <Text style={styles.sectionHeading}>Task & Project Information</Text>
           <View style={styles.grid}>
             {[
-              { label: "Project / Survey", value: meeting.projectSurvey },
+              { label: "Project / Voyage", value: meeting.projectSurvey },
               { label: "Contract No.", value: meeting.contractNo ?? "—" },
               {
                 label: "Vessel / Installation",

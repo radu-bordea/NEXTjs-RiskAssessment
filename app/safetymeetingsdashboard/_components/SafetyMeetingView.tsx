@@ -70,7 +70,7 @@ export default function SafetyMeetingView({ meeting }: SafetyMeetingViewProps) {
         <h2 className={sectionHeadingClass}>Task & Project Information</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-4">
           {[
-            { label: "Project / Survey", value: meeting.projectSurvey },
+            { label: "Project / Voyage", value: meeting.projectSurvey },
             { label: "Contract No.", value: meeting.contractNo ?? "—" },
             {
               label: "Vessel / Installation",

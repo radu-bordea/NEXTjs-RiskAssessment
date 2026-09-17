@@ -47,3 +47,6 @@
 
 # dark mode
 - npm install next-themes
+
+# remarks
+- for safety meetings Project Survey = Project Voyage

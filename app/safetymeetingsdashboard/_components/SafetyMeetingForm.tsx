@@ -303,7 +303,7 @@ export default function SafetyMeetingForm({ meeting, currentUser }: Props) {
 
   const onSubmit = async () => {
     if (!projectSurvey) {
-      toast.error("Project / Survey is required");
+      toast.error("Project / Voyage is required");
       return;
     }
     if (!vesselInstallation) {
@@ -477,11 +477,11 @@ const onSaveDraft = async () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className={labelClass}>Project / Survey *</label>
+              <label className={labelClass}>Project / Voyage *</label>
               <Input
                 value={projectSurvey}
                 onChange={(e) => setProjectSurvey(e.target.value)}
-                placeholder="e.g. North Sea Geophysical Survey"
+                placeholder="e.g. North Sea Geophysical Voyage 2026"
                 className={inputStyle}
               />
             </div>
