@@ -271,6 +271,7 @@ export default function RiskPDF({ risk }: { risk: any }) {
             <View style={styles.grid}>
               {[
                 { label: "Ref", value: risk.ref },
+                { label: "Project / Voyage", value: risk.projectVoyage ?? "—" },
                 { label: "Initiator", value: risk.initiator },
                 {
                   label: "Initiation Date",

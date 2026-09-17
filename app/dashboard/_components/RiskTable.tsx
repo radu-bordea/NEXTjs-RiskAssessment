@@ -85,6 +85,7 @@ export default function RiskTable({
    */
   const [filters, setFilters] = useState({
     ref: "",
+    projectVoyage: "",
     workActivity: "",
     initiator: "",
     vesselDepartment: "",
@@ -156,6 +157,13 @@ export default function RiskTable({
       )
         return false;
       if (
+        filters.projectVoyage &&
+        !r.projectVoyage
+          ?.toLowerCase()
+          .includes(filters.projectVoyage.toLowerCase())
+      )
+        return false;
+      if (
         filters.workActivity &&
         !r.workActivity
           .toLowerCase()
@@ -204,6 +212,7 @@ export default function RiskTable({
   const reset = () =>
     setFilters({
       ref: "",
+      projectVoyage: "",
       workActivity: "",
       initiator: "",
       vesselDepartment: "",
@@ -308,6 +317,13 @@ export default function RiskTable({
             placeholder="Ref"
             value={filters.ref}
             onChange={(e) => set("ref", e.target.value)}
+            className={inputClass}
+          />
+          <input
+            type="text"
+            placeholder="Project / Voyage"
+            value={filters.projectVoyage}
+            onChange={(e) => set("projectVoyage", e.target.value)}
             className={inputClass}
           />
           <input

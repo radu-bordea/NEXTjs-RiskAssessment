@@ -107,6 +107,7 @@ export default function RiskView({ risk }: RiskViewProps) {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-4">
           {[
             { label: "Ref", value: risk.ref },
+            { label: "Project / Voyage", value: risk.projectVoyage ?? "—" },
             { label: "Initiator", value: risk.initiator },
             {
               label: "Initiation Date",

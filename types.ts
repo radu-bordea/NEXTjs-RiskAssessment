@@ -31,6 +31,7 @@ export type Risk = {
   ref: string;
   cloneOf: string | null;
   workActivity: string;
+  projectVoyage: string | null;
   initiator: string;
   initiationDate: Date;
   reviewDate: Date | null;
