@@ -311,7 +311,7 @@ export default function RiskTable({
         </p>
 
         {/* Row 1 — text inputs + category + index */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-3">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
           <input
             type="text"
             placeholder="Ref"
@@ -341,7 +341,12 @@ export default function RiskTable({
             className={inputClass}
           />
 
-          {/* Category — selecting this resets the index filter */}
+
+        </div>
+
+        {/* Row 2 — dropdown filters */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+                    {/* Category — selecting this resets the index filter */}
           <select
             value={filters.libraryCategory}
             onChange={(e) => {
@@ -378,10 +383,6 @@ export default function RiskTable({
               </option>
             ))}
           </select>
-        </div>
-
-        {/* Row 2 — dropdown filters */}
-        <div className="grid grid-cols-2 md:grid-cols-6 gap-3 mb-4">
           <select
             value={filters.vesselDepartment}
             onChange={(e) => set("vesselDepartment", e.target.value)}
