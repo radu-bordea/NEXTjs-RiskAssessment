@@ -504,7 +504,7 @@ export default function RiskForm({ currentUser, risk }: Props) {
 
         {/* Project / Voyage — locked for COMPLETED */}
         <div className="mt-4">
-          <label className={labelClass}>Project / Voyage *</label>
+          <label className={labelClass}>Project / Voyage</label>
           <Input
             {...register("projectVoyage")}
             placeholder="e.g. North Sea Geophysical Survey"
@@ -515,9 +515,6 @@ export default function RiskForm({ currentUser, risk }: Props) {
                 : "border-[#A8D5B5] focus-visible:ring-[#1A7A4A]"
             }
           />
-          {errors.projectVoyage && (
-            <p className={errorClass}>{errors.projectVoyage.message}</p>
-          )}
         </div>
 
         {/* Work Activity — locked for COMPLETED */}

@@ -95,6 +95,8 @@ export default function RiskTable({
     libraryIndex: "",
     defectRelated: "",
     state: "",
+    dateFrom: "",
+    dateTo: "",
   });
 
   /** Track which template is currently being cloned — for loading state */
@@ -192,6 +194,16 @@ export default function RiskTable({
       if (filters.defectRelated === "yes" && !r.defectRelated) return false;
       if (filters.defectRelated === "no" && r.defectRelated) return false;
       if (filters.state && r.state !== filters.state) return false;
+      if (
+        filters.dateFrom &&
+        new Date(r.initiationDate) < new Date(filters.dateFrom)
+      )
+        return false;
+      if (
+        filters.dateTo &&
+        new Date(r.initiationDate) > new Date(filters.dateTo)
+      )
+        return false;
       return true;
     });
   }, [risks, filters]);
@@ -222,6 +234,8 @@ export default function RiskTable({
       libraryIndex: "",
       defectRelated: "",
       state: "",
+      dateFrom: "",
+      dateTo: "",
     });
 
   /**
@@ -304,150 +318,169 @@ export default function RiskTable({
         </div>
       </div>
 
-      {/* ── Filters Panel ─────────────────────────────────────────────────── */}
-      <div className="rounded-xl border border-[#A8D5B5] dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm p-5 mb-6">
-        <p className="text-xs font-semibold text-[#1A7A4A] dark:text-emerald-400 uppercase tracking-widest mb-4">
-          Filters
-        </p>
+{/* ── Filters Panel ─────────────────────────────────────────────── */}
+<div className="rounded-xl border border-[#A8D5B5] dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm p-5 mb-6">
+  <p className="text-xs font-semibold text-[#1A7A4A] dark:text-emerald-400 uppercase tracking-widest mb-4">
+    Filters
+  </p>
 
-        {/* Row 1 — text inputs + category + index */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
-          <input
-            type="text"
-            placeholder="Ref"
-            value={filters.ref}
-            onChange={(e) => set("ref", e.target.value)}
-            className={inputClass}
-          />
-          <input
-            type="text"
-            placeholder="Project / Voyage"
-            value={filters.projectVoyage}
-            onChange={(e) => set("projectVoyage", e.target.value)}
-            className={inputClass}
-          />
-          <input
-            type="text"
-            placeholder="Work Activity"
-            value={filters.workActivity}
-            onChange={(e) => set("workActivity", e.target.value)}
-            className={inputClass}
-          />
-          <input
-            type="text"
-            placeholder="Initiator"
-            value={filters.initiator}
-            onChange={(e) => set("initiator", e.target.value)}
-            className={inputClass}
-          />
+  {/* Row 1 — text inputs */}
+  <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-3">
+    <input
+      type="text"
+      placeholder="Ref"
+      value={filters.ref}
+      onChange={(e) => set("ref", e.target.value)}
+      className={inputClass}
+    />
+    <input
+      type="text"
+      placeholder="Project / Voyage"
+      value={filters.projectVoyage}
+      onChange={(e) => set("projectVoyage", e.target.value)}
+      className={inputClass}
+    />
+    <input
+      type="text"
+      placeholder="Work Activity"
+      value={filters.workActivity}
+      onChange={(e) => set("workActivity", e.target.value)}
+      className={inputClass}
+    />
+    <input
+      type="text"
+      placeholder="Initiator"
+      value={filters.initiator}
+      onChange={(e) => set("initiator", e.target.value)}
+      className={inputClass}
+    />
+    <select
+      value={filters.state}
+      onChange={(e) => set("state", e.target.value)}
+      className={selectClass}
+    >
+      <option value="">All States</option>
+      <option value="TEMPLATE">Template</option>
+      <option value="DRAFT">Draft</option>
+      <option value="COMPLETED">Completed</option>
+    </select>
+  </div>
 
+  {/* Row 2 — dropdown filters */}
+  <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-3">
+    <select
+      value={filters.libraryCategory}
+      onChange={(e) => {
+        set("libraryCategory", e.target.value);
+        set("libraryIndex", "");
+      }}
+      className={selectClass}
+    >
+      <option value="">Category Index</option>
+      {CATEGORIES.map((cat) => (
+        <option key={cat} value={cat}>
+          {cat}
+        </option>
+      ))}
+    </select>
+    <select
+      value={filters.libraryIndex}
+      onChange={(e) => set("libraryIndex", e.target.value)}
+      className={selectClass}
+      disabled={availableIndexes.length === 0}
+    >
+      <option value="">
+        {filters.libraryCategory
+          ? availableIndexes.length === 0
+            ? "No indexes found"
+            : `Index (${filters.libraryCategory})`
+          : "Library Index"}
+      </option>
+      {availableIndexes.map((idx) => (
+        <option key={idx} value={idx}>
+          {idx}
+        </option>
+      ))}
+    </select>
+    <select
+      value={filters.vesselDepartment}
+      onChange={(e) => set("vesselDepartment", e.target.value)}
+      className={selectClass}
+    >
+      <option value="">Vessel/Dept</option>
+      {vessels.map((v) => (
+        <option key={v!} value={v!}>
+          {v}
+        </option>
+      ))}
+    </select>
+    <select
+      value={filters.fleet}
+      onChange={(e) => set("fleet", e.target.value)}
+      className={selectClass}
+    >
+      <option value="">Fleet</option>
+      {fleets.map((f) => (
+        <option key={f!} value={f!}>
+          {f}
+        </option>
+      ))}
+    </select>
+    <select
+      value={filters.raType}
+      onChange={(e) => set("raType", e.target.value)}
+      className={selectClass}
+    >
+      <option value="">RA Type</option>
+      <option value="ROUTINE">Routine</option>
+      <option value="NON_ROUTINE">Non Routine</option>
+    </select>
+  </div>
 
-        </div>
+  {/* Row 3 — defect + date range, compact */}
+  <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4">
+    <select
+      value={filters.defectRelated}
+      onChange={(e) => set("defectRelated", e.target.value)}
+      className={selectClass}
+    >
+      <option value="">Defect Related</option>
+      <option value="yes">Yes</option>
+      <option value="no">No</option>
+    </select>
 
-        {/* Row 2 — dropdown filters */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-                    {/* Category — selecting this resets the index filter */}
-          <select
-            value={filters.libraryCategory}
-            onChange={(e) => {
-              set("libraryCategory", e.target.value);
-              set("libraryIndex", "");
-            }}
-            className={selectClass}
-          >
-            <option value="">Category Index</option>
-            {CATEGORIES.map((cat) => (
-              <option key={cat} value={cat}>
-                {cat}
-              </option>
-            ))}
-          </select>
+    <div>
+      <label className="block text-[10px] font-medium text-[#1A7A4A] dark:text-emerald-400 mb-1">
+        Initiation From
+      </label>
+      <input
+        type="date"
+        value={filters.dateFrom}
+        onChange={(e) => set("dateFrom", e.target.value)}
+        className={`${inputClass} w-full`}
+      />
+    </div>
 
-          {/* Library Index — dynamically filtered by selected category */}
-          <select
-            value={filters.libraryIndex}
-            onChange={(e) => set("libraryIndex", e.target.value)}
-            className={selectClass}
-            disabled={availableIndexes.length === 0}
-          >
-            <option value="">
-              {filters.libraryCategory
-                ? availableIndexes.length === 0
-                  ? "No indexes found"
-                  : `Index (${filters.libraryCategory})`
-                : "Library Index"}
-            </option>
-            {availableIndexes.map((idx) => (
-              <option key={idx} value={idx}>
-                {idx}
-              </option>
-            ))}
-          </select>
-          <select
-            value={filters.vesselDepartment}
-            onChange={(e) => set("vesselDepartment", e.target.value)}
-            className={selectClass}
-          >
-            <option value="">Vessel/Dept</option>
-            {vessels.map((v) => (
-              <option key={v!} value={v!}>
-                {v}
-              </option>
-            ))}
-          </select>
+    <div>
+      <label className="block text-[10px] font-medium text-[#1A7A4A] dark:text-emerald-400 mb-1">
+        Initiation To
+      </label>
+      <input
+        type="date"
+        value={filters.dateTo}
+        onChange={(e) => set("dateTo", e.target.value)}
+        className={`${inputClass} w-full`}
+      />
+    </div>
+  </div>
 
-          <select
-            value={filters.fleet}
-            onChange={(e) => set("fleet", e.target.value)}
-            className={selectClass}
-          >
-            <option value="">Fleet</option>
-            {fleets.map((f) => (
-              <option key={f!} value={f!}>
-                {f}
-              </option>
-            ))}
-          </select>
-
-          <select
-            value={filters.raType}
-            onChange={(e) => set("raType", e.target.value)}
-            className={selectClass}
-          >
-            <option value="">RA Type</option>
-            <option value="ROUTINE">Routine</option>
-            <option value="NON_ROUTINE">Non Routine</option>
-          </select>
-
-          <select
-            value={filters.defectRelated}
-            onChange={(e) => set("defectRelated", e.target.value)}
-            className={selectClass}
-          >
-            <option value="">Defect Related</option>
-            <option value="yes">Yes</option>
-            <option value="no">No</option>
-          </select>
-
-          <select
-            value={filters.state}
-            onChange={(e) => set("state", e.target.value)}
-            className={selectClass}
-          >
-            <option value="">All States</option>
-            <option value="TEMPLATE">Template</option>
-            <option value="DRAFT">Draft</option>
-            <option value="COMPLETED">Completed</option>
-          </select>
-        </div>
-
-        <button
-          onClick={reset}
-          className="text-xs px-4 py-2 rounded-lg border border-[#A8D5B5] dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:bg-[#EEF5F0] dark:hover:bg-slate-800 transition-colors"
-        >
-          Reset filters
-        </button>
-      </div>
+  <button
+    onClick={reset}
+    className="text-xs px-4 py-2 rounded-lg border border-[#A8D5B5] dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:bg-[#EEF5F0] dark:hover:bg-slate-800 transition-colors"
+  >
+    Reset filters
+  </button>
+</div>
 
       {/* ── Risk Table ────────────────────────────────────────────────────── */}
       <div className="rounded-xl overflow-hidden border border-[#A8D5B5] dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
