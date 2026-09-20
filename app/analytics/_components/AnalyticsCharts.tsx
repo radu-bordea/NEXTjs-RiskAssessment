@@ -3,8 +3,9 @@
 /**
  * AnalyticsCharts — client component for the Project Analytics page
  *
- * Recharts requires "use client" — this component receives pre-fetched
- * real data as props from the server component and renders the visuals.
+ * Recharts requires "use client" — this component receives pre-fetched,
+ * pre-filtered real data as props from the server component and
+ * renders the visuals plus a combined data table.
  */
 
 import {
@@ -34,6 +35,7 @@ type MonthlyTrendDatum = {
   workPermits: number;
 };
 
+
 type Props = {
   riskTotal: number;
   observationTotal: number;
@@ -46,9 +48,9 @@ type Props = {
 
 /** Colors for risk state pie chart — matches your state badge colors */
 const RISK_STATE_COLORS: Record<string, string> = {
-  TEMPLATE: "#3b82f6", // blue
-  DRAFT: "#f59e0b", // amber
-  COMPLETED: "#22c55e", // green
+  TEMPLATE: "#3b82f6",
+  DRAFT: "#f59e0b",
+  COMPLETED: "#22c55e",
 };
 
 /** Colors for the observation type pie chart — cycles through if more types exist */
@@ -62,6 +64,7 @@ const PIE_COLORS = [
   "#06b6d4",
   "#84cc16",
 ];
+
 
 export default function AnalyticsCharts({
   riskTotal,
@@ -323,6 +326,210 @@ export default function AnalyticsCharts({
             />
           </LineChart>
         </ResponsiveContainer>
+      </div>
+
+      {/* ── Data Summary Table — mirrors the charts above ─────────────────── */}
+      <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm p-5">
+        <p className="text-sm font-bold text-slate-700 dark:text-white mb-4">
+          Data Summary
+        </p>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Totals by Module */}
+          <div>
+            <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-2">
+              Totals by Module
+            </p>
+            <table className="w-full text-sm border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden">
+              <tbody>
+                <tr className="bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800">
+                  <td className="py-2 px-3 text-slate-600 dark:text-slate-300">
+                    Risk Assessments
+                  </td>
+                  <td className="py-2 px-3 text-right font-bold text-slate-800 dark:text-white">
+                    {riskTotal}
+                  </td>
+                </tr>
+                <tr className="bg-slate-50/50 dark:bg-slate-900/50 border-b border-slate-100 dark:border-slate-800">
+                  <td className="py-2 px-3 text-slate-600 dark:text-slate-300">
+                    Observation Cards
+                  </td>
+                  <td className="py-2 px-3 text-right font-bold text-slate-800 dark:text-white">
+                    {observationTotal}
+                  </td>
+                </tr>
+                <tr className="bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800">
+                  <td className="py-2 px-3 text-slate-600 dark:text-slate-300">
+                    Safety Meetings
+                  </td>
+                  <td className="py-2 px-3 text-right font-bold text-slate-800 dark:text-white">
+                    {safetyMeetingTotal}
+                  </td>
+                </tr>
+                <tr className="bg-slate-50/50 dark:bg-slate-900/50">
+                  <td className="py-2 px-3 text-slate-600 dark:text-slate-300">
+                    Toolbox Talk Cards
+                  </td>
+                  <td className="py-2 px-3 text-right font-bold text-slate-800 dark:text-white">
+                    {toolboxCardTotal}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          {/* Risk Assessment by State */}
+          <div>
+            <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-2">
+              Risk Assessments by State
+            </p>
+            <table className="w-full text-sm border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden">
+              <tbody>
+                {riskStateData.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan={2}
+                      className="py-3 px-3 text-center text-slate-400 text-xs"
+                    >
+                      No data
+                    </td>
+                  </tr>
+                ) : (
+                  riskStateData.map((entry, index) => (
+                    <tr
+                      key={entry.name}
+                      className={`${index % 2 === 0 ? "bg-white dark:bg-slate-900" : "bg-slate-50/50 dark:bg-slate-900/50"} ${index !== riskStateData.length - 1 ? "border-b border-slate-100 dark:border-slate-800" : ""}`}
+                    >
+                      <td className="py-2 px-3 text-slate-600 dark:text-slate-300 flex items-center gap-2">
+                        <span
+                          className="w-2 h-2 rounded-full"
+                          style={{
+                            background:
+                              RISK_STATE_COLORS[entry.name] ?? "#94a3b8",
+                          }}
+                        />
+                        {entry.name}
+                      </td>
+                      <td className="py-2 px-3 text-right font-bold text-slate-800 dark:text-white">
+                        {entry.value}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Observation Cards by Type */}
+          <div>
+            <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-2">
+              Observation Cards by Type
+            </p>
+            <table className="w-full text-sm border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden">
+              <tbody>
+                {observationTypeData.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan={2}
+                      className="py-3 px-3 text-center text-slate-400 text-xs"
+                    >
+                      No data
+                    </td>
+                  </tr>
+                ) : (
+                  observationTypeData.map((entry, index) => (
+                    <tr
+                      key={entry.name}
+                      className={`${index % 2 === 0 ? "bg-white dark:bg-slate-900" : "bg-slate-50/50 dark:bg-slate-900/50"} ${index !== observationTypeData.length - 1 ? "border-b border-slate-100 dark:border-slate-800" : ""}`}
+                    >
+                      <td className="py-2 px-3 text-slate-600 dark:text-slate-300 flex items-center gap-2">
+                        <span
+                          className="w-2 h-2 rounded-full"
+                          style={{
+                            background: PIE_COLORS[index % PIE_COLORS.length],
+                          }}
+                        />
+                        {entry.name}
+                      </td>
+                      <td className="py-2 px-3 text-right font-bold text-slate-800 dark:text-white">
+                        {entry.value}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+
+{/* Safety Meetings Overview */}
+<div>
+  <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-2">
+    Safety Meetings Overview
+  </p>
+  <table className="w-full text-sm border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden">
+    <tbody>
+      <tr className="bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800">
+        <td className="py-2 px-3 text-slate-600 dark:text-slate-300">Safety Meetings</td>
+        <td className="py-2 px-3 text-right font-bold text-slate-800 dark:text-white">{safetyMeetingTotal}</td>
+      </tr>
+      <tr className="bg-slate-50/50 dark:bg-slate-900/50">
+        <td className="py-2 px-3 text-slate-600 dark:text-slate-300">Toolbox Talk Cards</td>
+        <td className="py-2 px-3 text-right font-bold text-slate-800 dark:text-white">{toolboxCardTotal}</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+          {/* Monthly Trend — matches line chart exactly */}
+          <div>
+            <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-2">
+              Monthly Trend (Last 6 Months)
+            </p>
+            <table className="w-full text-sm border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden">
+              <thead>
+                <tr className="bg-slate-100 dark:bg-slate-800">
+                  <th className="py-2 px-3 text-left text-xs font-semibold text-slate-600 dark:text-slate-300">
+                    Month
+                  </th>
+                  <th className="py-2 px-3 text-right text-xs font-semibold text-slate-600 dark:text-slate-300">
+                    Risk
+                  </th>
+                  <th className="py-2 px-3 text-right text-xs font-semibold text-slate-600 dark:text-slate-300">
+                    Obs.
+                  </th>
+<th className="py-2 px-3 text-right text-xs font-semibold text-slate-600 dark:text-slate-300">Safety Mtgs</th>
+                  <th className="py-2 px-3 text-right text-xs font-semibold text-slate-600 dark:text-slate-300">
+                    Permits
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {monthlyTrendData.map((m, index) => (
+                  <tr
+                    key={m.month}
+                    className={`${index % 2 === 0 ? "bg-white dark:bg-slate-900" : "bg-slate-50/50 dark:bg-slate-900/50"} ${index !== monthlyTrendData.length - 1 ? "border-b border-slate-100 dark:border-slate-800" : ""}`}
+                  >
+                    <td className="py-2 px-3 text-slate-600 dark:text-slate-300">
+                      {m.month}
+                    </td>
+                    <td className="py-2 px-3 text-right text-slate-700 dark:text-slate-200">
+                      {m.riskAssessments}
+                    </td>
+                    <td className="py-2 px-3 text-right text-slate-700 dark:text-slate-200">
+                      {m.observationCards}
+                    </td>
+                    <td className="py-2 px-3 text-right text-slate-700 dark:text-slate-200">
+                      {m.toolboxTalks}
+                    </td>
+                    <td className="py-2 px-3 text-right text-slate-700 dark:text-slate-200">
+                      {m.workPermits}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
     </div>
   );
