@@ -5,7 +5,9 @@
  *
  * Recharts requires "use client" — this component receives pre-fetched,
  * pre-filtered real data as props from the server component and
- * renders the visuals plus a combined data table.
+ * renders the visuals plus a data summary table.
+ *
+ * Toolbox Talk Cards library is intentionally NOT shown on this page.
  */
 
 import {
@@ -31,24 +33,36 @@ type MonthlyTrendDatum = {
   month: string;
   riskAssessments: number;
   observationCards: number;
-  toolboxTalks: number;
+  safetyMeetings: number;
   workPermits: number;
 };
-
 
 type Props = {
   riskTotal: number;
   observationTotal: number;
   safetyMeetingTotal: number;
-  toolboxCardTotal: number;
   riskStateData: ChartDatum[];
   observationTypeData: ChartDatum[];
+  observationStateData: ChartDatum[];
+  safetyMeetingStateData: ChartDatum[];
   monthlyTrendData: MonthlyTrendDatum[];
 };
 
-/** Colors for risk state pie chart — matches your state badge colors */
+/** Colors for risk state pie chart — matches state badge colors */
 const RISK_STATE_COLORS: Record<string, string> = {
   TEMPLATE: "#3b82f6",
+  DRAFT: "#f59e0b",
+  COMPLETED: "#22c55e",
+};
+
+/** Colors for Observation state pie chart — matches DRAFT/COMPLETED */
+const OBSERVATION_STATE_COLORS: Record<string, string> = {
+  DRAFT: "#f59e0b",
+  COMPLETED: "#22c55e",
+};
+
+/** Colors for Safety Meeting state pie chart — matches DRAFT/COMPLETED */
+const SAFETY_MEETING_STATE_COLORS: Record<string, string> = {
   DRAFT: "#f59e0b",
   COMPLETED: "#22c55e",
 };
@@ -65,14 +79,14 @@ const PIE_COLORS = [
   "#84cc16",
 ];
 
-
 export default function AnalyticsCharts({
   riskTotal,
   observationTotal,
   safetyMeetingTotal,
-  toolboxCardTotal,
   riskStateData,
   observationTypeData,
+  observationStateData,
+  safetyMeetingStateData,
   monthlyTrendData,
 }: Props) {
   return (
@@ -124,7 +138,7 @@ export default function AnalyticsCharts({
                 </ResponsiveContainer>
               </div>
 
-              <div className="space-y-1 mt-2">
+              <div className="space-y-1 mt-44">
                 {riskStateData.map((entry) => (
                   <div
                     key={entry.name}
@@ -150,7 +164,7 @@ export default function AnalyticsCharts({
           )}
         </div>
 
-        {/* Observation Card total + type pie chart */}
+        {/* Observation Card total + type pie chart + state pie chart */}
         <div className="rounded-xl border border-amber-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm p-5 h-full flex flex-col">
           <div className="w-9 h-9 rounded-lg bg-amber-50 dark:bg-slate-800 flex items-center justify-center text-lg mb-3">
             👁
@@ -164,23 +178,24 @@ export default function AnalyticsCharts({
               {observationTotal}
             </p>
           </div>
-          <p className="text-xs text-slate-400 mb-2">by Type</p>
 
+          {/* By Type */}
+          <p className="text-xs text-slate-400 mb-2">by Type</p>
           {observationTypeData.length === 0 ? (
             <p className="text-xs text-slate-400 text-center py-4">
               No data yet.
             </p>
           ) : (
             <>
-              <div className="w-full h-44">
+              <div className="w-full h-32">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
                       data={observationTypeData}
                       dataKey="value"
                       nameKey="name"
-                      innerRadius={45}
-                      outerRadius={75}
+                      innerRadius={30}
+                      outerRadius={55}
                       paddingAngle={2}
                     >
                       {observationTypeData.map((entry, index) => (
@@ -194,8 +209,7 @@ export default function AnalyticsCharts({
                   </PieChart>
                 </ResponsiveContainer>
               </div>
-
-              <div className="space-y-1 mt-2">
+              <div className="space-y-1 mt-1 mb-3">
                 {observationTypeData.map((entry, index) => (
                   <div
                     key={entry.name}
@@ -218,51 +232,140 @@ export default function AnalyticsCharts({
               </div>
             </>
           )}
+
+
+          {/* By State */}
+          <div className="pt-3 border-t border-amber-200 dark:border-slate-700">
+            <p className="text-xs text-slate-400 mb-2">by State</p>
+            {observationStateData.length === 0 ? (
+              <p className="text-xs text-slate-400 text-center py-4">
+                No data yet.
+              </p>
+            ) : (
+              <>
+                <div className="w-full h-32">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={observationStateData}
+                        dataKey="value"
+                        nameKey="name"
+                        innerRadius={30}
+                        outerRadius={55}
+                        paddingAngle={2}
+                      >
+                        {observationStateData.map((entry) => (
+                          <Cell
+                            key={entry.name}
+                            fill={
+                              OBSERVATION_STATE_COLORS[entry.name] ?? "#94a3b8"
+                            }
+                          />
+                        ))}
+                      </Pie>
+                      <Tooltip />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+                <div className="space-y-1 mt-1">
+                  {observationStateData.map((entry) => (
+                    <div
+                      key={entry.name}
+                      className="flex items-center justify-between text-xs"
+                    >
+                      <span className="flex items-center gap-1.5 text-slate-600 dark:text-slate-300 truncate">
+                        <span
+                          className="w-2 h-2 rounded-full shrink-0"
+                          style={{
+                            background:
+                              OBSERVATION_STATE_COLORS[entry.name] ?? "#94a3b8",
+                          }}
+                        />
+                        <span className="truncate">{entry.name}</span>
+                      </span>
+                      <span className="font-medium text-slate-700 dark:text-slate-200 shrink-0 ml-2">
+                        {entry.value}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
         </div>
 
-        {/* Safety Meetings + Toolbox Talk Cards — table style */}
+        {/* Safety Meetings total + state pie chart */}
         <div className="rounded-xl border border-red-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm p-5 h-full flex flex-col">
           <div className="w-9 h-9 rounded-lg bg-red-50 dark:bg-slate-800 flex items-center justify-center text-lg mb-3">
             📋
           </div>
-          <p className="text-xs uppercase tracking-wide text-slate-400 font-medium mb-3">
-            Safety Meetings Overview
-          </p>
 
-          <table className="w-full text-sm border border-red-200 dark:border-slate-800 rounded-lg overflow-hidden">
-            <thead>
-              <tr className="bg-red-400 dark:bg-red-700">
-                <th className="py-2 px-3 text-left text-xs font-semibold text-white uppercase tracking-wide">
-                  Category
-                </th>
-                <th className="py-2 px-3 text-right text-xs font-semibold text-white uppercase tracking-wide">
-                  Total
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr className="bg-white dark:bg-slate-900">
-                <td className="py-2.5 px-3 text-slate-700 dark:text-slate-300 border-b border-r border-red-100 dark:border-slate-800">
-                  Safety Meetings
-                </td>
-                <td className="py-2.5 px-3 text-right border-b border-red-100 dark:border-slate-800">
-                  <span className="inline-block px-2.5 py-0.5 rounded-md bg-red-100 dark:bg-red-900/30 font-extrabold text-lg text-red-800 dark:text-red-300">
-                    {safetyMeetingTotal}
-                  </span>
-                </td>
-              </tr>
-              <tr className="bg-red-50/50 dark:bg-slate-900/50">
-                <td className="py-2.5 px-3 text-slate-700 dark:text-slate-300 border-r border-red-100 dark:border-slate-800">
-                  Toolbox Talk Cards
-                </td>
-                <td className="py-2.5 px-3 text-right">
-                  <span className="inline-block px-2.5 py-0.5 rounded-md bg-red-100 dark:bg-red-900/30 font-extrabold text-lg text-red-800 dark:text-red-300">
-                    {toolboxCardTotal}
-                  </span>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+          <div className="flex items-baseline justify-between mb-2">
+            <p className="text-xs uppercase tracking-wide text-slate-400 font-medium">
+              Safety Meetings
+            </p>
+            <p className="text-2xl font-extrabold text-slate-800 dark:text-white">
+              {safetyMeetingTotal}
+            </p>
+          </div>
+          <p className="text-xs text-slate-400 mb-2">by State</p>
+
+          {safetyMeetingStateData.length === 0 ? (
+            <p className="text-xs text-slate-400 text-center py-4">
+              No data yet.
+            </p>
+          ) : (
+            <>
+              <div className="w-full h-44">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={safetyMeetingStateData}
+                      dataKey="value"
+                      nameKey="name"
+                      innerRadius={45}
+                      outerRadius={75}
+                      paddingAngle={2}
+                    >
+                      {safetyMeetingStateData.map((entry) => (
+                        <Cell
+                          key={entry.name}
+                          fill={
+                            SAFETY_MEETING_STATE_COLORS[entry.name] ?? "#94a3b8"
+                          }
+                        />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+
+              <div className="space-y-1 mt-48">
+                {safetyMeetingStateData.map((entry) => (
+                  <div
+                    key={entry.name}
+                    className="flex items-center justify-between text-xs"
+                  >
+                    <span className="flex items-center gap-1.5 text-slate-600 dark:text-slate-300 truncate">
+                      <span
+                        className="w-2 h-2 rounded-full shrink-0"
+                        style={{
+                          background:
+                            SAFETY_MEETING_STATE_COLORS[entry.name] ??
+                            "#94a3b8",
+                        }}
+                      />
+                      <span className="truncate">{entry.name}</span>
+                    </span>
+                    <span className="font-medium text-slate-700 dark:text-slate-200 shrink-0 ml-2">
+                      {entry.value}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
         </div>
 
         {/* Work Permit Portal — placeholder, module not built yet */}
@@ -310,9 +413,9 @@ export default function AnalyticsCharts({
             />
             <Line
               type="monotone"
-              dataKey="toolboxTalks"
-              name="Toolbox Talks"
-              stroke="#22c55e"
+              dataKey="safetyMeetings"
+              name="Safety Meetings"
+              stroke="#ef4444"
               strokeWidth={2}
               dot={{ r: 3 }}
             />
@@ -358,20 +461,12 @@ export default function AnalyticsCharts({
                     {observationTotal}
                   </td>
                 </tr>
-                <tr className="bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800">
+                <tr className="bg-white dark:bg-slate-900">
                   <td className="py-2 px-3 text-slate-600 dark:text-slate-300">
                     Safety Meetings
                   </td>
                   <td className="py-2 px-3 text-right font-bold text-slate-800 dark:text-white">
                     {safetyMeetingTotal}
-                  </td>
-                </tr>
-                <tr className="bg-slate-50/50 dark:bg-slate-900/50">
-                  <td className="py-2 px-3 text-slate-600 dark:text-slate-300">
-                    Toolbox Talk Cards
-                  </td>
-                  <td className="py-2 px-3 text-right font-bold text-slate-800 dark:text-white">
-                    {toolboxCardTotal}
                   </td>
                 </tr>
               </tbody>
@@ -461,27 +556,93 @@ export default function AnalyticsCharts({
             </table>
           </div>
 
-{/* Safety Meetings Overview */}
-<div>
-  <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-2">
-    Safety Meetings Overview
-  </p>
-  <table className="w-full text-sm border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden">
-    <tbody>
-      <tr className="bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800">
-        <td className="py-2 px-3 text-slate-600 dark:text-slate-300">Safety Meetings</td>
-        <td className="py-2 px-3 text-right font-bold text-slate-800 dark:text-white">{safetyMeetingTotal}</td>
-      </tr>
-      <tr className="bg-slate-50/50 dark:bg-slate-900/50">
-        <td className="py-2 px-3 text-slate-600 dark:text-slate-300">Toolbox Talk Cards</td>
-        <td className="py-2 px-3 text-right font-bold text-slate-800 dark:text-white">{toolboxCardTotal}</td>
-      </tr>
-    </tbody>
-  </table>
-</div>
+          {/* Observation Cards by State */}
+          <div>
+            <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-2">
+              Observation Cards by State
+            </p>
+            <table className="w-full text-sm border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden">
+              <tbody>
+                {observationStateData.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan={2}
+                      className="py-3 px-3 text-center text-slate-400 text-xs"
+                    >
+                      No data
+                    </td>
+                  </tr>
+                ) : (
+                  observationStateData.map((entry, index) => (
+                    <tr
+                      key={entry.name}
+                      className={`${index % 2 === 0 ? "bg-white dark:bg-slate-900" : "bg-slate-50/50 dark:bg-slate-900/50"} ${index !== observationStateData.length - 1 ? "border-b border-slate-100 dark:border-slate-800" : ""}`}
+                    >
+                      <td className="py-2 px-3 text-slate-600 dark:text-slate-300 flex items-center gap-2">
+                        <span
+                          className="w-2 h-2 rounded-full"
+                          style={{
+                            background:
+                              OBSERVATION_STATE_COLORS[entry.name] ?? "#94a3b8",
+                          }}
+                        />
+                        {entry.name}
+                      </td>
+                      <td className="py-2 px-3 text-right font-bold text-slate-800 dark:text-white">
+                        {entry.value}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Safety Meetings by State */}
+          <div>
+            <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-2">
+              Safety Meetings by State
+            </p>
+            <table className="w-full text-sm border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden">
+              <tbody>
+                {safetyMeetingStateData.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan={2}
+                      className="py-3 px-3 text-center text-slate-400 text-xs"
+                    >
+                      No data
+                    </td>
+                  </tr>
+                ) : (
+                  safetyMeetingStateData.map((entry, index) => (
+                    <tr
+                      key={entry.name}
+                      className={`${index % 2 === 0 ? "bg-white dark:bg-slate-900" : "bg-slate-50/50 dark:bg-slate-900/50"} ${index !== safetyMeetingStateData.length - 1 ? "border-b border-slate-100 dark:border-slate-800" : ""}`}
+                    >
+                      <td className="py-2 px-3 text-slate-600 dark:text-slate-300 flex items-center gap-2">
+                        <span
+                          className="w-2 h-2 rounded-full"
+                          style={{
+                            background:
+                              SAFETY_MEETING_STATE_COLORS[entry.name] ??
+                              "#94a3b8",
+                          }}
+                        />
+                        {entry.name}
+                      </td>
+                      <td className="py-2 px-3 text-right font-bold text-slate-800 dark:text-white">
+                        {entry.value}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
 
           {/* Monthly Trend — matches line chart exactly */}
-          <div>
+          <div className="md:col-span-2">
             <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-2">
               Monthly Trend (Last 6 Months)
             </p>
@@ -497,7 +658,9 @@ export default function AnalyticsCharts({
                   <th className="py-2 px-3 text-right text-xs font-semibold text-slate-600 dark:text-slate-300">
                     Obs.
                   </th>
-<th className="py-2 px-3 text-right text-xs font-semibold text-slate-600 dark:text-slate-300">Safety Mtgs</th>
+                  <th className="py-2 px-3 text-right text-xs font-semibold text-slate-600 dark:text-slate-300">
+                    Safety Mtgs
+                  </th>
                   <th className="py-2 px-3 text-right text-xs font-semibold text-slate-600 dark:text-slate-300">
                     Permits
                   </th>
@@ -519,7 +682,7 @@ export default function AnalyticsCharts({
                       {m.observationCards}
                     </td>
                     <td className="py-2 px-3 text-right text-slate-700 dark:text-slate-200">
-                      {m.toolboxTalks}
+                      {m.safetyMeetings}
                     </td>
                     <td className="py-2 px-3 text-right text-slate-700 dark:text-slate-200">
                       {m.workPermits}

@@ -46,14 +46,14 @@ export default function AnalyticsFilters({ dateFrom, dateTo, project }: Props) {
 
   return (
     <div className="rounded-xl border border-emerald-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm p-5 mb-6">
-      <p className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 uppercase tracking-widest mb-4">
+      <p className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 uppercase tracking-widest ">
         Filters
       </p>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 mb-4">
 
         {/* Project / Voyage search — free text, applies to Risk + Safety Meeting */}
-        <div className="md:col-span-2">
+        <div className="md:col-span-2 mt-5">
           <input
             type="text"
             placeholder="Search Project / Voyage..."
