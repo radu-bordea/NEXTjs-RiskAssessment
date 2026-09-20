@@ -111,9 +111,10 @@ export default async function ProjectAnalyticsPage({
   filteredRisks.forEach((r) => {
     riskStateCounts[r.state] = (riskStateCounts[r.state] ?? 0) + 1;
   });
-  const riskStateData = Object.entries(riskStateCounts).map(
-    ([name, value]) => ({ name, value }),
-  );
+
+  const riskStateData = ["COMPLETED", "DRAFT", "TEMPLATE"]
+    .filter((state) => riskStateCounts[state] !== undefined)
+    .map((state) => ({ name: state, value: riskStateCounts[state] }));
 
   // ─── Observation Type breakdown — for pie chart ───────────────────
   const observationTypeCounts: Record<string, number> = {};
@@ -131,9 +132,11 @@ export default async function ProjectAnalyticsPage({
     observationStateCounts[o.state] =
       (observationStateCounts[o.state] ?? 0) + 1;
   });
-  const observationStateData = Object.entries(observationStateCounts).map(
-    ([name, value]) => ({ name, value }),
-  );
+
+  // Force consistent order: COMPLETED first, then DRAFT
+  const observationStateData = ["COMPLETED", "DRAFT"]
+    .filter((state) => observationStateCounts[state] !== undefined)
+    .map((state) => ({ name: state, value: observationStateCounts[state] }));
 
   // ─── Safety Meeting state breakdown — for pie chart ────────────────
   const safetyMeetingStateCounts: Record<string, number> = {};
@@ -141,9 +144,10 @@ export default async function ProjectAnalyticsPage({
     safetyMeetingStateCounts[s.state] =
       (safetyMeetingStateCounts[s.state] ?? 0) + 1;
   });
-  const safetyMeetingStateData = Object.entries(safetyMeetingStateCounts).map(
-    ([name, value]) => ({ name, value }),
-  );
+
+  const safetyMeetingStateData = ["COMPLETED", "DRAFT"]
+    .filter((state) => safetyMeetingStateCounts[state] !== undefined)
+    .map((state) => ({ name: state, value: safetyMeetingStateCounts[state] }));
 
   // ─── Monthly trend — last 6 months, respects filters ──────────────
   const now = new Date();
