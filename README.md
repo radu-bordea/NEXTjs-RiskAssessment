@@ -11,6 +11,8 @@
 - vercel env pull
 - npx tsx scripts/upload-manual.ts
 - npm install -D dotenv
+- npm install html2canvas jspdf
+- npm install html2canvas-pro
 
 
 

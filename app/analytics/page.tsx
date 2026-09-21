@@ -4,6 +4,7 @@ import prisma from "@/lib/prisma";
 import Link from "next/link";
 import AnalyticsCharts from "./_components/AnalyticsCharts";
 import AnalyticsFilters from "./_components/AnalyticsFilters";
+import DownloadPdfButton from "./_components/DownloadPdfButton";
 
 /**
  * ProjectAnalyticsPage — /analytics
@@ -196,12 +197,15 @@ export default async function ProjectAnalyticsPage({
               Safety Meetings.
             </p>
           </div>
-          <Link
-            href="/"
-            className="text-xs px-3 py-1.5 rounded-lg border border-emerald-200 hover:bg-emerald-50 dark:hover:bg-slate-800 transition-colors font-medium"
-          >
-            ← Home
-          </Link>
+          <div className="flex items-center gap-2">
+            <DownloadPdfButton targetId="analytics-content" />
+            <Link
+              href="/"
+              className="text-xs px-3 py-1.5 rounded-lg border border-emerald-200 hover:bg-emerald-50 dark:hover:bg-slate-800 transition-colors font-medium"
+            >
+              ← Home
+            </Link>
+          </div>
         </div>
 
         {/* ── Filters — date range + project/voyage search ─────────────── */}
@@ -212,16 +216,32 @@ export default async function ProjectAnalyticsPage({
         />
 
         {/* ── Charts + Cards ─────────────────────────────────────────── */}
-        <AnalyticsCharts
-          riskTotal={riskTotal}
-          observationTotal={observationTotal}
-          safetyMeetingTotal={safetyMeetingTotal}
-          riskStateData={riskStateData}
-          observationTypeData={observationTypeData}
-          observationStateData={observationStateData}
-          safetyMeetingStateData={safetyMeetingStateData}
-          monthlyTrendData={monthlyTrendData}
-        />
+        <div id="analytics-content" className="p-6 bg-white dark:bg-slate-950">
+          <div className="mb-6 pb-4 border-b border-slate-200 dark:border-slate-800">
+            <h2 className="text-xl font-extrabold text-slate-800 dark:text-white">
+              QHSE - Project Analytics
+            </h2>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+              Generated:{" "}
+              {new Date().toLocaleDateString("en-GB", {
+                day: "2-digit",
+                month: "long",
+                year: "numeric",
+              })}
+            </p>
+          </div>
+
+          <AnalyticsCharts
+            riskTotal={riskTotal}
+            observationTotal={observationTotal}
+            safetyMeetingTotal={safetyMeetingTotal}
+            riskStateData={riskStateData}
+            observationTypeData={observationTypeData}
+            observationStateData={observationStateData}
+            safetyMeetingStateData={safetyMeetingStateData}
+            monthlyTrendData={monthlyTrendData}
+          />
+        </div>
       </div>
     </div>
   );
