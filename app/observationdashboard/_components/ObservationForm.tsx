@@ -104,7 +104,9 @@ export default function ObservationForm({ currentUser, observation }: Props) {
 
   /** Date of observation */
   const [date, setDate] = useState(
-    observation?.date ?? new Date().toISOString().split("T")[0],
+    observation?.date
+      ? new Date(observation.date).toISOString().split("T")[0]
+      : new Date().toISOString().split("T")[0],
   );
 
   /** Time of observation */
@@ -363,195 +365,205 @@ export default function ObservationForm({ currentUser, observation }: Props) {
     "rounded-xl border border-amber-200 dark:border-slate-800 bg-amber-50/30 dark:bg-slate-900/50 p-6 mb-6 min-h-[80px] flex items-center justify-center";
 
   // ─── Handlers ────────────────────────────────────────────────────────────
-const onSubmit = async () => {
-  // Manual validation for required fields before submitting
-  if (!vesselProject) {
-    toast.error("Vessel / Project is required")
-    return
-  }
-  if (!observerName) {
-    toast.error("Observer Name is required")
-    return
-  }
-  if (!createdByField) {
-    toast.error("Created By is required")
-    return
-  }
-  if (!observationType) {
-    toast.error("Please select an Observation Type")
-    return
-  }
-  if (!observationDescription) {
-    toast.error("Observation Description is required")
-    return
-  }
-
-  setLoading(true)
-  try {
-    const payload = {
-      vesselProject,
-      location,
-      weatherSeaState,
-      date: new Date(date),
-      time,
-      observerName,
-      createdByField,
-
-      observationType,
-      stopWorkUsed,
-
-      observationSource,
-      observationSourceOther,
-
-      lifeSavingRules,
-      lifeSavingRulesOther,
-
-      riskPriority,
-      hiPo,
-
-      categoryOperations,
-      categoryOperationsOther,
-      categorySurveyEquipment,
-      categorySurveyEquipmentOther,
-      categoryWorkActivities,
-      categoryWorkActivitiesOther,
-      categoryHazards,
-      categoryHazardsOther,
-      categoryEnvironment,
-      categoryEnvironmentOther,
-
-      observationDescription,
-
-      immediateAction,
-
-      correctiveAction,
-      correctiveActionDate: correctiveActionDate ? new Date(correctiveActionDate) : null,
-      preventiveAction,
-      preventiveActionDate: preventiveActionDate ? new Date(preventiveActionDate) : null,
-      responsiblePerson,
-
-      rootCauses,
-      rootCauseOther,
-
-      potentialConsequences,
-      potentialConsequenceOther,
-
-      lessonsLearned,
-      preventRecurrence,
-
-      closedBy,
-      dateClosed: dateClosed ? new Date(dateClosed) : null,
-      correctiveActionEffective,
-      furtherActionRequired,
-      closeOutName,
-
-      officeResponse,
-      effectiveDate: effectiveDate ? new Date(effectiveDate) : null,
+  const onSubmit = async () => {
+    // Manual validation for required fields before submitting
+    if (!vesselProject) {
+      toast.error("Vessel / Project is required");
+      return;
+    }
+    if (!observerName) {
+      toast.error("Observer Name is required");
+      return;
+    }
+    if (!createdByField) {
+      toast.error("Created By is required");
+      return;
+    }
+    if (!observationType) {
+      toast.error("Please select an Observation Type");
+      return;
+    }
+    if (!observationDescription) {
+      toast.error("Observation Description is required");
+      return;
     }
 
-    // Edit mode → updateObservation (submitAsCompleted = true)
-    // Create mode → createObservation
-    const result = isEditMode
-      ? await updateObservation(observation.id, payload, true)
-      : await createObservation(payload)
+    setLoading(true);
+    try {
+      const payload = {
+        vesselProject,
+        location,
+        weatherSeaState,
+        date: new Date(date),
+        time,
+        observerName,
+        createdByField,
 
-    if (result.success) {
-      toast.success(isEditMode ? "Observation submitted!" : "Observation created!")
-      router.push("/observationdashboard")
-    } else {
-      toast.error(result.error ?? "Something went wrong")
+        observationType,
+        stopWorkUsed,
+
+        observationSource,
+        observationSourceOther,
+
+        lifeSavingRules,
+        lifeSavingRulesOther,
+
+        riskPriority,
+        hiPo,
+
+        categoryOperations,
+        categoryOperationsOther,
+        categorySurveyEquipment,
+        categorySurveyEquipmentOther,
+        categoryWorkActivities,
+        categoryWorkActivitiesOther,
+        categoryHazards,
+        categoryHazardsOther,
+        categoryEnvironment,
+        categoryEnvironmentOther,
+
+        observationDescription,
+
+        immediateAction,
+
+        correctiveAction,
+        correctiveActionDate: correctiveActionDate
+          ? new Date(correctiveActionDate)
+          : null,
+        preventiveAction,
+        preventiveActionDate: preventiveActionDate
+          ? new Date(preventiveActionDate)
+          : null,
+        responsiblePerson,
+
+        rootCauses,
+        rootCauseOther,
+
+        potentialConsequences,
+        potentialConsequenceOther,
+
+        lessonsLearned,
+        preventRecurrence,
+
+        closedBy,
+        dateClosed: dateClosed ? new Date(dateClosed) : null,
+        correctiveActionEffective,
+        furtherActionRequired,
+        closeOutName,
+
+        officeResponse,
+        effectiveDate: effectiveDate ? new Date(effectiveDate) : null,
+      };
+
+      // Edit mode → updateObservation (submitAsCompleted = true)
+      // Create mode → createObservation
+      const result = isEditMode
+        ? await updateObservation(observation.id, payload, true)
+        : await createObservation(payload);
+
+      if (result.success) {
+        toast.success(
+          isEditMode ? "Observation submitted!" : "Observation created!",
+        );
+        router.push("/observationdashboard");
+      } else {
+        toast.error(result.error ?? "Something went wrong");
+      }
+    } catch {
+      toast.error("Something went wrong");
+    } finally {
+      setLoading(false);
     }
-  } catch {
-    toast.error("Something went wrong")
-  } finally {
-    setLoading(false)
-  }
-}
+  };
 
-const onSaveDraft = async () => {
-  setDraftLoading(true)
-  try {
-    const emptyToUndefined = (val: string) => (val === "" ? undefined : val)
+  const onSaveDraft = async () => {
+    setDraftLoading(true);
+    try {
+      const emptyToUndefined = (val: string) => (val === "" ? undefined : val);
 
-    const payload = {
-      vesselProject,
-      location,
-      weatherSeaState,
-      date: date ? new Date(date) : undefined,
-      time,
-      observerName,
-      createdByField: emptyToUndefined(createdByField),
+      const payload = {
+        vesselProject,
+        location,
+        weatherSeaState,
+        date: date ? new Date(date) : undefined,
+        time,
+        observerName,
+        createdByField: emptyToUndefined(createdByField),
 
-      observationType: emptyToUndefined(observationType),
-      stopWorkUsed,
+        observationType: emptyToUndefined(observationType),
+        stopWorkUsed,
 
-      observationSource,
-      observationSourceOther,
+        observationSource,
+        observationSourceOther,
 
-      lifeSavingRules,
-      lifeSavingRulesOther,
+        lifeSavingRules,
+        lifeSavingRulesOther,
 
-      riskPriority,
-      hiPo,
+        riskPriority,
+        hiPo,
 
-      categoryOperations,
-      categoryOperationsOther,
-      categorySurveyEquipment,
-      categorySurveyEquipmentOther,
-      categoryWorkActivities,
-      categoryWorkActivitiesOther,
-      categoryHazards,
-      categoryHazardsOther,
-      categoryEnvironment,
-      categoryEnvironmentOther,
+        categoryOperations,
+        categoryOperationsOther,
+        categorySurveyEquipment,
+        categorySurveyEquipmentOther,
+        categoryWorkActivities,
+        categoryWorkActivitiesOther,
+        categoryHazards,
+        categoryHazardsOther,
+        categoryEnvironment,
+        categoryEnvironmentOther,
 
-      observationDescription: emptyToUndefined(observationDescription),
+        observationDescription: emptyToUndefined(observationDescription),
 
-      immediateAction,
+        immediateAction,
 
-      correctiveAction,
-      correctiveActionDate: correctiveActionDate ? new Date(correctiveActionDate) : null,
-      preventiveAction,
-      preventiveActionDate: preventiveActionDate ? new Date(preventiveActionDate) : null,
-      responsiblePerson,
+        correctiveAction,
+        correctiveActionDate: correctiveActionDate
+          ? new Date(correctiveActionDate)
+          : null,
+        preventiveAction,
+        preventiveActionDate: preventiveActionDate
+          ? new Date(preventiveActionDate)
+          : null,
+        responsiblePerson,
 
-      rootCauses,
-      rootCauseOther,
+        rootCauses,
+        rootCauseOther,
 
-      potentialConsequences,
-      potentialConsequenceOther,
+        potentialConsequences,
+        potentialConsequenceOther,
 
-      lessonsLearned,
-      preventRecurrence,
+        lessonsLearned,
+        preventRecurrence,
 
-      closedBy,
-      dateClosed: dateClosed ? new Date(dateClosed) : null,
-      correctiveActionEffective,
-      furtherActionRequired,
-      closeOutName,
+        closedBy,
+        dateClosed: dateClosed ? new Date(dateClosed) : null,
+        correctiveActionEffective,
+        furtherActionRequired,
+        closeOutName,
 
-      officeResponse,
-      effectiveDate: effectiveDate ? new Date(effectiveDate) : null,
+        officeResponse,
+        effectiveDate: effectiveDate ? new Date(effectiveDate) : null,
+      };
+
+      // Edit mode → updateObservation (submitAsCompleted = false)
+      // Create mode → saveObservationDraft
+      const result = isEditMode
+        ? await updateObservation(observation.id, payload, false)
+        : await saveObservationDraft(payload);
+
+      if (result.success) {
+        toast.success("Draft saved!");
+        router.push("/observationdashboard");
+      } else {
+        toast.error(result.error ?? "Failed to save draft");
+      }
+    } catch {
+      toast.error("Something went wrong");
+    } finally {
+      setDraftLoading(false);
     }
-
-    // Edit mode → updateObservation (submitAsCompleted = false)
-    // Create mode → saveObservationDraft
-    const result = isEditMode
-      ? await updateObservation(observation.id, payload, false)
-      : await saveObservationDraft(payload)
-
-    if (result.success) {
-      toast.success("Draft saved!")
-      router.push("/observationdashboard")
-    } else {
-      toast.error(result.error ?? "Failed to save draft")
-    }
-  } catch {
-    toast.error("Something went wrong")
-  } finally {
-    setDraftLoading(false)
-  }
-}
+  };
 
   return (
     <div className="space-y-6">
