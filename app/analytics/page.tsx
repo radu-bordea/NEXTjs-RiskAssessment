@@ -43,12 +43,44 @@ export default async function ProjectAnalyticsPage({
   const hasDateFilter = Object.keys(dateFilter).length > 0;
 
   const projectSearch = project?.trim() ?? "";
+  const isUnassignedFilter = projectSearch === "__UNASSIGNED__";
+
+  // ─── Fetch distinct project/voyage values across Risk + SafetyMeeting ──
+  const [riskProjects, safetyMeetingProjects, observationProjects] =
+    await Promise.all([
+      prisma.risk.findMany({
+        where: { projectVoyage: { not: null } },
+        select: { projectVoyage: true },
+        distinct: ["projectVoyage"],
+      }),
+      prisma.safetyMeeting.findMany({
+        where: { projectSurvey: { not: "" } },
+        select: { projectSurvey: true },
+        distinct: ["projectSurvey"],
+      }),
+      prisma.observation.findMany({
+        where: { projectVoyage: { not: null } },
+        select: { projectVoyage: true },
+        distinct: ["projectVoyage"],
+      }),
+    ]);
+
+  const allProjectNames = Array.from(
+    new Set([
+      ...riskProjects.map((r) => r.projectVoyage).filter(Boolean),
+      ...safetyMeetingProjects.map((s) => s.projectSurvey).filter(Boolean),
+      ...observationProjects.map((o) => o.projectVoyage).filter(Boolean),
+    ]),
+  ).sort() as string[];
 
   // ─── Risk — filtered by initiationDate + projectVoyage ────────────
   const riskWhere: any = {};
   if (hasDateFilter) riskWhere.initiationDate = dateFilter;
-  if (projectSearch)
-    riskWhere.projectVoyage = { contains: projectSearch, mode: "insensitive" };
+  if (isUnassignedFilter) {
+    riskWhere.projectVoyage = null;
+  } else if (projectSearch) {
+    riskWhere.projectVoyage = projectSearch;
+  }
 
   const filteredRisks = await prisma.risk.findMany({
     where: riskWhere,
@@ -63,32 +95,36 @@ export default async function ProjectAnalyticsPage({
     orderBy: { initiationDate: "desc" },
   });
 
-  // ─── Observation — filtered by date only (no projectVoyage field yet) ──
+  // ─── Observation — filtered by date + projectVoyage ───────────────
   const observationWhere: any = {};
   if (hasDateFilter) observationWhere.date = dateFilter;
-  const filteredObservations = projectSearch
-    ? []
-    : await prisma.observation.findMany({
-        where: observationWhere,
-        select: {
-          id: true,
-          title: true,
-          observationType: true,
-          state: true,
-          date: true,
-          createdAt: true,
-        },
-        orderBy: { date: "desc" },
-      });
+  if (isUnassignedFilter) {
+    observationWhere.projectVoyage = null;
+  } else if (projectSearch) {
+    observationWhere.projectVoyage = projectSearch;
+  }
+
+  const filteredObservations = await prisma.observation.findMany({
+    where: observationWhere,
+    select: {
+      id: true,
+      title: true,
+      observationType: true,
+      state: true,
+      date: true,
+      createdAt: true,
+    },
+    orderBy: { date: "desc" },
+  });
 
   // ─── SafetyMeeting — filtered by date + projectSurvey ─────────────
   const safetyMeetingWhere: any = {};
   if (hasDateFilter) safetyMeetingWhere.date = dateFilter;
-  if (projectSearch)
-    safetyMeetingWhere.projectSurvey = {
-      contains: projectSearch,
-      mode: "insensitive",
-    };
+  if (isUnassignedFilter) {
+    safetyMeetingWhere.projectSurvey = "";
+  } else if (projectSearch) {
+    safetyMeetingWhere.projectSurvey = projectSearch;
+  }
 
   const filteredSafetyMeetings = await prisma.safetyMeeting.findMany({
     where: safetyMeetingWhere,
@@ -213,6 +249,7 @@ export default async function ProjectAnalyticsPage({
           dateFrom={dateFrom ?? ""}
           dateTo={dateTo ?? ""}
           project={project ?? ""}
+          availableProjects={allProjectNames}
         />
 
         {/* ── Charts + Cards ─────────────────────────────────────────── */}

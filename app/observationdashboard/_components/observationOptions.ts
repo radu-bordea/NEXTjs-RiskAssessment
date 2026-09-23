@@ -22,7 +22,7 @@ export const OBSERVATION_TYPES = [
   { value: "UNSAFE_ACT", icon: "🚶", label: "Unsafe Act / At-Risk Behaviour" },
   { value: "UNSAFE_CONDITION", icon: "⚠️", label: "Unsafe Condition" },
   { value: "NEAR_MISS", icon: "⭐", label: "Near Miss (Potential Incident)" },
-  { value: "OBSERVATION_CARD", icon: "🌿", label: "Observation Card" },
+  { value: "OBSERVATION_CARD", icon: "👮", label: "Observation Card" },
   {
     value: "QUALITY_SERVICE",
     icon: "💎",

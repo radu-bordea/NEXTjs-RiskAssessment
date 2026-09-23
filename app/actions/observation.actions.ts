@@ -56,7 +56,7 @@ const validated = observationSchema.safeParse(data)
         title,
 
         vesselProject:   values.vesselProject,
-        projectVoyage:   values.projectVoyage ?? null,
+        projectVoyage: values.projectVoyage?.trim() || null,
         location:        values.location ?? null,
         weatherSeaState: values.weatherSeaState ?? null,
         date:            values.date,
@@ -184,7 +184,7 @@ export async function saveObservationDraft(data: Partial<ObservationFormValues>)
         title,
 
         vesselProject:   values.vesselProject!,
-        projectVoyage:   values.projectVoyage ?? null,
+        projectVoyage: values.projectVoyage?.trim() || null,
         location:        values.location ?? null,
         weatherSeaState: values.weatherSeaState ?? null,
         date:            values.date ?? new Date(),
@@ -372,7 +372,7 @@ export async function updateObservation(
         title,
 
         vesselProject:   values.vesselProject!,
-        projectVoyage:   values.projectVoyage ?? null,
+        projectVoyage: values.projectVoyage?.trim() || null,
         location:        values.location ?? null,
         weatherSeaState: values.weatherSeaState ?? null,
         date:            values.date ?? existing.date,
