@@ -9,6 +9,7 @@ import { z } from "zod";
 export const observationSchema = z.object({
   // ─── Section 1 — Observation Details ─────────────────────────────
   vesselProject: z.string().min(1, "Vessel / Project is required"),
+  projectVoyage:   z.string().optional().nullable(),
   location: z.string().optional().nullable(),
   weatherSeaState: z.string().optional().nullable(),
   date: z.coerce.date({ message: "Date is required" }),

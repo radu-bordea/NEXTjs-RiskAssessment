@@ -25,7 +25,6 @@ export type AssessmentRow = {
   additionalMeasures: AdditionalMeasure[];
 };
 
-
 export type Risk = {
   id: string;
   ref: string;
@@ -68,14 +67,14 @@ export type User = {
   email: string;
 } | null;
 
-
 // ─── Observation types ─────────────────────────────────────────────────────
 
 export type Observation = {
-  id:                     string
-  title:                  string
-  observationDescription: string
-  vesselProject:          string
-  date:                   Date
-  state:                  "DRAFT" | "COMPLETED"
-}
+  id: string;
+  title: string;
+  observationDescription: string;
+  vesselProject: string;
+  projectVoyage: string | null;
+  date: Date;
+  state: "DRAFT" | "COMPLETED";
+};

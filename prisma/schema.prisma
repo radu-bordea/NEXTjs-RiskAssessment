@@ -157,6 +157,7 @@ model Observation {
 
   // ─── Section 1 — Observation Details ─────────────────────────────
   vesselProject   String
+  projectVoyage   String?
   location        String?
   weatherSeaState String?
   date            DateTime

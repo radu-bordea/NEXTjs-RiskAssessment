@@ -70,6 +70,7 @@ export default function ObservationTable({
   const [filters, setFilters] = useState({
     title: "",
     vesselProject: "",
+    projectVoyage: "",
     status: "",
   });
 
@@ -78,7 +79,8 @@ export default function ObservationTable({
     setFilters((prev) => ({ ...prev, [key]: value }));
 
   /** Reset all filters to empty */
-  const reset = () => setFilters({ title: "", vesselProject: "", status: "" });
+  const reset = () =>
+    setFilters({ title: "", vesselProject: "", projectVoyage: "", status: "" });
 
   /**
    * filtered — applies all active filters and sorts by date descending
@@ -97,6 +99,13 @@ export default function ObservationTable({
           !o.vesselProject
             .toLowerCase()
             .includes(filters.vesselProject.toLowerCase())
+        )
+          return false;
+        if (
+          filters.projectVoyage &&
+          !o.projectVoyage
+            ?.toLowerCase()
+            .includes(filters.projectVoyage.toLowerCase())
         )
           return false;
         if (filters.status && o.state !== filters.status) return false;
@@ -189,6 +198,14 @@ export default function ObservationTable({
             placeholder="Vessel / Project"
             value={filters.vesselProject}
             onChange={(e) => set("vesselProject", e.target.value)}
+            className={inputClass}
+          />
+          {/* Project / Voyage text search */}
+          <input
+            type="text"
+            placeholder="Project / Voyage"
+            value={filters.projectVoyage}
+            onChange={(e) => set("projectVoyage", e.target.value)}
             className={inputClass}
           />
 
@@ -356,9 +373,9 @@ export default function ObservationTable({
                                   Delete Observation Card?
                                 </AlertDialogTitle>
                                 <AlertDialogDescription>
-                                  This action cannot be undone. The
-                                  observation "{o.title}" and all its data
-                                  will be permanently deleted.
+                                  This action cannot be undone. The observation
+                                  "{o.title}" and all its data will be
+                                  permanently deleted.
                                 </AlertDialogDescription>
                               </AlertDialogHeader>
                               <AlertDialogFooter>

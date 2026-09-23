@@ -89,6 +89,11 @@ export default function ObservationForm({ currentUser, observation }: Props) {
     observation?.vesselProject ?? "",
   );
 
+  /** project voyage name */
+  const [projectVoyage, setProjectVoyage] = useState(
+    observation?.projectVoyage ?? "",
+  );
+
   /** Location on vessel e.g. Main Deck */
   const [location, setLocation] = useState(observation?.location ?? "");
 
@@ -392,6 +397,7 @@ export default function ObservationForm({ currentUser, observation }: Props) {
     try {
       const payload = {
         vesselProject,
+        projectVoyage,
         location,
         weatherSeaState,
         date: new Date(date),
@@ -483,6 +489,7 @@ export default function ObservationForm({ currentUser, observation }: Props) {
 
       const payload = {
         vesselProject,
+        projectVoyage,
         location,
         weatherSeaState,
         date: date ? new Date(date) : undefined,
@@ -580,6 +587,15 @@ export default function ObservationForm({ currentUser, observation }: Props) {
                 value={vesselProject}
                 onChange={(e) => setVesselProject(e.target.value)}
                 placeholder="e.g. MV Atlantic Star"
+                className="border-amber-200 focus-visible:ring-amber-400"
+              />
+            </div>
+            <div>
+              <label className={labelClass}>Project / Voyage</label>
+              <Input
+                value={projectVoyage}
+                onChange={(e) => setProjectVoyage(e.target.value)}
+                placeholder="e.g. North Sea Geophysical Survey"
                 className="border-amber-200 focus-visible:ring-amber-400"
               />
             </div>
