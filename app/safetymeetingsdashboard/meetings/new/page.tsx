@@ -8,7 +8,7 @@ import Link from "next/link"
  */
 export default function NewSafetyMeetingPage() {
   return (
-    <div className="min-h-screen bg-[#fff8f8] dark:bg-slate-950 px-6 md:px-10 py-10 font-sans">
+    <div className="min-h-screen bg-[#f5f8ff] dark:bg-slate-950 px-6 md:px-10 py-10 font-sans">
       <div className="max-w-5xl mx-auto">
         <Link
           href="/safetymeetingsdashboard"

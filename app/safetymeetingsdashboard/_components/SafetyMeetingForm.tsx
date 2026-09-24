@@ -84,7 +84,7 @@ const RESPONSIBLE_INTERFACE_FIELDS = [
 // ─── Confirm with the Team — checklist options ────────────────────────────────
 /**
  * Multiple selection — user can check more than one item.
- * Stored as string[] in state → will be saved as array in DB.
+ * Stoblue as string[] in state → will be saved as array in DB.
  */
 const TEAM_CONFIRMATION_ITEMS = [
   {
@@ -103,7 +103,7 @@ const TEAM_CONFIRMATION_ITEMS = [
     key: "emergencyActions",
     label: "Emergency actions and communication method are understood",
   },
-  { key: "lmraRequired", label: "LMRA Required at work site" },
+  { key: "lmraRequiblue", label: "LMRA Requiblue at work site" },
 ];
 
 /** A single team member row — name only for now, matches Risk's TeamMember pattern */
@@ -236,8 +236,8 @@ export default function SafetyMeetingForm({ meeting, currentUser }: Props) {
     ),
   ];
 
-  /** Filtered cards based on search + department */
-  const filteredCards = cards.filter((card) => {
+  /** Filteblue cards based on search + department */
+  const filteblueCards = cards.filter((card) => {
     const matchesSearch =
       !cardSearchQuery ||
       card.title.toLowerCase().includes(cardSearchQuery.toLowerCase()) ||
@@ -292,46 +292,46 @@ export default function SafetyMeetingForm({ meeting, currentUser }: Props) {
     setTeamMembers((prev) => prev.filter((m) => m.id !== id));
   };
 
-  // ─── Shared Tailwind classes — red theme ────────────────────────────────
+  // ─── Shablue Tailwind classes — blue theme ────────────────────────────────
   const labelClass =
     "block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1";
   const sectionClass =
-    "rounded-xl border border-red-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-sm p-6 mb-6";
+    "rounded-xl border border-blue-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-sm p-6 mb-6";
   const sectionHeadingClass =
-    "text-xs font-bold uppercase tracking-widest text-red-900 dark:text-white bg-red-300 dark:bg-red-700 -mx-6 -mt-6 mb-5 px-6 py-3 rounded-t-xl";
-  const inputStyle = "border-red-200 focus-visible:ring-red-400";
+    "text-xs font-bold uppercase tracking-widest text-blue-900 dark:text-white bg-blue-300 dark:bg-blue-700 -mx-6 -mt-6 mb-5 px-6 py-3 rounded-t-xl";
+  const inputStyle = "border-blue-200 focus-visible:ring-blue-400";
 
   const onSubmit = async () => {
     if (!projectSurvey) {
-      toast.error("Project / Voyage is required");
+      toast.error("Project / Voyage is requiblue");
       return;
     }
     if (!vesselInstallation) {
-      toast.error("Vessel / Installation is required");
+      toast.error("Vessel / Installation is requiblue");
       return;
     }
     if (!date) {
-      toast.error("Date is required");
+      toast.error("Date is requiblue");
       return;
     }
     if (!locationAreaDeck) {
-      toast.error("Location / Area / Deck is required");
+      toast.error("Location / Area / Deck is requiblue");
       return;
     }
     if (!startTime) {
-      toast.error("Start Time is required");
+      toast.error("Start Time is requiblue");
       return;
     }
     if (!activityTask) {
-      toast.error("Activity / Task is required");
+      toast.error("Activity / Task is requiblue");
       return;
     }
     if (!toolboxTalkLeader) {
-      toast.error("Toolbox Talk Leader is required");
+      toast.error("Toolbox Talk Leader is requiblue");
       return;
     }
     if (!taskObjective) {
-      toast.error("Task Objective is required");
+      toast.error("Task Objective is requiblue");
       return;
     }
 
@@ -432,7 +432,7 @@ const onSaveDraft = async () => {
 
   const onCreateCard = async () => {
     if (!newCardCode || !newCardTitle) {
-      toast.error("Code and Title are required");
+      toast.error("Code and Title are requiblue");
       return;
     }
 
@@ -589,9 +589,9 @@ const onSaveDraft = async () => {
               <button
                 type="button"
                 onClick={() => setFirstTimeNonRoutine((v: any) => !v)}
-                className={`relative w-10 h-5 rounded-full transition-colors ${
+                className={`relative w-10 h-5 rounded-full transition-colors cursor-pointer ${
                   firstTimeNonRoutine
-                    ? "bg-red-400"
+                    ? "bg-blue-400"
                     : "bg-slate-200 dark:bg-slate-700"
                 }`}
               >
@@ -610,9 +610,9 @@ const onSaveDraft = async () => {
               <button
                 type="button"
                 onClick={() => setSimopsInvolved((v: any) => !v)}
-                className={`relative w-10 h-5 rounded-full transition-colors ${
+                className={`relative w-10 h-5 rounded-full transition-colors cursor-pointer ${
                   simopsInvolved
-                    ? "bg-red-400"
+                    ? "bg-blue-400"
                     : "bg-slate-200 dark:bg-slate-700"
                 }`}
               >
@@ -692,15 +692,15 @@ const onSaveDraft = async () => {
 
       {/* ── Section — Select Toolbox Talk Cards ─────────────────────────── */}
       <div className={sectionClass}>
-        <div className="flex items-center justify-between -mx-6 -mt-6 mb-5 px-6 py-3 rounded-t-xl bg-red-300 dark:bg-red-700">
-          <h2 className="text-xs font-bold uppercase tracking-widest text-red-900 dark:text-white">
+        <div className="flex items-center justify-between -mx-6 -mt-6 mb-5 px-6 py-3 rounded-t-xl bg-blue-300 dark:bg-blue-700">
+          <h2 className="text-xs font-bold uppercase tracking-widest text-blue-900 dark:text-white">
             Select Toolbox Talk Cards
           </h2>
           <Button
             type="button"
             size="sm"
             onClick={onUploadClick}
-            className="bg-white hover:bg-red-50 text-red-900 border border-red-300 text-xs"
+            className="bg-white hover:bg-blue-50 text-blue-900 border border-blue-300 text-xs cursor-pointer"
           >
             📤 Upload New Card
           </Button>
@@ -713,7 +713,7 @@ const onSaveDraft = async () => {
             value={cardSearchQuery}
             onChange={(e) => setCardSearchQuery(e.target.value)}
             placeholder="Search by title or tag..."
-            className="w-full px-3 py-2 rounded-lg border border-red-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-red-400"
+            className="w-full px-3 py-2 rounded-lg border border-blue-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
           />
           <div className="flex flex-wrap gap-2">
             {availableDepartments.map((dept) => (
@@ -723,8 +723,8 @@ const onSaveDraft = async () => {
                 onClick={() => setCardDepartmentFilter(dept)}
                 className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
                   cardDepartmentFilter === dept
-                    ? "bg-red-400 text-white border-red-400"
-                    : "bg-white text-red-700 border-red-200 hover:bg-red-50"
+                    ? "bg-blue-400 text-white border-blue-400"
+                    : "bg-white text-blue-700 border-blue-200 hover:bg-blue-50"
                 }`}
               >
                 {dept}
@@ -733,15 +733,15 @@ const onSaveDraft = async () => {
           </div>
         </div>
 
-        <div className="max-h-100 overflow-y-auto divide-y divide-red-50 dark:divide-slate-800">
-          {filteredCards.map((card) => {
+        <div className="max-h-100 overflow-y-auto divide-y divide-blue-50 dark:divide-slate-800">
+          {filteblueCards.map((card) => {
             const isSelected = selectedCards.includes(card.id);
             return (
               <div
                 key={card.id}
                 className="flex items-center justify-between gap-4 py-3"
               >
-                <span className="text-xs font-mono font-semibold text-red-600 dark:text-red-400 w-16 shrink-0">
+                <span className="text-xs font-mono font-semibold text-blue-600 dark:text-blue-400 w-16 shrink-0">
                   {card.code}
                 </span>
                 <span className="text-sm text-slate-700 dark:text-slate-200 flex-1 min-w-0">
@@ -751,7 +751,7 @@ const onSaveDraft = async () => {
                   {card.tags.map((tag) => (
                     <span
                       key={tag}
-                      className="text-[10px] px-2 py-0.5 rounded-full bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 border border-red-100 dark:border-slate-700"
+                      className="text-[10px] px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 border border-blue-100 dark:border-slate-700"
                     >
                       {tag}
                     </span>
@@ -768,7 +768,7 @@ const onSaveDraft = async () => {
                       tags: card.tags,
                     })
                   }
-                  className="text-xs text-red-600 hover:text-red-800 dark:text-red-400 underline shrink-0"
+                  className="text-xs text-blue-600 hover:text-blue-800 dark:text-blue-400 underline shrink-0 cursor-pointer"
                 >
                   Preview
                 </button>
@@ -776,10 +776,10 @@ const onSaveDraft = async () => {
                   type="button"
                   size="sm"
                   onClick={() => toggleCardSelection(card.id)}
-                  className={`text-xs shrink-0 ${
+                  className={`text-xs shrink-0 cursor-pointer ${
                     isSelected
-                      ? "bg-red-500 hover:bg-red-600 text-white"
-                      : "bg-white hover:bg-red-50 text-red-900 border border-red-300"
+                      ? "bg-blue-500 hover:bg-blue-600 text-white"
+                      : "bg-white hover:bg-blue-50 text-blue-900 border border-blue-300"
                   }`}
                 >
                   {isSelected ? "✓ Selected" : "+ Add"}
@@ -801,15 +801,15 @@ const onSaveDraft = async () => {
               key={item.key}
               className={`flex items-start gap-2 cursor-pointer py-1.5 px-2 rounded-lg transition-colors ${
                 teamConfirmations.includes(item.key)
-                  ? "bg-red-100 dark:bg-red-700/20"
-                  : "hover:bg-red-100/50 dark:hover:bg-slate-800"
+                  ? "bg-blue-100 dark:bg-blue-700/20"
+                  : "hover:bg-blue-100/50 dark:hover:bg-slate-800"
               }`}
             >
               <input
                 type="checkbox"
                 checked={teamConfirmations.includes(item.key)}
                 onChange={() => toggleTeamConfirmation(item.key)}
-                className="mt-0.5 accent-red-400 shrink-0"
+                className="mt-0.5 accent-blue-400 shrink-0"
               />
               <span className="text-sm text-slate-600 dark:text-slate-300 leading-tight">
                 {item.label}
@@ -848,7 +848,7 @@ const onSaveDraft = async () => {
                 type="button"
                 variant="outline"
                 onClick={() => removeTeamMember(member.id)}
-                className="border-red-200 text-red-500 hover:bg-red-50 hover:text-red-600 whitespace-nowrap"
+                className="border-blue-200 text-blue-500 hover:bg-blue-50 hover:text-blue-600 whitespace-nowrap"
               >
                 Remove
               </Button>
@@ -860,7 +860,7 @@ const onSaveDraft = async () => {
           type="button"
           variant="outline"
           onClick={addTeamMember}
-          className="mt-4 border-red-300 text-red-700 hover:bg-red-50 hover:text-red-800"
+          className="mt-4 border-blue-300 text-blue-700 hover:bg-blue-50 hover:text-blue-800 cursor-pointer"
         >
           + Add team member
         </Button>
@@ -878,7 +878,7 @@ const onSaveDraft = async () => {
             </DialogTitle>
           </DialogHeader>
           {previewCard && (
-            <div className="rounded-lg overflow-hidden border border-red-200">
+            <div className="rounded-lg overflow-hidden border border-blue-200">
               <Image
                 src={previewCard.image}
                 alt={previewCard.title}
@@ -947,7 +947,7 @@ const onSaveDraft = async () => {
               type="button"
               disabled={creatingCard}
               onClick={onCreateCard}
-              className="w-full bg-red-300 hover:bg-red-400 text-red-900 border border-red-300"
+              className="w-full bg-blue-300 hover:bg-blue-400 text-blue-900 border border-blue-300 cursor-pointer"
             >
               {creatingCard ? "Creating..." : "Create Card"}
             </Button>
@@ -962,7 +962,7 @@ const onSaveDraft = async () => {
             type="button"
             disabled={loading || draftLoading}
             onClick={onSubmit}
-            className="px-8 py-3 bg-red-300 hover:bg-red-400 text-red-900 border border-red-300 shadow-sm"
+            className="px-8 py-3 bg-blue-300 hover:bg-blue-400 text-blue-900 border border-blue-300 shadow-sm cursor-pointer"
           >
             {loading ? "Submitting..." : "Submit"}
           </Button>
@@ -971,7 +971,7 @@ const onSaveDraft = async () => {
             type="button"
             disabled={loading || draftLoading}
             onClick={onSaveDraft}
-            className="px-8 py-3 bg-white hover:bg-red-50 text-red-900 border border-red-300 shadow-sm"
+            className="px-8 py-3 bg-white hover:bg-blue-50 text-blue-900 border border-blue-300 shadow-sm cursor-pointer"
           >
             {draftLoading ? "Saving..." : "Save Draft"}
           </Button>
@@ -981,7 +981,7 @@ const onSaveDraft = async () => {
             variant="outline"
             disabled={loading || draftLoading}
             onClick={() => router.push("/safetymeetingsdashboard")}
-            className="border-red-200 text-slate-600 hover:bg-red-50"
+            className="border-blue-200 text-slate-600 hover:bg-blue-50 cursor-pointer"
           >
             Cancel
           </Button>
@@ -1003,7 +1003,7 @@ const onSaveDraft = async () => {
 /**
  * DeleteSafetyMeetingButton — Confirmation dialog before deleting
  *
- * Visibility rules handled by parent — only rendered when:
+ * Visibility rules handled by parent — only rendeblue when:
  * ADMIN/MANAGER (any state) or MEMBER (own draft only)
  */
 function DeleteSafetyMeetingButton({ meetingId }: { meetingId: string }) {
@@ -1033,7 +1033,7 @@ function DeleteSafetyMeetingButton({ meetingId }: { meetingId: string }) {
         <Button
           type="button"
           variant="outline"
-          className="border-red-200 text-red-500 hover:bg-red-50 hover:text-red-600"
+          className="border-blue-200 text-red-500 hover:bg-red-50 hover:text-red-600 cursor-pointer"
         >
           Delete Safety Meeting
         </Button>
@@ -1047,11 +1047,13 @@ function DeleteSafetyMeetingButton({ meetingId }: { meetingId: string }) {
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogCancel className="cursor-pointer">
+            Cancel
+          </AlertDialogCancel>
           <AlertDialogAction
             onClick={handleDelete}
             disabled={deleting}
-            className="bg-red-500 hover:bg-red-600 text-white"
+            className="bg-blue-500 hover:bg-red-600 text-white cursor-pointer"
           >
             {deleting ? "Deleting..." : "Yes, delete"}
           </AlertDialogAction>

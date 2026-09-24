@@ -65,8 +65,8 @@ const moduleCards = [
     icon: "📋",
     title: "Access Safety Meetings / Toolbox Talks",
     href: "/safetymeetingsdashboard",
-    bg: "bg-red-400 hover:bg-red-500",
-    text: "text-red-950",
+    bg: "bg-blue-400 hover:bg-blue-500",
+    text: "text-blue-950",
   },
   {
     icon: "📝",
@@ -272,7 +272,7 @@ export default function HomeDashboard() {
                 {/* Footer tagline */}
                 <div className="pt-3 mt-4 text-center">
                   <p className="text-emerald-300 text-[10px] font-bold uppercase tracking-wide flex items-center justify-center gap-1.5 mb-1">
-                   🛡️ Project Successfully
+                    🛡️ Project Successfully
                   </p>
                   <p className="text-emerald-100/80 text-[10px] leading-relaxed">
                     Through planning, competence and teamwork we deliver safe
@@ -315,7 +315,6 @@ export default function HomeDashboard() {
 
             {/* ── Leading Indicators + Attention Required ────────────── */}
             <div className="grid grid-cols-1 xl:grid-cols-[1fr_300px] gap-6">
-              
               {/* Leading Indicators chart */}
               <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm p-5">
                 <p className="text-sm font-bold text-slate-700 dark:text-white mb-4">
@@ -404,8 +403,6 @@ export default function HomeDashboard() {
                 </div>
               </div>
             </div>
-
-
 
             {/* ── Risk Overview + Safety Trend + Corrective Actions ────── */}
             <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">

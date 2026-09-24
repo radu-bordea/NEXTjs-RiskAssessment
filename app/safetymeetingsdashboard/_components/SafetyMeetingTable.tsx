@@ -4,7 +4,7 @@
  * SafetyMeetingTable — Safety Meetings / Toolbox Talks dashboard
  *
  * Displays all toolbox talk records in a filterable table.
- * Red theme to distinguish from Risk (green), Observation (amber), Work Permits (blue).
+ * blue theme to distinguish from Risk (green), Observation (amber), Work Permits (blue).
  *
  * States: DRAFT / COMPLETED
  * Roles (matches Observation Card):
@@ -57,17 +57,17 @@ type CurrentUser = {
 // ─── Status badge styles ──────────────────────────────────────────────────────
 const stateStyle: Record<string, string> = {
   DRAFT:
-    "bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-400 whitespace-nowrap",
+    "bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 whitespace-nowrap",
   COMPLETED:
     "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 whitespace-nowrap",
 };
 
-// ─── Shared Tailwind classes ──────────────────────────────────────────────────
+// ─── Shablue Tailwind classes ──────────────────────────────────────────────────
 const inputClass =
-  "px-3 py-2 rounded-lg border border-red-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm text-slate-700 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-red-400 transition-colors";
+  "px-3 py-2 rounded-lg border border-blue-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm text-slate-700 dark:text-slate-200 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-400 transition-colors";
 
 const selectClass =
-  "px-3 py-2 rounded-lg border border-red-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-red-400 transition-colors";
+  "px-3 py-2 rounded-lg border border-blue-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-400 transition-colors";
 
 export default function SafetyMeetingTable({
   meetings,
@@ -101,9 +101,9 @@ export default function SafetyMeetingTable({
     setFilters({ projectSurvey: "", vesselInstallation: "", status: "" });
 
   /**
-   * filtered — applies all active filters and sorts by date descending
+   * filteblue — applies all active filters and sorts by date descending
    */
-  const filtered = useMemo(() => {
+  const filteblue = useMemo(() => {
     return meetings
       .filter((m) => {
         if (
@@ -148,7 +148,7 @@ export default function SafetyMeetingTable({
   };
 
   return (
-    <div className="min-h-screen bg-[#fff8f8] dark:bg-slate-950 text-slate-900 dark:text-slate-100 px-6 md:px-10 py-10 font-sans">
+    <div className="min-h-screen bg-[#f5f8ff] dark:bg-slate-950 text-slate-900 dark:text-slate-100 px-6 md:px-10 py-10 font-sans">
       {/* ── Page Header ───────────────────────────────────────────────── */}
       <div className="flex items-center justify-between mb-8 flex-wrap gap-4">
         <Link href="/">
@@ -164,7 +164,7 @@ export default function SafetyMeetingTable({
 
         <Link
           href="/"
-          className="text-xs px-3 py-1.5 rounded-lg border border-red-300 hover:bg-red-100 dark:hover:bg-slate-800 transition-colors font-medium"
+          className="text-xs px-3 py-1.5 rounded-lg border border-blue-300 hover:bg-blue-100 dark:hover:bg-slate-800 transition-colors font-medium"
         >
           ← Home
         </Link>
@@ -177,7 +177,7 @@ export default function SafetyMeetingTable({
             </span>
           </h1>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-2">
-            Displaying {filtered.length} of {meetings.length} toolbox talks
+            Displaying {filteblue.length} of {meetings.length} toolbox talks
           </p>
         </div>
 
@@ -185,7 +185,7 @@ export default function SafetyMeetingTable({
           {/* Open Manual button — opens PDF viewer modal */}
           <button
             onClick={() => setManualOpen(true)}
-            className="px-5 py-2.5 bg-white hover:bg-red-50 text-red-900 border border-red-300 rounded-lg text-sm font-medium transition-colors cursor-pointer shadow-sm"
+            className="px-5 py-2.5 bg-white hover:bg-blue-50 text-blue-900 border border-blue-300 rounded-lg text-sm font-medium transition-colors cursor-pointer shadow-sm"
           >
             📖 Open Manual
           </button>
@@ -193,7 +193,7 @@ export default function SafetyMeetingTable({
           {/* New Toolbox Talk button */}
           <button
             onClick={() => router.push("/safetymeetingsdashboard/meetings/new")}
-            className="px-5 py-2.5 bg-red-300 hover:bg-red-400 text-red-900 border border-red-300 rounded-lg text-sm font-medium transition-colors cursor-pointer shadow-sm"
+            className="px-5 py-2.5 bg-blue-300 hover:bg-blue-400 text-blue-900 border border-blue-300 rounded-lg text-sm font-medium transition-colors cursor-pointer shadow-sm"
           >
             + New Safety Meetings / Toolbox Talks
           </button>
@@ -201,8 +201,8 @@ export default function SafetyMeetingTable({
       </div>
 
       {/* ── Filters Panel ─────────────────────────────────────────────── */}
-      <div className="rounded-xl border border-red-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm p-5 mb-6">
-        <p className="text-xs font-semibold text-red-600 dark:text-red-400 uppercase tracking-widest mb-4">
+      <div className="rounded-xl border border-blue-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm p-5 mb-6">
+        <p className="text-xs font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-widest mb-4">
           Filters
         </p>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-4">
@@ -232,17 +232,17 @@ export default function SafetyMeetingTable({
         </div>
         <button
           onClick={reset}
-          className="text-xs px-4 py-2 rounded-lg border border-red-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:bg-red-50 dark:hover:bg-slate-800 transition-colors"
+          className="text-xs px-4 py-2 rounded-lg border border-blue-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:bg-blue-50 dark:hover:bg-slate-800 transition-colors"
         >
           Reset filters
         </button>
       </div>
 
       {/* ── Table ──────────────────────────────────────────────────────── */}
-      <div className="rounded-xl overflow-hidden border border-red-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
+      <div className="rounded-xl overflow-hidden border border-blue-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="bg-red-300 dark:bg-red-700 border-b border-red-400">
+            <thead className="bg-blue-300 dark:bg-blue-700 border-b border-blue-400">
               <tr>
                 {[
                   "Project / Voyage",
@@ -264,7 +264,7 @@ export default function SafetyMeetingTable({
             </thead>
 
             <tbody>
-              {filtered.length === 0 ? (
+              {filteblue.length === 0 ? (
                 <tr>
                   <td
                     colSpan={7}
@@ -274,17 +274,17 @@ export default function SafetyMeetingTable({
                   </td>
                 </tr>
               ) : (
-                filtered.map((m, index) => (
+                filteblue.map((m, index) => (
                   <tr
                     key={m.id}
-                    className={`border-b border-red-50 dark:border-slate-800 hover:bg-red-50 dark:hover:bg-slate-800/60 transition-colors ${
+                    className={`border-b border-blue-50 dark:border-slate-800 hover:bg-blue-50 dark:hover:bg-slate-800/60 transition-colors ${
                       index % 2 === 0
                         ? "bg-white dark:bg-slate-900"
-                        : "bg-red-50/30 dark:bg-slate-900/50"
+                        : "bg-blue-50/30 dark:bg-slate-900/50"
                     }`}
                   >
                     <td
-                      className="px-4 py-3 font-medium text-red-600 dark:text-red-400 cursor-pointer hover:underline whitespace-nowrap"
+                      className="px-4 py-3 font-medium text-blue-600 dark:text-blue-400 cursor-pointer hover:underline whitespace-nowrap"
                       onClick={() =>
                         router.push(`/safetymeetingsdashboard/meetings/${m.id}`)
                       }
@@ -322,7 +322,7 @@ export default function SafetyMeetingTable({
                               `/safetymeetingsdashboard/meetings/${m.id}`,
                             )
                           }
-                          className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-slate-800 cursor-pointer"
+                          className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-slate-800 cursor-pointer"
                         >
                           👁
                         </Button>
@@ -338,7 +338,7 @@ export default function SafetyMeetingTable({
                                 `/safetymeetingsdashboard/meetings/${m.id}/edit`,
                               )
                             }
-                            className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-slate-800 cursor-pointer"
+                            className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-800 cursor-pointer"
                           >
                             ✏️
                           </Button>
@@ -355,7 +355,7 @@ export default function SafetyMeetingTable({
                                 `/safetymeetingsdashboard/meetings/${m.id}/pdf`,
                               )
                             }
-                            className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-slate-800 cursor-pointer"
+                            className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-slate-800 cursor-pointer"
                           >
                             📝
                           </Button>
@@ -370,7 +370,7 @@ export default function SafetyMeetingTable({
                                 variant="ghost"
                                 size="sm"
                                 disabled={deletingId === m.id}
-                                className="p-1.5 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-slate-800 cursor-pointer"
+                                className="p-1.5 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-800 cursor-pointer"
                               >
                                 {deletingId === m.id ? "..." : "🗑️"}
                               </Button>
@@ -410,7 +410,7 @@ export default function SafetyMeetingTable({
                                   variant="ghost"
                                   size="sm"
                                   disabled={deletingId === m.id}
-                                  className="p-1.5 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-slate-800"
+                                  className="p-1.5 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-800 cursor-pointer"
                                 >
                                   {deletingId === m.id ? "..." : "🗑️"}
                                 </Button>
@@ -427,10 +427,12 @@ export default function SafetyMeetingTable({
                                   </AlertDialogDescription>
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>
-                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogCancel className="cursor-pointer">
+                                    Cancel
+                                  </AlertDialogCancel>
                                   <AlertDialogAction
                                     onClick={() => handleDelete(m.id)}
-                                    className="bg-red-500 hover:bg-red-600 text-white"
+                                    className="bg-blue-500 hover:bg-red-600 text-white cursor-pointer"
                                   >
                                     Yes, delete
                                   </AlertDialogAction>
@@ -458,7 +460,7 @@ export default function SafetyMeetingTable({
           </DialogHeader>
           <iframe
             src="https://3ndlujwykffozodt.public.blob.vercel-storage.com/manual.pdf"
-            className="w-full flex-1 rounded-lg border border-red-200"
+            className="w-full flex-1 rounded-lg border border-blue-200"
             title="Safety Manual"
           />
         </DialogContent>

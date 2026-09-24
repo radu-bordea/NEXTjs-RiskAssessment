@@ -35,7 +35,7 @@ export default async function SafetyMeetingViewPage({
   if (!meeting) notFound()
 
   return (
-    <div className="min-h-screen bg-[#fff8f8] dark:bg-slate-950">
+    <div className="min-h-screen bg-[#f5f8ff] dark:bg-slate-950">
       <SafetyMeetingView meeting={meeting} />
     </div>
   )

@@ -48,7 +48,7 @@ export default async function Home() {
             </Link>
             <Link
               href="/safetymeetingsdashboard"
-              className="flex items-center justify-center gap-2 px-5 py-3 bg-red-300 text-red-900 border border-red-300 rounded-lg text-sm hover:bg-red-400 transition-colors text-center"
+              className="flex items-center justify-center gap-2 px-5 py-3 bg-blue-300 text-blue-900 border border-blue-300 rounded-lg text-sm hover:bg-blue-400 transition-colors text-center"
             >
               📋 Access Safety Meetings / Toolbox Talks
             </Link>

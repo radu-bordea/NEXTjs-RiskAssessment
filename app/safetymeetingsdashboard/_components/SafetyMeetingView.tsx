@@ -12,7 +12,7 @@ type SafetyMeetingViewProps = {
 };
 
 const stateStyle: Record<string, string> = {
-  DRAFT: "bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-400",
+  DRAFT: "bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
   COMPLETED:
     "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
 };
@@ -22,15 +22,15 @@ const TEAM_CONFIRMATION_LABELS: Record<string, string> = {
   criticalHazards: "Critical hazards and controls have been discussed",
   stopMakeSafe: "Stop / Make Safe / Reassess criteria are understood",
   emergencyActions: "Emergency actions and communication method are understood",
-  lmraRequired: "LMRA Required at work site",
+  lmraRequiblue: "LMRA Requiblue at work site",
 };
 
 export default function SafetyMeetingView({ meeting }: SafetyMeetingViewProps) {
   const sectionClass =
-    "rounded-xl border border-red-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-sm p-5 md:p-6";
+    "rounded-xl border border-blue-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-sm p-5 md:p-6";
 
   const sectionHeadingClass =
-    "text-xs font-bold uppercase tracking-widest text-red-900 dark:text-red-400 mb-4 pb-2 border-b border-red-100 dark:border-slate-700";
+    "text-xs font-bold uppercase tracking-widest text-blue-900 dark:text-blue-400 mb-4 pb-2 border-b border-blue-100 dark:border-slate-700";
 
   const labelClass =
     "block text-xs font-medium text-slate-400 dark:text-slate-500 mb-1";
@@ -38,17 +38,17 @@ export default function SafetyMeetingView({ meeting }: SafetyMeetingViewProps) {
   const valueClass = "text-sm text-slate-900 dark:text-white font-medium";
 
   const fieldClass =
-    "rounded-lg border border-red-200 dark:border-slate-700 bg-red-50/30 dark:bg-slate-950 px-3 py-2 text-sm min-h-[38px] w-full break-words";
+    "rounded-lg border border-blue-200 dark:border-slate-700 bg-blue-50/30 dark:bg-slate-950 px-3 py-2 text-sm min-h-[38px] w-full break-words";
 
   const tagClass =
-    "text-xs px-2.5 py-1 rounded-full border border-red-200 dark:border-slate-700 bg-red-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300";
+    "text-xs px-2.5 py-1 rounded-full border border-blue-200 dark:border-slate-700 bg-blue-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300";
 
   return (
     <div className="w-full px-3 md:px-8 py-6 space-y-4 max-w-[1400px] mx-auto min-h-screen">
       {/* ── Page header ───────────────────────────────────────────────── */}
       <div className="flex items-start justify-between flex-wrap gap-3 mb-2">
         <div>
-          <p className="text-xs uppercase tracking-widest text-red-600 dark:text-red-400 font-medium mb-1">
+          <p className="text-xs uppercase tracking-widest text-blue-600 dark:text-blue-400 font-medium mb-1">
             Safety Meeting / Toolbox Talk
           </p>
           <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-slate-800 dark:text-white">
@@ -201,17 +201,17 @@ export default function SafetyMeetingView({ meeting }: SafetyMeetingViewProps) {
 {meeting.selectedCards?.length > 0 && (
   <div className={sectionClass}>
     <h2 className={sectionHeadingClass}>Selected Toolbox Talk Cards</h2>
-    <div className="rounded-lg border border-red-100 dark:border-slate-800 overflow-hidden shadow-sm">
+    <div className="rounded-lg border border-blue-100 dark:border-slate-800 overflow-hidden shadow-sm">
       {meeting.selectedCards.map((sc: any, index: number) => (
         <div
           key={sc.id}
           className={`flex items-center gap-3 px-4 py-3 transition-colors ${
             index % 2 === 0
               ? "bg-white dark:bg-slate-900"
-              : "bg-red-50/40 dark:bg-slate-900/50"
-          } ${index !== meeting.selectedCards.length - 1 ? "border-b border-red-50 dark:border-slate-800" : ""}`}
+              : "bg-blue-50/40 dark:bg-slate-900/50"
+          } ${index !== meeting.selectedCards.length - 1 ? "border-b border-blue-50 dark:border-slate-800" : ""}`}
         >
-          <span className="text-xs font-mono font-bold text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 px-2 py-1 rounded-md shrink-0">
+          <span className="text-xs font-mono font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 px-2 py-1 rounded-md shrink-0">
             {sc.card.code}
           </span>
           <span className="text-sm text-slate-700 dark:text-slate-200 flex-1 font-medium">
@@ -237,7 +237,7 @@ export default function SafetyMeetingView({ meeting }: SafetyMeetingViewProps) {
             <div className="space-y-1.5 mb-3">
               {meeting.teamConfirmations.map((key: string) => (
                 <div key={key} className="flex items-center gap-2">
-                  <span className="text-red-500">✓</span>
+                  <span className="text-blue-500">✓</span>
                   <span className="text-sm text-slate-700 dark:text-slate-300">
                     {TEAM_CONFIRMATION_LABELS[key] ?? key}
                   </span>
@@ -262,7 +262,7 @@ export default function SafetyMeetingView({ meeting }: SafetyMeetingViewProps) {
             {meeting.teamMembers.map((m: any) => (
               <span
                 key={m.id}
-                className="text-sm px-3 py-1.5 rounded-full border border-red-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-950"
+                className="text-sm px-3 py-1.5 rounded-full border border-blue-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-950"
               >
                 {m.name}
               </span>

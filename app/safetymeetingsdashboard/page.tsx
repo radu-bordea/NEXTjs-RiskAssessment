@@ -30,7 +30,7 @@ export default async function SafetyMeetingsDashboardPage() {
   })
 
   return (
-    <div className="min-h-screen bg-[#fff8f8] dark:bg-slate-950">
+    <div className="min-h-screen bg-[#f5f8ff] dark:bg-slate-950">
       <SafetyMeetingTable meetings={meetings} currentUser={user} />
     </div>
   )
