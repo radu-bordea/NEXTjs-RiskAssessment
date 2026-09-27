@@ -13,6 +13,7 @@
 - npm install -D dotenv
 - npm install html2canvas jspdf
 - npm install html2canvas-pro
+- npm install resend
 
 
 

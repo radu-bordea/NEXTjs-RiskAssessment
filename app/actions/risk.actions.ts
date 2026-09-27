@@ -9,6 +9,7 @@ import {
   RiskFormValues,
   riskDraftSchema,
 } from "@/lib/validations/risk.schema";
+import { sendRiskNotification } from "@/lib/email/riskNotifications";
 
 export async function createRisk(data: RiskFormValues) {
   const { userId } = await auth();
@@ -88,6 +89,19 @@ export async function createRisk(data: RiskFormValues) {
           })),
         },
       },
+    });
+
+    // Notify Admin/Manager users about the new template
+    await sendRiskNotification({
+      action: "Template Created",
+      risk: {
+        id: risk.id,
+        ref: risk.ref,
+        workActivity: risk.workActivity,
+        state: risk.state,
+      },
+      actorName: user.name ?? user.email,
+      actorId: userId,
     });
 
     return { success: true, id: risk.id };
@@ -299,6 +313,20 @@ export async function createDraftFromTemplate(templateId: string) {
         },
       },
     });
+
+    // Notify Admin/Manager users about the new draft
+    await sendRiskNotification({
+      action: "Draft Created",
+      risk: {
+        id: draft.id,
+        ref: draft.ref,
+        workActivity: draft.workActivity,
+        state: draft.state,
+      },
+      actorName: user.name ?? user.email,
+      actorId: userId,
+    });
+
     // Revalidate dashboard so new draft appears immediately
     revalidatePath("/dashboard");
     return { success: true, id: draft.id };
@@ -406,6 +434,19 @@ export async function submitDraft(id: string, data: RiskFormValues) {
       },
     });
 
+    // Notify Admin/Manager users about the completed submission
+    await sendRiskNotification({
+      action: "Draft Submitted (Completed)",
+      risk: {
+        id: risk.id,
+        ref: risk.ref,
+        workActivity: risk.workActivity,
+        state: risk.state,
+      },
+      actorName: user.name ?? user.email,
+      actorId: userId,
+    });
+
     return { success: true, id: risk.id };
   } catch (error) {
     console.error("submitDraft error:", error);
@@ -500,7 +541,9 @@ export async function updateRisk(id: string, data: RiskFormValues) {
 
     if (existing && values.initiationDate) {
       const dateStr = values.initiationDate.toISOString().split("T")[0];
-      const baseRefMatch = existing.ref.match(/^(.+?)_\d{4}-\d{2}-\d{2}_DRAFT_(\d+)$/);
+      const baseRefMatch = existing.ref.match(
+        /^(.+?)_\d{4}-\d{2}-\d{2}_DRAFT_(\d+)$/,
+      );
       if (baseRefMatch) {
         const baseRef = baseRefMatch[1];
         const draftNumber = baseRefMatch[2];
@@ -607,7 +650,9 @@ export async function updateCompleted(
 
     // 3. Rebuild ref using the new initiation date, preserving base ref + completed number
     const dateStr = initiationDate.toISOString().split("T")[0];
-    const baseRefMatch = existing.ref.match(/^(.+?)_\d{4}-\d{2}-\d{2}_COMPLETED_(\d+)$/);
+    const baseRefMatch = existing.ref.match(
+      /^(.+?)_\d{4}-\d{2}-\d{2}_COMPLETED_(\d+)$/,
+    );
     let refToSave = existing.ref;
 
     if (baseRefMatch) {
