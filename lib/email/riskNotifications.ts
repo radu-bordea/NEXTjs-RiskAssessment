@@ -1,5 +1,5 @@
-import { resend } from "@/lib/resend"
-import prisma from "@/lib/prisma"
+import { resend } from "@/lib/resend";
+import prisma from "@/lib/prisma";
 
 /**
  * sendRiskNotification — sends an email to all ADMIN/MANAGER users
@@ -19,27 +19,36 @@ export async function sendRiskNotification({
   actorName,
   actorId,
 }: {
-  action: string
-  risk: { id: string; ref: string; workActivity: string; state: string }
-  actorName: string
-  actorId: string
+  action: string;
+  risk: { id: string; ref: string; workActivity: string; state: string };
+  actorName: string;
+  actorId: string;
 }) {
   try {
-    // Get all Admin/Manager users, excluding the person who did the action
+    // // Get all Admin/Manager users, excluding the person who did the action
+    // const recipients = await prisma.user.findMany({
+    //   where: {
+    //     role: { in: ["ADMIN", "MANAGER"] },
+    //     id: { not: actorId },
+    //   },
+    //   select: { email: true },
+    // })
+
+    // Recipients: Managers and Members, including the person who did the action.
+    // ADMIN is excluded for now (client request), so add "ADMIN" here later to include admins.
     const recipients = await prisma.user.findMany({
       where: {
-        role: { in: ["ADMIN", "MANAGER"] },
-        id: { not: actorId },
+        role: { in: ["MANAGER", "MEMBER"] },
       },
       select: { email: true },
-    })
+    });
 
-    if (recipients.length === 0) return
+    if (recipients.length === 0) return;
 
-    const emails = recipients.map((r) => r.email)
+    const emails = recipients.map((r) => r.email);
 
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://marineqhse.com"
-    const riskUrl = `${appUrl}/dashboard/risks/${risk.id}`
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://marineqhse.com";
+    const riskUrl = `${appUrl}/dashboard/risks/${risk.id}`;
 
     await resend.emails.send({
       from: "MarineGuard Notifications <notifications@marineqhse.com>",
@@ -74,9 +83,9 @@ export async function sendRiskNotification({
           </a>
         </div>
       `,
-    })
+    });
   } catch (error) {
     // Log but never throw — email failure should never break the actual DB operation
-    console.error("sendRiskNotification error:", error)
+    console.error("sendRiskNotification error:", error);
   }
 }
