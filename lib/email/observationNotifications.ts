@@ -1,5 +1,5 @@
-import { resend } from "@/lib/resend";
-import prisma from "@/lib/prisma";
+import { resend } from "@/lib/resend"
+import prisma from "@/lib/prisma"
 
 /** Escapes user-typed text before putting it into the email HTML */
 const escapeHtml = (text: string) =>
@@ -7,60 +7,52 @@ const escapeHtml = (text: string) =>
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
+    .replace(/"/g, "&quot;")
 
 /**
- * sendRiskNotification — emails MANAGER and MEMBER users when a Risk
- * event happens (Template created, Draft created, Draft submitted/completed).
+ * sendObservationNotification — emails MANAGER and MEMBER users when
+ * something happens to an Observation Card.
  *
  * Recipients: Managers and Members, including the person who did the action.
  * ADMIN is excluded for now (client request) — add "ADMIN" to the role
  * list below to include admins later.
  *
  * Never throws: an email failure must not break the database operation.
- *
- * @param action - Human-readable action description (e.g. "Template Created")
- * @param risk - The risk record (needs at least: id, ref, workActivity, state)
- * @param actorName - Name/email of the person who did the action
- * @param actorId - Not used for filtering right now. Kept so the actor can be
- *                  excluded again later with: id: { not: actorId }
  */
-export async function sendRiskNotification({
+export async function sendObservationNotification({
   action,
-  risk,
+  observation,
   actorName,
-  actorId,
 }: {
-  action: string;
-  risk: { id: string; ref: string; workActivity: string; state: string };
-  actorName: string;
-  actorId: string;
+  action: string
+  observation: { id: string; title: string; observationDescription: string; state: string }
+  actorName: string
 }) {
   try {
     const recipients = await prisma.user.findMany({
       where: { role: { in: ["MANAGER", "MEMBER"] } },
       select: { email: true },
-    });
+    })
 
-    if (recipients.length === 0) return;
+    if (recipients.length === 0) return
 
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://marineqhse.com";
-    const riskUrl = `${appUrl}/dashboard/risks/${risk.id}`;
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://marineqhse.com"
+    const observationUrl = `${appUrl}/observationdashboard/observations/${observation.id}`
 
     // A deleted record has no page to link to
     const actionBlock =
       action === "Deleted"
         ? `<p style="color:#94a3b8;font-size:13px;">This record has been permanently deleted.</p>`
-        : `<a href="${riskUrl}" style="display:inline-block;background:#1A7A4A;color:white;padding:10px 20px;border-radius:8px;text-decoration:none;font-size:14px;">View Risk Assessment</a>`;
+        : `<a href="${observationUrl}" style="display:inline-block;background:#d97706;color:white;padding:10px 20px;border-radius:8px;text-decoration:none;font-size:14px;">View Observation Card</a>`
 
     const { error } = await resend.emails.send({
       from: "MarineGuard Notifications <notifications@marineqhse.com>",
       to: recipients.map((r) => r.email),
-      subject: `[Risk Assessment] ${action} — ${risk.ref}`,
+      subject: `[Observation Card] ${action} — ${observation.title}`,
       html: `
         <div style="font-family:sans-serif;max-width:500px;margin:0 auto;">
-          <h2 style="color:#1A7A4A;">${escapeHtml(risk.ref)}</h2>
-          <p style="color:#334155;">${escapeHtml(risk.workActivity.slice(0, 200))}</p>
+          <h2 style="color:#d97706;">${escapeHtml(observation.title)}</h2>
+          <p style="color:#334155;">${escapeHtml(observation.observationDescription.slice(0, 200))}</p>
 
           <table style="width:100%;margin:16px 0;border-collapse:collapse;">
             <tr>
@@ -73,7 +65,7 @@ export async function sendRiskNotification({
             </tr>
             <tr>
               <td style="padding:6px 0;color:#94a3b8;font-size:13px;">State</td>
-              <td style="padding:6px 0;">${risk.state}</td>
+              <td style="padding:6px 0;">${observation.state}</td>
             </tr>
             <tr>
               <td style="padding:6px 0;color:#94a3b8;font-size:13px;">Date</td>
@@ -84,11 +76,11 @@ export async function sendRiskNotification({
           ${actionBlock}
         </div>
       `,
-    });
+    })
 
     // Resend returns API errors instead of throwing them, so check explicitly
-    if (error) console.error("sendRiskNotification Resend error:", error);
+    if (error) console.error("sendObservationNotification Resend error:", error)
   } catch (error) {
-    console.error("sendRiskNotification error:", error);
+    console.error("sendObservationNotification error:", error)
   }
 }
