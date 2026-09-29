@@ -10,6 +10,8 @@ import {
   SafetyMeetingFormValues,
 } from "@/lib/validations/safetyMeeting.schema";
 
+import { sendSafetyMeetingNotification } from "@/lib/email/safetyMeetingNotifications";
+
 /**
  * createSafetyMeeting — Creates a new Safety Meeting as COMPLETED
  *
@@ -77,6 +79,17 @@ export async function createSafetyMeeting(data: SafetyMeetingFormValues) {
           create: (values.selectedCardIds ?? []).map((cardId) => ({ cardId })),
         },
       },
+    });
+
+    await sendSafetyMeetingNotification({
+      action: "Toolbox Talk Submitted (Completed)",
+      meeting: {
+        id: meeting.id,
+        projectSurvey: meeting.projectSurvey,
+        activityTask: meeting.activityTask,
+        state: meeting.state,
+      },
+      actorName: user.name ?? user.email,
     });
 
     revalidatePath("/safetymeetingsdashboard");
@@ -155,6 +168,17 @@ export async function saveSafetyMeetingDraft(
           create: (values.selectedCardIds ?? []).map((cardId) => ({ cardId })),
         },
       },
+    });
+
+    await sendSafetyMeetingNotification({
+      action: "Draft Created",
+      meeting: {
+        id: meeting.id,
+        projectSurvey: meeting.projectSurvey,
+        activityTask: meeting.activityTask,
+        state: meeting.state,
+      },
+      actorName: user.name ?? user.email,
     });
 
     revalidatePath("/safetymeetingsdashboard");
@@ -261,6 +285,19 @@ export async function updateSafetyMeeting(
         },
       },
     });
+
+    if (submitAsCompleted) {
+      await sendSafetyMeetingNotification({
+        action: "Draft Submitted (Completed)",
+        meeting: {
+          id: meeting.id,
+          projectSurvey: meeting.projectSurvey,
+          activityTask: meeting.activityTask,
+          state: meeting.state,
+        },
+        actorName: user.name ?? user.email,
+      });
+    }
 
     revalidatePath("/safetymeetingsdashboard");
     return { success: true, id: meeting.id };
