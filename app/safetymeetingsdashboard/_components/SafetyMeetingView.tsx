@@ -6,6 +6,7 @@
  * Follows the same pattern as RiskView/ObservationView — each section
  * only renders if it has data.
  */
+import CardHoverPreview from "./CardHoverPreview";
 
 type SafetyMeetingViewProps = {
   meeting: any;
@@ -197,36 +198,43 @@ export default function SafetyMeetingView({ meeting }: SafetyMeetingViewProps) {
         </div>
       )}
 
-{/* ── Selected Toolbox Talk Cards ──────────────────────────────── */}
-{meeting.selectedCards?.length > 0 && (
-  <div className={sectionClass}>
-    <h2 className={sectionHeadingClass}>Selected Toolbox Talk Cards</h2>
-    <div className="rounded-lg border border-blue-100 dark:border-slate-800 overflow-hidden shadow-sm">
-      {meeting.selectedCards.map((sc: any, index: number) => (
-        <div
-          key={sc.id}
-          className={`flex items-center gap-3 px-4 py-3 transition-colors ${
-            index % 2 === 0
-              ? "bg-white dark:bg-slate-900"
-              : "bg-blue-50/40 dark:bg-slate-900/50"
-          } ${index !== meeting.selectedCards.length - 1 ? "border-b border-blue-50 dark:border-slate-800" : ""}`}
-        >
-          <span className="text-xs font-mono font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 px-2 py-1 rounded-md shrink-0">
-            {sc.card.code}
-          </span>
-          <span className="text-sm text-slate-700 dark:text-slate-200 flex-1 font-medium">
-            {sc.card.title}
-          </span>
-          <div className="flex items-center gap-1.5 flex-wrap shrink-0">
-            {sc.card.tags.map((tag: string) => (
-              <span key={tag} className={tagClass}>{tag}</span>
+      {/* ── Selected Toolbox Talk Cards ──────────────────────────────── */}
+      {meeting.selectedCards?.length > 0 && (
+        <div className={sectionClass}>
+          <h2 className={sectionHeadingClass}>Selected Toolbox Talk Cards</h2>
+          <div className="rounded-lg border border-blue-100 dark:border-slate-800 overflow-hidden shadow-sm">
+            {meeting.selectedCards.map((sc: any, index: number) => (
+              <div
+                key={sc.id}
+                className={`flex items-center gap-3 px-4 py-3 transition-colors ${
+                  index % 2 === 0
+                    ? "bg-white dark:bg-slate-900"
+                    : "bg-blue-50/40 dark:bg-slate-900/50"
+                } ${index !== meeting.selectedCards.length - 1 ? "border-b border-blue-50 dark:border-slate-800" : ""}`}
+              >
+                <CardHoverPreview
+                  imageUrl={sc.card.imageUrl}
+                  title={sc.card.title}
+                >
+                  <span className="text-xs font-mono font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 px-2 py-1 rounded-md shrink-0 cursor-help">
+                    {sc.card.code}
+                  </span>
+                </CardHoverPreview>
+                <span className="text-sm text-slate-700 dark:text-slate-200 flex-1 font-medium">
+                  {sc.card.title}
+                </span>
+                <div className="flex items-center gap-1.5 flex-wrap shrink-0">
+                  {sc.card.tags.map((tag: string) => (
+                    <span key={tag} className={tagClass}>
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              </div>
             ))}
           </div>
         </div>
-      ))}
-    </div>
-  </div>
-)}
+      )}
 
       {/* ── Confirm with the Team ────────────────────────────────────── */}
       {(meeting.teamConfirmations?.length > 0 ||

@@ -54,6 +54,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { TOOLBOX_DEPARTMENTS } from "@/lib/toolboxDepartments";
+import ManualDialogButton from "./ManualDialogButton";
 
 type CurrentUser = {
   id: string;
@@ -698,18 +699,21 @@ export default function SafetyMeetingForm({ meeting, currentUser }: Props) {
 
       {/* ── Section — Select Toolbox Talk Cards ─────────────────────────── */}
       <div className={sectionClass}>
-        <div className="flex items-center justify-between -mx-6 -mt-6 mb-5 px-6 py-3 rounded-t-xl bg-blue-300 dark:bg-blue-700">
+        <div className="flex flex-col gap-2 sm:flex-row items-center justify-between -mx-6 -mt-6 mb-5 px-6 py-3 rounded-t-xl bg-blue-300 dark:bg-blue-700">
           <h2 className="text-xs font-bold uppercase tracking-widest text-blue-900 dark:text-white">
             Select Toolbox Talk Cards
           </h2>
-          <Button
-            type="button"
-            size="sm"
-            onClick={onUploadClick}
-            className="bg-white hover:bg-blue-50 text-blue-900 border border-blue-300 text-xs cursor-pointer"
-          >
-            📤 Upload New Card
-          </Button>
+          <div className="flex items-center gap-2">
+            <ManualDialogButton className="bg-white hover:bg-blue-50 text-blue-900 border border-blue-300 text-xs cursor-pointer" />
+            <Button
+              type="button"
+              size="sm"
+              onClick={onUploadClick}
+              className="bg-white hover:bg-blue-50 text-blue-900 border border-blue-300 text-xs cursor-pointer"
+            >
+              📤 Upload New Card
+            </Button>
+          </div>
         </div>
 
         {/* Filters */}
@@ -727,7 +731,7 @@ export default function SafetyMeetingForm({ meeting, currentUser }: Props) {
                 key={dept.value}
                 type="button"
                 onClick={() => setCardDepartmentFilter(dept.value)}
-                className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
+                className={`text-xs px-3 py-1.5 rounded-full border cursor-pointer transition-colors ${
                   cardDepartmentFilter === dept.value
                     ? "bg-blue-400 text-white border-blue-400"
                     : "bg-white text-blue-700 border-blue-200 hover:bg-blue-50"
@@ -745,7 +749,7 @@ export default function SafetyMeetingForm({ meeting, currentUser }: Props) {
             return (
               <div
                 key={card.id}
-                className="flex items-center justify-between gap-4 py-3"
+                className="flex flex-col gap-2 py-3 md:flex-row md:items-center md:gap-4"
               >
                 <span className="text-xs font-mono font-semibold text-blue-600 dark:text-blue-400 w-16 shrink-0">
                   {card.code}
@@ -753,43 +757,45 @@ export default function SafetyMeetingForm({ meeting, currentUser }: Props) {
                 <span className="text-sm text-slate-700 dark:text-slate-200 flex-1 min-w-0">
                   {card.title}
                 </span>
-                <div className="flex items-center gap-1.5 shrink-0">
+                <div className="flex flex-wrap items-center gap-1.5 min-w-0 md:max-w-[40%]">
                   {card.tags.map((tag) => (
                     <span
                       key={tag}
-                      className="text-[10px] px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 border border-blue-100 dark:border-slate-700"
+                      className="text-[10px] px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 border border-blue-100 dark:border-slate-700 break-words"
                     >
                       {tag}
                     </span>
                   ))}
                 </div>
-                <button
-                  type="button"
-                  onClick={() =>
-                    setPreviewCard({
-                      code: card.code,
-                      title: card.title,
-                      department: card.department,
-                      image: card.imageUrl ?? "/assets/images/logo2.png",
-                      tags: card.tags,
-                    })
-                  }
-                  className="text-xs text-blue-600 hover:text-blue-800 dark:text-blue-400 underline shrink-0 cursor-pointer"
-                >
-                  Preview
-                </button>
-                <Button
-                  type="button"
-                  size="sm"
-                  onClick={() => toggleCardSelection(card.id)}
-                  className={`text-xs shrink-0 cursor-pointer ${
-                    isSelected
-                      ? "bg-blue-500 hover:bg-blue-600 text-white"
-                      : "bg-white hover:bg-blue-50 text-blue-900 border border-blue-300"
-                  }`}
-                >
-                  {isSelected ? "✓ Selected" : "+ Add"}
-                </Button>
+                <div className="flex items-center gap-3 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setPreviewCard({
+                        code: card.code,
+                        title: card.title,
+                        department: card.department,
+                        image: card.imageUrl ?? "/assets/images/logo2.png",
+                        tags: card.tags,
+                      })
+                    }
+                    className="text-xs text-blue-600 hover:text-blue-800 dark:text-blue-400 underline shrink-0 cursor-pointer"
+                  >
+                    Preview
+                  </button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={() => toggleCardSelection(card.id)}
+                    className={`text-xs shrink-0 cursor-pointer ${
+                      isSelected
+                        ? "bg-blue-500 hover:bg-blue-600 text-white"
+                        : "bg-white hover:bg-blue-50 text-blue-900 border border-blue-300"
+                    }`}
+                  >
+                    {isSelected ? "✓ Selected" : "+ Add"}
+                  </Button>
+                </div>
               </div>
             );
           })}
