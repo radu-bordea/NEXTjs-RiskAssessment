@@ -53,6 +53,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { TOOLBOX_DEPARTMENTS } from "@/lib/toolboxDepartments";
 
 type CurrentUser = {
   id: string;
@@ -228,16 +229,14 @@ export default function SafetyMeetingForm({ meeting, currentUser }: Props) {
   /** Selected department filter — "All" shows everything */
   const [cardDepartmentFilter, setCardDepartmentFilter] = useState("All");
 
-  /** Unique departments from current card data, for filter buttons */
-  const availableDepartments = [
-    "All",
-    ...Array.from(
-      new Set(cards.map((c) => c.department).filter((d): d is string => !!d)),
-    ),
+  /** Unique departments for filter buttons */
+  const departmentFilters = [
+    { value: "All", label: "All" },
+    ...TOOLBOX_DEPARTMENTS,
   ];
 
-  /** Filteblue cards based on search + department */
-  const filteblueCards = cards.filter((card) => {
+  /** Filtered cards based on search + department */
+  const filterBlueCards = cards.filter((card) => {
     const matchesSearch =
       !cardSearchQuery ||
       card.title.toLowerCase().includes(cardSearchQuery.toLowerCase()) ||
@@ -382,49 +381,51 @@ export default function SafetyMeetingForm({ meeting, currentUser }: Props) {
     }
   };
 
-const onSaveDraft = async () => {
-  setDraftLoading(true)
-  try {
-    const emptyToUndefined = (val: string) => (val === "" ? undefined : val)
+  const onSaveDraft = async () => {
+    setDraftLoading(true);
+    try {
+      const emptyToUndefined = (val: string) => (val === "" ? undefined : val);
 
-    const payload = {
-      projectSurvey,
-      contractNo,
-      vesselInstallation,
-      date: date ? new Date(date) : undefined,
-      locationAreaDeck: emptyToUndefined(locationAreaDeck),
-      startTime: emptyToUndefined(startTime),
-      expectedFinish,
-      activityTask: emptyToUndefined(activityTask),
-      toolboxTalkLeader: emptyToUndefined(toolboxTalkLeader),
-      taskObjective: emptyToUndefined(taskObjective),
-      firstTimeNonRoutine,
-      simopsInvolved,
-      ...operationalContext,
-      ...responsibleInterfaces,
-      responsibleInterfacesOther,
-      teamConfirmations,
-      teamConfirmationsOther,
-      selectedCardIds: selectedCards,
-      teamMembers: teamMembers.filter((m) => m.name.trim() !== "").map((m) => ({ name: m.name })),
+      const payload = {
+        projectSurvey,
+        contractNo,
+        vesselInstallation,
+        date: date ? new Date(date) : undefined,
+        locationAreaDeck: emptyToUndefined(locationAreaDeck),
+        startTime: emptyToUndefined(startTime),
+        expectedFinish,
+        activityTask: emptyToUndefined(activityTask),
+        toolboxTalkLeader: emptyToUndefined(toolboxTalkLeader),
+        taskObjective: emptyToUndefined(taskObjective),
+        firstTimeNonRoutine,
+        simopsInvolved,
+        ...operationalContext,
+        ...responsibleInterfaces,
+        responsibleInterfacesOther,
+        teamConfirmations,
+        teamConfirmationsOther,
+        selectedCardIds: selectedCards,
+        teamMembers: teamMembers
+          .filter((m) => m.name.trim() !== "")
+          .map((m) => ({ name: m.name })),
+      };
+
+      const result = isEditMode
+        ? await updateSafetyMeeting(meeting.id, payload, false)
+        : await saveSafetyMeetingDraft(payload);
+
+      if (result.success) {
+        toast.success("Draft saved!");
+        router.push("/safetymeetingsdashboard");
+      } else {
+        toast.error(result.error ?? "Failed to save draft");
+      }
+    } catch {
+      toast.error("Something went wrong");
+    } finally {
+      setDraftLoading(false);
     }
-
-    const result = isEditMode
-      ? await updateSafetyMeeting(meeting.id, payload, false)
-      : await saveSafetyMeetingDraft(payload)
-
-    if (result.success) {
-      toast.success("Draft saved!")
-      router.push("/safetymeetingsdashboard")
-    } else {
-      toast.error(result.error ?? "Failed to save draft")
-    }
-  } catch {
-    toast.error("Something went wrong")
-  } finally {
-    setDraftLoading(false)
-  }
-}
+  };
 
   const onUploadClick = () => {
     setCreateCardOpen(true);
@@ -433,6 +434,11 @@ const onSaveDraft = async () => {
   const onCreateCard = async () => {
     if (!newCardCode || !newCardTitle) {
       toast.error("Code and Title are requiblue");
+      return;
+    }
+
+    if (!newCardDepartment) {
+      toast.error("Department is required");
       return;
     }
 
@@ -716,25 +722,25 @@ const onSaveDraft = async () => {
             className="w-full px-3 py-2 rounded-lg border border-blue-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
           />
           <div className="flex flex-wrap gap-2">
-            {availableDepartments.map((dept) => (
+            {departmentFilters.map((dept) => (
               <button
-                key={dept}
+                key={dept.value}
                 type="button"
-                onClick={() => setCardDepartmentFilter(dept)}
+                onClick={() => setCardDepartmentFilter(dept.value)}
                 className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
-                  cardDepartmentFilter === dept
+                  cardDepartmentFilter === dept.value
                     ? "bg-blue-400 text-white border-blue-400"
                     : "bg-white text-blue-700 border-blue-200 hover:bg-blue-50"
                 }`}
               >
-                {dept}
+                {dept.label}
               </button>
             ))}
           </div>
         </div>
 
         <div className="max-h-100 overflow-y-auto divide-y divide-blue-50 dark:divide-slate-800">
-          {filteblueCards.map((card) => {
+          {filterBlueCards.map((card) => {
             const isSelected = selectedCards.includes(card.id);
             return (
               <div
@@ -917,13 +923,19 @@ const onSaveDraft = async () => {
               />
             </div>
             <div>
-              <label className={labelClass}>Department</label>
-              <Input
+              <label className={labelClass}>Department *</label>
+              <select
                 value={newCardDepartment}
                 onChange={(e) => setNewCardDepartment(e.target.value)}
-                placeholder="e.g. Survey, Deck, Engine"
-                className={inputStyle}
-              />
+                className="w-full px-3 py-2 rounded-lg border border-blue-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+              >
+                <option value="">— Select department —</option>
+                {TOOLBOX_DEPARTMENTS.map((d) => (
+                  <option key={d.value} value={d.value}>
+                    {d.label}
+                  </option>
+                ))}
+              </select>
             </div>
             <div>
               <label className={labelClass}>Tags (comma separated)</label>

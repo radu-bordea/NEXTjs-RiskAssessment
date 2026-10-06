@@ -1,11 +1,12 @@
-"use server"
+"use server";
 
-import { auth } from "@clerk/nextjs/server"
-import { redirect } from "next/navigation"
-import prisma from "@/lib/prisma"
-import { revalidatePath } from "next/cache"
-import { put } from "@vercel/blob"
-import { toolboxTalkCardSchema } from "@/lib/validations/safetyMeeting.schema"
+import { auth } from "@clerk/nextjs/server";
+import { redirect } from "next/navigation";
+import prisma from "@/lib/prisma";
+import { revalidatePath } from "next/cache";
+import { put } from "@vercel/blob";
+import { toolboxTalkCardSchema } from "@/lib/validations/safetyMeeting.schema";
+import { TOOLBOX_DEPARTMENTS } from "@/lib/toolboxDepartments";
 
 /**
  * getToolboxTalkCards — Fetches all reusable cards for the selection list
@@ -13,14 +14,14 @@ import { toolboxTalkCardSchema } from "@/lib/validations/safetyMeeting.schema"
  * All roles can view.
  */
 export async function getToolboxTalkCards() {
-  const { userId } = await auth()
-  if (!userId) redirect("/sign-in")
+  const { userId } = await auth();
+  if (!userId) redirect("/sign-in");
 
   const cards = await prisma.toolboxTalkCard.findMany({
     orderBy: { code: "asc" },
-  })
+  });
 
-  return cards
+  return cards;
 }
 
 /**
@@ -35,55 +36,78 @@ export async function getToolboxTalkCards() {
  * @param formData - FormData containing code, title, tags (comma separated), and the image file
  */
 export async function createToolboxTalkCard(formData: FormData) {
-  const { userId } = await auth()
-  if (!userId) redirect("/sign-in")
+  const { userId } = await auth();
+  if (!userId) redirect("/sign-in");
 
-  const user = await prisma.user.findUnique({ where: { id: userId } })
-  if (!user) return { success: false, error: "User not found" }
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user) return { success: false, error: "User not found" };
 
   if (user.role !== "ADMIN") {
-    return { success: false, error: "Only Admin can create toolbox talk cards" }
+    return {
+      success: false,
+      error: "Only Admin can create toolbox talk cards",
+    };
   }
 
-  const code  = formData.get("code") as string
-  const title = formData.get("title") as string
-  const department = formData.get("department") as string
-  const tagsRaw = formData.get("tags") as string
-  const tags = tagsRaw ? tagsRaw.split(",").map((t) => t.trim()).filter(Boolean) : []
-  const imageFile = formData.get("image") as File | null
+  const code = formData.get("code") as string;
+  const title = formData.get("title") as string;
+  const department = formData.get("department") as string;
+  const tagsRaw = formData.get("tags") as string;
+  const tags = tagsRaw
+    ? tagsRaw
+        .split(",")
+        .map((t) => t.trim())
+        .filter(Boolean)
+    : [];
+  const imageFile = formData.get("image") as File | null;
 
-  const validated = toolboxTalkCardSchema.safeParse({ code, title, department, tags })
+  // Only the 5 approved departments are accepted
+  const validDepartments = TOOLBOX_DEPARTMENTS.map((d) => d.value);
+  if (!department || !validDepartments.includes(department)) {
+    return { success: false, error: "Please select a valid department" };
+  }
+
+  const validated = toolboxTalkCardSchema.safeParse({
+    code,
+    title,
+    department,
+    tags,
+  });
   if (!validated.success) {
-    console.log("Zod validation errors:", validated.error.flatten())
-    return { success: false, error: "Validation failed" }
+    console.log("Zod validation errors:", validated.error.flatten());
+    return { success: false, error: "Validation failed" };
   }
 
   try {
-    let imageUrl: string | null = null
+    let imageUrl: string | null = null;
 
     // Upload image to Vercel Blob if provided
     if (imageFile && imageFile.size > 0) {
-      const blob = await put(`cards/${code}-${Date.now()}-${imageFile.name}`, imageFile, {
-        access: "public",
-      })
-      imageUrl = blob.url
+      const blob = await put(
+        `cards/${code}-${Date.now()}-${imageFile.name}`,
+        imageFile,
+        {
+          access: "public",
+        },
+      );
+      imageUrl = blob.url;
     }
 
     const card = await prisma.toolboxTalkCard.create({
       data: {
-        code:     validated.data.code,
-        title:    validated.data.title,
-         department: validated.data.department ?? null,  // ← add
-        tags:     validated.data.tags,
+        code: validated.data.code,
+        title: validated.data.title,
+        department: validated.data.department ?? null, // ← add
+        tags: validated.data.tags,
         imageUrl,
       },
-    })
+    });
 
-    revalidatePath("/safetymeetingsdashboard")
-    return { success: true, id: card.id }
+    revalidatePath("/safetymeetingsdashboard");
+    return { success: true, id: card.id };
   } catch (error) {
-    console.error("createToolboxTalkCard error:", error)
-    return { success: false, error: "Failed to create card" }
+    console.error("createToolboxTalkCard error:", error);
+    return { success: false, error: "Failed to create card" };
   }
 }
 
@@ -95,22 +119,25 @@ export async function createToolboxTalkCard(formData: FormData) {
  * cleanup later if storage usage becomes a concern.
  */
 export async function deleteToolboxTalkCard(id: string) {
-  const { userId } = await auth()
-  if (!userId) redirect("/sign-in")
+  const { userId } = await auth();
+  if (!userId) redirect("/sign-in");
 
-  const user = await prisma.user.findUnique({ where: { id: userId } })
-  if (!user) return { success: false, error: "User not found" }
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user) return { success: false, error: "User not found" };
 
   if (user.role !== "ADMIN") {
-    return { success: false, error: "Only Admin can delete toolbox talk cards" }
+    return {
+      success: false,
+      error: "Only Admin can delete toolbox talk cards",
+    };
   }
 
   try {
-    await prisma.toolboxTalkCard.delete({ where: { id } })
-    revalidatePath("/safetymeetingsdashboard")
-    return { success: true }
+    await prisma.toolboxTalkCard.delete({ where: { id } });
+    revalidatePath("/safetymeetingsdashboard");
+    return { success: true };
   } catch (error) {
-    console.error("deleteToolboxTalkCard error:", error)
-    return { success: false, error: "Failed to delete card" }
+    console.error("deleteToolboxTalkCard error:", error);
+    return { success: false, error: "Failed to delete card" };
   }
 }
