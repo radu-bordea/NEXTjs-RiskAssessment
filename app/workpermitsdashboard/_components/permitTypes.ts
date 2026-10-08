@@ -41,7 +41,7 @@ export const PERMIT_TYPES: {
     icon: "🚪",
     description: "Entry into tanks, void spaces, cofferdams and other enclosed spaces.",
     href: `${WORK_PERMITS_BASE}/new/confined-space`,
-    ready: false,
+    ready: true,
     cardStyle: "border-violet-200 hover:border-violet-400 dark:border-violet-900/50 dark:hover:border-violet-700",
     iconStyle: "bg-violet-100 dark:bg-violet-900/30",
   },

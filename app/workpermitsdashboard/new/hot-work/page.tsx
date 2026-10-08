@@ -1,4 +1,4 @@
-import HotWorkPermitForm from "../../_components/hotWorkPermitForm";
+import HotWorkPermitForm from "../../_components/HotWorkPermitForm";
 
 
 /**

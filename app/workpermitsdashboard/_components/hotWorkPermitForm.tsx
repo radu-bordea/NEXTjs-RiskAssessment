@@ -10,6 +10,9 @@
  *  4. Related permits         9. Authorization & acknowledgement
  *  5. Check section (1–11)   10. After issue (filled in later)
  *
+ * Shared UI pieces (Section, Field, inputs, buttons) come from permitFormUI.tsx.
+ * Only YesNoNa + QuestionRow live here — Hot Work is the only Yes/No/N/A form.
+ *
  * Not connected to DB yet — Save Draft / Issue Permit only console.log.
  * Next steps: Zod schema → server actions → Prisma.
  */
@@ -25,6 +28,18 @@ import {
   type Answer,
 } from "./hotWorkOptions"
 import { WORK_PERMITS_BASE } from "./permitTypes"
+import {
+  AddButton,
+  CheckItem,
+  Counter,
+  FORM_WIDTH,
+  Field,
+  RemoveButton,
+  Section,
+  addHours,
+  hoursBetween,
+  inputCls,
+} from "./permitFormUI"
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 type FormState = {
@@ -72,24 +87,7 @@ type FormState = {
 
 type AnswerOption = Exclude<Answer, "">
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
-const pad = (n: number) => String(n).padStart(2, "0")
-
-/** Date → "YYYY-MM-DDTHH:mm" for <input type="datetime-local"> */
-function toInputValue(d: Date) {
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
-}
-
-function addHours(value: string, hours: number) {
-  const d = new Date(value)
-  if (Number.isNaN(d.getTime())) return ""
-  return toInputValue(new Date(d.getTime() + hours * 3_600_000))
-}
-
-function hoursBetween(from: string, to: string) {
-  return (new Date(to).getTime() - new Date(from).getTime()) / 3_600_000
-}
-
+// ─── Initial state ───────────────────────────────────────────────────────────
 const emptyAnswers = (items: readonly { id: string }[]) =>
   Object.fromEntries(items.map((i) => [i.id, ""])) as Record<string, Answer>
 
@@ -128,64 +126,7 @@ const initialState: FormState = {
   closeOutAt: "",
 }
 
-const inputCls =
-  "w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-
-// ─── Small UI pieces ─────────────────────────────────────────────────────────
-function Section({
-  number,
-  title,
-  subtitle,
-  right,
-  children,
-}: {
-  number: number
-  title: string
-  subtitle?: string
-  right?: ReactNode
-  children: ReactNode
-}) {
-  return (
-    <section className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
-      <header className="flex items-center gap-3 px-5 py-3 border-b border-slate-200 dark:border-slate-800 bg-blue-50 dark:bg-blue-950/40 rounded-t-xl">
-        <span className="w-7 h-7 shrink-0 rounded-full bg-blue-900 text-white text-xs font-bold flex items-center justify-center">
-          {number}
-        </span>
-        <div className="flex-1 min-w-0">
-          <h2 className="text-sm font-semibold text-blue-900 dark:text-blue-300 uppercase tracking-wide">
-            {title}
-          </h2>
-          {subtitle && <p className="text-xs text-slate-500 dark:text-slate-400">{subtitle}</p>}
-        </div>
-        {right}
-      </header>
-      <div className="p-5">{children}</div>
-    </section>
-  )
-}
-
-function Field({
-  label,
-  required,
-  className = "",
-  children,
-}: {
-  label: string
-  required?: boolean
-  className?: string
-  children: ReactNode
-}) {
-  return (
-    <label className={`block ${className}`}>
-      <span className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">
-        {label}
-        {required && <span className="text-red-500"> *</span>}
-      </span>
-      {children}
-    </label>
-  )
-}
-
+// ─── Yes / No / N/A (Hot Work only) ──────────────────────────────────────────
 const ANSWER_LABEL: Record<AnswerOption, string> = { YES: "Yes", NO: "No", NA: "N/A" }
 const ANSWER_ACTIVE: Record<AnswerOption, string> = {
   YES: "bg-emerald-600 text-white",
@@ -220,7 +161,7 @@ function YesNoNa({
             role="radio"
             aria-checked={active}
             onClick={() => onChange(active ? "" : opt)}
-            className={`min-w-[52px] px-3 py-1.5 text-xs font-semibold transition-colors cursor-pointer ${
+            className={`min-w-[60px] px-3 py-1.5 text-sm font-semibold transition-colors cursor-pointer ${
               i > 0 ? "border-l border-slate-300 dark:border-slate-700" : ""
             } ${
               active
@@ -247,7 +188,7 @@ function QuestionRow({
 }) {
   return (
     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 py-3 border-b border-slate-100 dark:border-slate-800 last:border-0">
-      <p className="text-sm text-slate-700 dark:text-slate-300">
+      <p className="text-base text-slate-700 dark:text-slate-300">
         {number !== undefined && (
           <span className="inline-block w-6 font-semibold text-blue-900 dark:text-blue-400">{number}.</span>
         )}
@@ -357,7 +298,7 @@ export default function HotWorkPermitForm() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8 pb-32">
+    <div className={`${FORM_WIDTH} mx-auto px-4 sm:px-6 py-8 pb-32`}>
 
       {/* ── Top bar ──────────────────────────────────────────────── */}
       <Link
@@ -374,14 +315,14 @@ export default function HotWorkPermitForm() {
           </div>
           <div>
             <h1 className="text-2xl font-bold text-blue-900 dark:text-blue-400">Hot Work Permit</h1>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
+            <p className="text-sm text-slate-500 dark:text-slate-400">
               Form 34 · Revision 001 · Last revised 20.05.25
             </p>
           </div>
         </div>
       </div>
 
-      <p className="text-xs text-slate-600 dark:text-slate-400 mb-3">
+      <p className="text-sm text-slate-600 dark:text-slate-400 mb-3">
         This permit relates to any work involving temperatures likely to cause ignition of
         combustible gases, vapours or liquids in or adjacent to the area involved.
       </p>
@@ -449,25 +390,12 @@ export default function HotWorkPermitForm() {
                   aria-label={`Person ${i + 1}`}
                 />
                 {form.workers.length > 1 && (
-                  <button
-                    type="button"
-                    onClick={() => removeWorker(i)}
-                    className="px-3 rounded-lg border border-slate-300 dark:border-slate-700 text-slate-500 hover:text-red-600 hover:border-red-300 cursor-pointer"
-                    aria-label={`Remove person ${i + 1}`}
-                  >
-                    ✕
-                  </button>
+                  <RemoveButton label={`Remove person ${i + 1}`} onClick={() => removeWorker(i)} />
                 )}
               </div>
             ))}
           </div>
-          <button
-            type="button"
-            onClick={addWorker}
-            className="mt-3 text-sm font-medium text-blue-700 dark:text-blue-400 hover:underline cursor-pointer"
-          >
-            + Add person
-          </button>
+          <AddButton onClick={addWorker}>+ Add person</AddButton>
         </Section>
 
         {/* 3 ── Validity ────────────────────────────────────────── */}
@@ -522,11 +450,7 @@ export default function HotWorkPermitForm() {
         <Section
           number={5}
           title="Check section"
-          right={
-            <span className="text-xs font-semibold text-blue-900 dark:text-blue-300 whitespace-nowrap">
-              {checksAnswered}/{HOT_WORK_CHECKS.length}
-            </span>
-          }
+          right={<Counter done={checksAnswered} total={HOT_WORK_CHECKS.length} />}
         >
           {HOT_WORK_CHECKS.map((c, i) => (
             <QuestionRow key={c.id} number={i + 1} label={c.label}>
@@ -603,11 +527,7 @@ export default function HotWorkPermitForm() {
           number={8}
           title="Fire prevention measures"
           subtitle="Item 14"
-          right={
-            <span className="text-xs font-semibold text-blue-900 dark:text-blue-300 whitespace-nowrap">
-              {fireAnswered}/{FIRE_PREVENTION_MEASURES.length}
-            </span>
-          }
+          right={<Counter done={fireAnswered} total={FIRE_PREVENTION_MEASURES.length} />}
         >
           {FIRE_PREVENTION_MEASURES.map((m) => (
             <QuestionRow key={m.id} label={m.label}>
@@ -630,23 +550,18 @@ export default function HotWorkPermitForm() {
             </Field>
           </div>
 
-          <label className="mt-4 flex items-start gap-3 rounded-lg border border-slate-200 dark:border-slate-800 p-3 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50">
-            <input type="checkbox" className="mt-0.5 h-4 w-4 accent-blue-900" checked={form.authorizationConfirmed} onChange={(e) => set("authorizationConfirmed", e.target.checked)} />
-            <span className="text-sm text-slate-700 dark:text-slate-300">
+          <div className="mt-4 space-y-3">
+            <CheckItem checked={form.authorizationConfirmed} onChange={(v) => set("authorizationConfirmed", v)}>
               Master / Supervisor fully satisfied that all safety checks and precautions have been taken
               and will be maintained for the duration of the hot work.
-            </span>
-          </label>
-
-          <label className="mt-3 flex items-start gap-3 rounded-lg border border-slate-200 dark:border-slate-800 p-3 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50">
-            <input type="checkbox" className="mt-0.5 h-4 w-4 accent-blue-900" checked={form.workersAcknowledged} onChange={(e) => set("workersAcknowledged", e.target.checked)} />
-            <span className="text-sm text-slate-700 dark:text-slate-300">
+            </CheckItem>
+            <CheckItem checked={form.workersAcknowledged} onChange={(v) => set("workersAcknowledged", v)}>
               Persons carrying out hot work
               {namedWorkers.length > 0 && <strong> ({namedWorkers.join(", ")})</strong>} acknowledge
               understanding the safety procedures, precautions taken and the emergency procedures for
               this task.
-            </span>
-          </label>
+            </CheckItem>
+          </div>
         </Section>
 
         {/* 10 ── Work progress & close-out ─────────────────────── */}
@@ -690,11 +605,11 @@ export default function HotWorkPermitForm() {
             <label className="flex items-start gap-3 cursor-pointer">
               <input
                 type="checkbox"
-                className="mt-0.5 h-4 w-4 accent-emerald-700"
+                className="mt-1 h-4 w-4 accent-emerald-700"
                 checked={form.closeOutConfirmed}
                 onChange={(e) => set("closeOutConfirmed", e.target.checked)}
               />
-              <span className="text-sm text-slate-700 dark:text-slate-300">
+              <span className="text-base text-slate-700 dark:text-slate-300">
                 The work has been completed and all persons under my supervision, materials and
                 equipment have been withdrawn.
               </span>
@@ -730,7 +645,7 @@ export default function HotWorkPermitForm() {
 
       {/* ── Sticky action bar ─────────────────────────────────────── */}
       <div className="fixed bottom-0 inset-x-0 border-t border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-950/95 backdrop-blur">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-end gap-3">
+        <div className={`${FORM_WIDTH} mx-auto px-4 sm:px-6 py-3 flex items-center justify-end gap-3`}>
           <button
             type="button"
             onClick={handleSaveDraft}
