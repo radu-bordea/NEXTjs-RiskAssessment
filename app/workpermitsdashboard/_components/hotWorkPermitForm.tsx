@@ -695,7 +695,7 @@ export default function HotWorkPermitForm() {
                 onChange={(e) => set("closeOutConfirmed", e.target.checked)}
               />
               <span className="text-sm text-slate-700 dark:text-slate-300">
-                ✅ The work has been completed and all persons under my supervision, materials and
+                The work has been completed and all persons under my supervision, materials and
                 equipment have been withdrawn.
               </span>
             </label>
