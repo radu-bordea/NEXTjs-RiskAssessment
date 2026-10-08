@@ -61,6 +61,13 @@ type FormState = {
   supervisorName: string
   authorizationConfirmed: boolean
   workersAcknowledged: boolean
+  // 10. After issue (optional when creating)
+  workCommencedAt: string
+  extensionTo: string
+  workCompletedAt: string
+  closeOutConfirmed: boolean
+  closeOutOfficer: string
+  closeOutAt: string
 }
 
 type AnswerOption = Exclude<Answer, "">
@@ -113,6 +120,12 @@ const initialState: FormState = {
   supervisorName: "",
   authorizationConfirmed: false,
   workersAcknowledged: false,
+  workCommencedAt: "",
+  extensionTo: "",
+  workCompletedAt: "",
+  closeOutConfirmed: false,
+  closeOutOfficer: "",
+  closeOutAt: "",
 }
 
 const inputCls =
@@ -315,6 +328,13 @@ export default function HotWorkPermitForm() {
     if (!form.supervisorName.trim()) e.push("Supervisor name is required")
     if (!form.authorizationConfirmed) e.push("Master / Supervisor must confirm all safety checks")
     if (!form.workersAcknowledged) e.push("Persons carrying out hot work must acknowledge the procedures")
+    // Section 10 is optional, but if filled it must make sense
+    if (form.extensionTo && form.validTo && form.extensionTo <= form.validTo)
+      e.push("Extension must end after the original 'Valid to' time")
+    if (form.workCommencedAt && form.workCompletedAt && form.workCompletedAt <= form.workCommencedAt)
+      e.push("Work completed must be after work commenced")
+    if (form.closeOutConfirmed && (!form.closeOutOfficer.trim() || !form.closeOutAt))
+      e.push("Close-out needs the officer's name and date/time")
     return e
   }
 
@@ -629,24 +649,82 @@ export default function HotWorkPermitForm() {
           </label>
         </Section>
 
-        {/* 10 ── After issue (info only) ────────────────────────── */}
-        <Section number={10} title="After the permit is issued" subtitle="Filled in later from the permit's page">
-          <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-            {[
-              { icon: "▶️", t: "Work commenced", d: "Date and time work starts" },
-              { icon: "⏩", t: "Extension granted", d: `Extend up to a new end time (max ${HOT_WORK_MAX_HOURS} hrs)` },
-              { icon: "🏁", t: "Work completed", d: "Date and time work ends" },
-              { icon: "✅", t: "Close-out", d: "Officer in charge confirms people, materials and equipment withdrawn" },
-            ].map((s) => (
-              <li key={s.t} className="flex gap-3 rounded-lg bg-slate-50 dark:bg-slate-800/50 p-3">
-                <span aria-hidden>{s.icon}</span>
-                <div>
-                  <p className="font-medium text-slate-800 dark:text-slate-200">{s.t}</p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">{s.d}</p>
-                </div>
-              </li>
-            ))}
-          </ul>
+        {/* 10 ── Work progress & close-out ─────────────────────── */}
+        <Section
+          number={10}
+          title="Work progress & close-out"
+          subtitle="Optional when creating — fill in as the work starts, is extended and ends"
+        >
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <Field label="▶️ Work commenced (date & time)">
+              <input
+                type="datetime-local"
+                className={inputCls}
+                value={form.workCommencedAt}
+                min={form.validFrom || undefined}
+                onChange={(e) => set("workCommencedAt", e.target.value)}
+              />
+            </Field>
+            <Field label="⏩ Extension granted to (date & time)">
+              <input
+                type="datetime-local"
+                className={inputCls}
+                value={form.extensionTo}
+                min={form.validTo || undefined}
+                onChange={(e) => set("extensionTo", e.target.value)}
+              />
+            </Field>
+            <Field label="🏁 Work completed (date & time)">
+              <input
+                type="datetime-local"
+                className={inputCls}
+                value={form.workCompletedAt}
+                min={form.workCommencedAt || undefined}
+                onChange={(e) => set("workCompletedAt", e.target.value)}
+              />
+            </Field>
+          </div>
+
+          {/* Close-out */}
+          <div className="mt-5 rounded-lg border border-emerald-200 dark:border-emerald-900/50 bg-emerald-50/50 dark:bg-emerald-950/20 p-4">
+            <label className="flex items-start gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                className="mt-0.5 h-4 w-4 accent-emerald-700"
+                checked={form.closeOutConfirmed}
+                onChange={(e) => set("closeOutConfirmed", e.target.checked)}
+              />
+              <span className="text-sm text-slate-700 dark:text-slate-300">
+                ✅ The work has been completed and all persons under my supervision, materials and
+                equipment have been withdrawn.
+              </span>
+            </label>
+
+            <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Field label="Authorized officer in charge" required={form.closeOutConfirmed}>
+                <input
+                  className={inputCls}
+                  value={form.closeOutOfficer}
+                  onChange={(e) => set("closeOutOfficer", e.target.value)}
+                  placeholder="Full name"
+                />
+              </Field>
+              <Field label="Close-out date & time" required={form.closeOutConfirmed}>
+                <input
+                  type="datetime-local"
+                  className={inputCls}
+                  value={form.closeOutAt}
+                  min={form.workCompletedAt || undefined}
+                  onChange={(e) => set("closeOutAt", e.target.value)}
+                />
+              </Field>
+            </div>
+          </div>
+
+          <p className="mt-4 text-xs italic text-slate-500 dark:text-slate-400">
+            This permit ensures that the work area has been assessed, hazards controlled, and all
+            necessary safety precautions implemented before work commences.
+          </p>
         </Section>
       </div>
 
