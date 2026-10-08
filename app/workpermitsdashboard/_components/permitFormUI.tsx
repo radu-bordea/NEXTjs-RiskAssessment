@@ -3,9 +3,8 @@
 /**
  * permitFormUI — shared UI pieces for all Work Permit forms
  *
- * Used by ConfinedSpacePermitForm (and later Working Aloft).
- * HotWorkPermitForm still has its own copies — we can switch it to
- * import from here later, so the 3 forms always look the same.
+ * Used by HotWorkPermitForm, ConfinedSpacePermitForm (and later Working Aloft),
+ * so all permit forms look the same. Change a style here → all forms change.
  *
  * Sizes: text-base inputs (16px — no zoom on iPhone), text-sm labels.
  */

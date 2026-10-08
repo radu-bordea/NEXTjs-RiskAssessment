@@ -426,6 +426,10 @@ export default function ConfinedSpacePermitForm() {
           <li>has inadequate ventilation;</li>
           <li>is not designed to be continuously occupied by crew members.</li>
         </ul>
+        <p className="mt-2">
+          This permit ensures that the work area has been assessed, hazards controlled, and all
+          necessary safety precautions implemented before work commences.
+        </p>
         <p className="mt-2 font-medium text-slate-700 dark:text-slate-300">
           This permit cannot be issued for more than one enclosed space.
         </p>
@@ -671,11 +675,11 @@ export default function ConfinedSpacePermitForm() {
         </Section>
 
         {/* 9 ── Personnel entering ──────────────────────────────── */}
-        <Section number={9} title="Personnel entering space" subtitle={`Up to ${MAX_PERSONNEL} persons`}>
+        <Section number={9} title="Personnel entering space" subtitle={`Up to ${MAX_PERSONNEL} persons — person 1 is the team leader`}>
           <NameList
             values={form.personnel}
             onChange={(v) => set("personnel", v)}
-            placeholder={(i) => `Person ${i + 1} — full name`}
+            placeholder={(i) => (i === 0 ? "Person 1 — team leader" : `Person ${i + 1} — full name`)}
             addLabel="+ Add person"
             max={MAX_PERSONNEL}
           />
