@@ -52,7 +52,7 @@ export const PERMIT_TYPES: {
     icon: "🪜",
     description: "Work at height on masts and structures, or over the ship's side.",
     href: `${WORK_PERMITS_BASE}/new/working-aloft`,
-    ready: false,
+    ready: true,
     cardStyle: "border-sky-200 hover:border-sky-400 dark:border-sky-900/50 dark:hover:border-sky-700",
     iconStyle: "bg-sky-100 dark:bg-sky-900/30",
   },

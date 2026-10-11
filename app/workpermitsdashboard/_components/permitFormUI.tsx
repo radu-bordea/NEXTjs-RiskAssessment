@@ -171,3 +171,81 @@ export function RemoveButton({ onClick, label }: { onClick: () => void; label: s
     </button>
   )
 }
+
+// ─── Yes / No / N/A answers ──────────────────────────────────────────────────
+/** "" = not answered yet */
+export type Answer = "YES" | "NO" | "NA" | ""
+export type AnswerOption = Exclude<Answer, "">
+
+const ANSWER_LABEL: Record<AnswerOption, string> = { YES: "Yes", NO: "No", NA: "N/A" }
+const ANSWER_ACTIVE: Record<AnswerOption, string> = {
+  YES: "bg-emerald-600 text-white",
+  NO: "bg-red-600 text-white",
+  NA: "bg-slate-500 text-white",
+}
+
+/** Segmented Yes / No / N/A buttons — click again to clear */
+export function YesNoNa({
+  value,
+  onChange,
+  options = ["YES", "NO", "NA"],
+  ariaLabel,
+}: {
+  value: Answer
+  onChange: (v: Answer) => void
+  options?: AnswerOption[]
+  ariaLabel: string
+}) {
+  return (
+    <div
+      role="radiogroup"
+      aria-label={ariaLabel}
+      className="inline-flex shrink-0 rounded-lg border border-slate-300 dark:border-slate-700 overflow-hidden"
+    >
+      {options.map((opt, i) => {
+        const active = value === opt
+        return (
+          <button
+            key={opt}
+            type="button"
+            role="radio"
+            aria-checked={active}
+            onClick={() => onChange(active ? "" : opt)}
+            className={`min-w-[60px] px-3 py-1.5 text-sm font-semibold transition-colors cursor-pointer ${
+              i > 0 ? "border-l border-slate-300 dark:border-slate-700" : ""
+            } ${
+              active
+                ? ANSWER_ACTIVE[opt]
+                : "bg-white dark:bg-slate-900 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800"
+            }`}
+          >
+            {ANSWER_LABEL[opt]}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
+/** One question with its answer buttons on the right (below on mobile) */
+export function QuestionRow({
+  number,
+  label,
+  children,
+}: {
+  number?: number | string
+  label: ReactNode
+  children: ReactNode
+}) {
+  return (
+    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 py-3 border-b border-slate-100 dark:border-slate-800 last:border-0">
+      <p className="text-base text-slate-700 dark:text-slate-300">
+        {number !== undefined && (
+          <span className="inline-block w-6 font-semibold text-blue-900 dark:text-blue-400">{number}.</span>
+        )}
+        {label}
+      </p>
+      {children}
+    </div>
+  )
+}

@@ -10,14 +10,13 @@
  *  4. Related permits         9. Authorization & acknowledgement
  *  5. Check section (1–11)   10. After issue (filled in later)
  *
- * Shared UI pieces (Section, Field, inputs, buttons) come from permitFormUI.tsx.
- * Only YesNoNa + QuestionRow live here — Hot Work is the only Yes/No/N/A form.
+ * All UI pieces (Section, Field, inputs, buttons, Yes/No/N/A) come from permitFormUI.tsx.
  *
  * Not connected to DB yet — Save Draft / Issue Permit only console.log.
  * Next steps: Zod schema → server actions → Prisma.
  */
 
-import { useState, type ReactNode } from "react"
+import { useState } from "react"
 import Link from "next/link"
 import {
   FIRE_PREVENTION_MEASURES,
@@ -38,6 +37,8 @@ import {
   Section,
   addHours,
   hoursBetween,
+  QuestionRow,
+  YesNoNa,
   inputCls,
 } from "./permitFormUI"
 
@@ -85,8 +86,6 @@ type FormState = {
   closeOutAt: string
 }
 
-type AnswerOption = Exclude<Answer, "">
-
 // ─── Initial state ───────────────────────────────────────────────────────────
 const emptyAnswers = (items: readonly { id: string }[]) =>
   Object.fromEntries(items.map((i) => [i.id, ""])) as Record<string, Answer>
@@ -124,79 +123,6 @@ const initialState: FormState = {
   closeOutConfirmed: false,
   closeOutOfficer: "",
   closeOutAt: "",
-}
-
-// ─── Yes / No / N/A (Hot Work only) ──────────────────────────────────────────
-const ANSWER_LABEL: Record<AnswerOption, string> = { YES: "Yes", NO: "No", NA: "N/A" }
-const ANSWER_ACTIVE: Record<AnswerOption, string> = {
-  YES: "bg-emerald-600 text-white",
-  NO: "bg-red-600 text-white",
-  NA: "bg-slate-500 text-white",
-}
-
-/** Segmented Yes / No / N/A — click again to clear */
-function YesNoNa({
-  value,
-  onChange,
-  options = ["YES", "NO", "NA"],
-  ariaLabel,
-}: {
-  value: Answer
-  onChange: (v: Answer) => void
-  options?: AnswerOption[]
-  ariaLabel: string
-}) {
-  return (
-    <div
-      role="radiogroup"
-      aria-label={ariaLabel}
-      className="inline-flex shrink-0 rounded-lg border border-slate-300 dark:border-slate-700 overflow-hidden"
-    >
-      {options.map((opt, i) => {
-        const active = value === opt
-        return (
-          <button
-            key={opt}
-            type="button"
-            role="radio"
-            aria-checked={active}
-            onClick={() => onChange(active ? "" : opt)}
-            className={`min-w-[60px] px-3 py-1.5 text-sm font-semibold transition-colors cursor-pointer ${
-              i > 0 ? "border-l border-slate-300 dark:border-slate-700" : ""
-            } ${
-              active
-                ? ANSWER_ACTIVE[opt]
-                : "bg-white dark:bg-slate-900 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800"
-            }`}
-          >
-            {ANSWER_LABEL[opt]}
-          </button>
-        )
-      })}
-    </div>
-  )
-}
-
-function QuestionRow({
-  number,
-  label,
-  children,
-}: {
-  number?: number | string
-  label: string
-  children: ReactNode
-}) {
-  return (
-    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 py-3 border-b border-slate-100 dark:border-slate-800 last:border-0">
-      <p className="text-base text-slate-700 dark:text-slate-300">
-        {number !== undefined && (
-          <span className="inline-block w-6 font-semibold text-blue-900 dark:text-blue-400">{number}.</span>
-        )}
-        {label}
-      </p>
-      {children}
-    </div>
-  )
 }
 
 // ─── Main form ───────────────────────────────────────────────────────────────
