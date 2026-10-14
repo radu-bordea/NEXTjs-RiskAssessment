@@ -41,6 +41,7 @@ import {
   addHours,
   hoursBetween,
   inputCls,
+  ReadOnlyField,
   newRowId,
 } from "./permitFormUI"
 
@@ -72,7 +73,7 @@ type AtmosphereRow = {
 
 type FormState = {
   // 1. General
-  vessel: string
+  projectVoyage: string
   location: string
   reason: string
   // 2. Validity
@@ -129,7 +130,7 @@ const newAtmosphereRow = (): AtmosphereRow => ({
 })
 
 const initialState: FormState = {
-  vessel: "",
+  projectVoyage: "",
   location: "",
   reason: "",
   validFrom: "",
@@ -267,7 +268,7 @@ function NameList({
 }
 
 // ─── Main form ───────────────────────────────────────────────────────────────
-export default function ConfinedSpacePermitForm() {
+export default function ConfinedSpacePermitForm({ vessel }: { vessel: string }) {
   const [form, setForm] = useState<FormState>(initialState)
   const [errors, setErrors] = useState<string[]>([])
   const [message, setMessage] = useState<string | null>(null)
@@ -332,7 +333,6 @@ export default function ConfinedSpacePermitForm() {
   // ── Validation (only for Issue Permit — drafts can be incomplete) ──
   function validate() {
     const e: string[] = []
-    if (!form.vessel.trim()) e.push("Vessel is required")
     if (!form.location.trim()) e.push("Location / name of enclosed space is required")
     if (!form.reason.trim()) e.push("Reason for entry is required")
     if (!form.validFrom || !form.validTo) e.push("Permit validity (from / to) is required")
@@ -371,7 +371,7 @@ export default function ConfinedSpacePermitForm() {
 
   function handleSaveDraft() {
     setErrors([])
-    console.log("SAVE DRAFT", form)
+    console.log("SAVE DRAFT", { vessel, ...form })
     setMessage("Draft saved (UI only — not stored in the database yet).")
   }
 
@@ -383,7 +383,7 @@ export default function ConfinedSpacePermitForm() {
       window.scrollTo({ top: 0, behavior: "smooth" })
       return
     }
-    console.log("ISSUE PERMIT", form)
+    console.log("ISSUE PERMIT", { vessel, ...form })
     setMessage("Permit ready to issue (UI only — not stored in the database yet).")
   }
 
@@ -466,10 +466,11 @@ export default function ConfinedSpacePermitForm() {
         {/* 1 ── General ─────────────────────────────────────────── */}
         <Section number={1} title="General">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Field label="Vessel" required>
-              <input className={inputCls} value={form.vessel} onChange={(e) => set("vessel", e.target.value)} placeholder="e.g. MV Atlantic Star" />
+            <ReadOnlyField label="Vessel" value={vessel} hint="From your login" />
+            <Field label="Project / Voyage">
+              <input className={inputCls} value={form.projectVoyage} onChange={(e) => set("projectVoyage", e.target.value)} placeholder="e.g. Survey 2026-14" />
             </Field>
-            <Field label="Location / name of enclosed space" required>
+            <Field label="Location / name of enclosed space" required className="sm:col-span-2">
               <input className={inputCls} value={form.location} onChange={(e) => set("location", e.target.value)} placeholder="e.g. Ballast tank 3P" />
             </Field>
             <Field label="Reason for entry" required className="sm:col-span-2">

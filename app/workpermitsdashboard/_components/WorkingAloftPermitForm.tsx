@@ -4,9 +4,9 @@
  * WorkingAloftPermitForm — Working Aloft / Overside Permit (Form 31, Rev 001) — UI only
  *
  * Built from the paper form, reorganised into clear sections:
- *  General (vessel, location, job, TYPE OF WORK)  →  Persons involved  →  Validity
+ *  General (vessel, project/voyage, location, job)  →  Persons involved  →  Validity
  *  → Other permits  →  Section 1: equipment + auxiliary/warnings
- *  → Section 2: aloft and/or overside checks (shown by type of work)
+ *  → Section 2: working aloft checks + working overside checks (always both)
  *  → Authorization  →  Section 3: completion (filled in later)
  *
  * All UI pieces come from permitFormUI.tsx (same look as the other permits).
@@ -21,8 +21,6 @@ import {
   EQUIPMENT_ITEMS,
   OVERSIDE_CHECKS,
   WORKING_ALOFT_MAX_HOURS,
-  WORK_TYPES,
-  type WorkType,
 } from "./workingAloftOptions"
 import { WORK_PERMITS_BASE } from "./permitTypes"
 import {
@@ -38,6 +36,7 @@ import {
   addHours,
   hoursBetween,
   inputCls,
+  ReadOnlyField,
   type Answer,
 } from "./permitFormUI"
 
@@ -47,10 +46,9 @@ type AnswerGroup = "equipment" | "auxiliary" | "aloftChecks" | "oversideChecks"
 
 type FormState = {
   // General
-  vessel: string
+  projectVoyage: string
   location: string
   jobDescription: string
-  workType: WorkType
   persons: string[]
   // Validity
   validFrom: string
@@ -82,10 +80,9 @@ const emptyAnswers = (items: readonly { id: string }[]) =>
   Object.fromEntries(items.map((i) => [i.id, ""])) as Answers
 
 const initialState: FormState = {
-  vessel: "",
+  projectVoyage: "",
   location: "",
   jobDescription: "",
-  workType: "",
   persons: [""],
   validFrom: "",
   validTo: "",
@@ -109,7 +106,7 @@ const initialState: FormState = {
 const countAnswered = (a: Answers) => Object.values(a).filter(Boolean).length
 
 // ─── Main form ───────────────────────────────────────────────────────────────
-export default function WorkingAloftPermitForm() {
+export default function WorkingAloftPermitForm({ vessel }: { vessel: string }) {
   const [form, setForm] = useState<FormState>(initialState)
   const [errors, setErrors] = useState<string[]>([])
   const [message, setMessage] = useState<string | null>(null)
@@ -147,9 +144,6 @@ export default function WorkingAloftPermitForm() {
   const duration = form.validFrom && form.validTo ? hoursBetween(form.validFrom, form.validTo) : null
   const durationError = duration !== null && (duration <= 0 || duration > WORKING_ALOFT_MAX_HOURS)
 
-  const showAloft = form.workType === "ALOFT" || form.workType === "BOTH"
-  const showOverside = form.workType === "OVERSIDE" || form.workType === "BOTH"
-
   const equipmentDone = countAnswered(form.equipment)
   const auxiliaryDone = countAnswered(form.auxiliary)
   const aloftDone = countAnswered(form.aloftChecks)
@@ -161,10 +155,8 @@ export default function WorkingAloftPermitForm() {
   // ── Validation (only for Issue Permit — drafts can be incomplete) ──
   function validate() {
     const e: string[] = []
-    if (!form.vessel.trim()) e.push("Vessel is required")
     if (!form.location.trim()) e.push("Location of work is required")
     if (!form.jobDescription.trim()) e.push("Job description is required")
-    if (!form.workType) e.push("Choose the type of work: aloft, overside or both")
     if (namedPersons.length === 0) e.push("Add at least one person involved")
 
     if (!form.validFrom || !form.validTo) e.push("Permit validity (from / to) is required")
@@ -178,8 +170,8 @@ export default function WorkingAloftPermitForm() {
     if (auxiliaryDone < AUXILIARY_ITEMS.length) e.push("Section 1: answer all auxiliary equipment & warnings items")
     if (form.auxOtherText.trim() && !form.auxOtherAnswer) e.push("Section 1: answer Yes / No for “Other”")
 
-    if (showAloft && aloftDone < ALOFT_CHECKS.length) e.push("Section 2: answer all working aloft questions")
-    if (showOverside && oversideDone < OVERSIDE_CHECKS.length) e.push("Section 2: answer all working overside questions")
+    if (aloftDone < ALOFT_CHECKS.length) e.push("Section 2: answer all working aloft questions")
+    if (oversideDone < OVERSIDE_CHECKS.length) e.push("Section 2: answer all working overside questions")
 
     if (!form.discussedConfirmed) e.push("Confirm the work plan meeting and risk assessment")
     if (!form.teamLeaderName.trim()) e.push("Authorized team leader is required")
@@ -194,7 +186,7 @@ export default function WorkingAloftPermitForm() {
 
   function handleSaveDraft() {
     setErrors([])
-    console.log("SAVE DRAFT", form)
+    console.log("SAVE DRAFT", { vessel, ...form })
     setMessage("Draft saved (UI only — not stored in the database yet).")
   }
 
@@ -206,7 +198,7 @@ export default function WorkingAloftPermitForm() {
       window.scrollTo({ top: 0, behavior: "smooth" })
       return
     }
-    console.log("ISSUE PERMIT", form)
+    console.log("ISSUE PERMIT", { vessel, ...form })
     setMessage("Permit ready to issue (UI only — not stored in the database yet).")
   }
 
@@ -281,11 +273,10 @@ export default function WorkingAloftPermitForm() {
         {/* ── General ────────────────────────────────────────────── */}
         <Section number={next()} title="General">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Field label="Vessel" required>
-              <input className={inputCls} value={form.vessel} onChange={(e) => set("vessel", e.target.value)} placeholder="e.g. Mobile Viking" />
-            </Field>
-            <Field label="Permit no." hint="Assigned automatically when the permit is issued">
-              <input className={`${inputCls} bg-slate-50 dark:bg-slate-800 text-slate-400`} value="WA-____-___" disabled />
+            <ReadOnlyField label="Vessel" value={vessel} hint="From your login" />
+            <ReadOnlyField label="Permit no." value="WA-____-___" hint="Assigned automatically when the permit is issued" />
+            <Field label="Project / Voyage" className="sm:col-span-2">
+              <input className={inputCls} value={form.projectVoyage} onChange={(e) => set("projectVoyage", e.target.value)} placeholder="e.g. Survey 2026-14" />
             </Field>
             <Field label="Location of work" required className="sm:col-span-2">
               <input className={inputCls} value={form.location} onChange={(e) => set("location", e.target.value)} placeholder="e.g. Foremast / port side hull" />
@@ -295,34 +286,6 @@ export default function WorkingAloftPermitForm() {
             </Field>
           </div>
 
-          {/* Type of work — controls which Section 2 questions appear */}
-          <div className="mt-5">
-            <span className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">
-              Type of work <span className="text-red-500">*</span>
-            </span>
-            <div role="radiogroup" aria-label="Type of work" className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              {WORK_TYPES.map((t) => {
-                const active = form.workType === t.value
-                return (
-                  <button
-                    key={t.value}
-                    type="button"
-                    role="radio"
-                    aria-checked={active}
-                    onClick={() => set("workType", t.value)}
-                    className={`flex items-center gap-3 rounded-lg border-2 px-4 py-3 text-left text-base transition-colors cursor-pointer ${
-                      active
-                        ? "border-blue-900 bg-blue-50 text-blue-900 dark:border-blue-400 dark:bg-blue-950/40 dark:text-blue-300"
-                        : "border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:border-blue-300"
-                    }`}
-                  >
-                    <span aria-hidden className="text-xl">{t.icon}</span>
-                    <span className="font-medium">{t.label}</span>
-                  </button>
-                )
-              })}
-            </div>
-          </div>
         </Section>
 
         {/* ── Persons involved ───────────────────────────────────── */}
@@ -454,41 +417,33 @@ export default function WorkingAloftPermitForm() {
           </div>
         </Section>
 
-        {/* ── Section 2: shown by type of work ───────────────────── */}
-        {!form.workType && (
-          <div className="rounded-xl border border-dashed border-blue-300 dark:border-blue-800 bg-blue-50/50 dark:bg-blue-950/20 px-5 py-4 text-sm text-blue-900 dark:text-blue-300">
-            <strong>Section 2</strong> questions appear here after you choose the <strong>type of work</strong> in section 1
-            (working aloft, overside, or both).
-          </div>
-        )}
+        {/* ── Section 2: working aloft ───────────────────────────── */}
+        <Section
+          number={next()}
+          title="Section 2 · For working aloft"
+          subtitle="Answer N/A where a question does not apply to this job"
+          right={<div className="flex items-center gap-3">{allYes("aloftChecks")}<Counter done={aloftDone} total={ALOFT_CHECKS.length} /></div>}
+        >
+          {ALOFT_CHECKS.map((c, i) => (
+            <QuestionRow key={c.id} number={i + 1} label={c.label}>
+              <YesNoNa ariaLabel={c.label} value={form.aloftChecks[c.id]} onChange={(v) => setAnswer("aloftChecks", c.id, v)} />
+            </QuestionRow>
+          ))}
+        </Section>
 
-        {showAloft && (
-          <Section
-            number={next()}
-            title="Section 2 · For working aloft"
-            right={<div className="flex items-center gap-3">{allYes("aloftChecks")}<Counter done={aloftDone} total={ALOFT_CHECKS.length} /></div>}
-          >
-            {ALOFT_CHECKS.map((c, i) => (
-              <QuestionRow key={c.id} number={i + 1} label={c.label}>
-                <YesNoNa ariaLabel={c.label} value={form.aloftChecks[c.id]} onChange={(v) => setAnswer("aloftChecks", c.id, v)} />
-              </QuestionRow>
-            ))}
-          </Section>
-        )}
-
-        {showOverside && (
-          <Section
-            number={next()}
-            title="Section 2 · For working overside"
-            right={<div className="flex items-center gap-3">{allYes("oversideChecks")}<Counter done={oversideDone} total={OVERSIDE_CHECKS.length} /></div>}
-          >
-            {OVERSIDE_CHECKS.map((c, i) => (
-              <QuestionRow key={c.id} number={i + 1} label={c.label}>
-                <YesNoNa ariaLabel={c.label} value={form.oversideChecks[c.id]} onChange={(v) => setAnswer("oversideChecks", c.id, v)} />
-              </QuestionRow>
-            ))}
-          </Section>
-        )}
+        {/* ── Section 2: working overside ────────────────────────── */}
+        <Section
+          number={next()}
+          title="Section 2 · For working overside"
+          subtitle="Answer N/A where a question does not apply to this job"
+          right={<div className="flex items-center gap-3">{allYes("oversideChecks")}<Counter done={oversideDone} total={OVERSIDE_CHECKS.length} /></div>}
+        >
+          {OVERSIDE_CHECKS.map((c, i) => (
+            <QuestionRow key={c.id} number={i + 1} label={c.label}>
+              <YesNoNa ariaLabel={c.label} value={form.oversideChecks[c.id]} onChange={(v) => setAnswer("oversideChecks", c.id, v)} />
+            </QuestionRow>
+          ))}
+        </Section>
 
         {/* ── Authorization ──────────────────────────────────────── */}
         <Section number={next()} title="Authorization">

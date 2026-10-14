@@ -4,7 +4,8 @@
  * WorkPermitTable — Work Permits dashboard table (all permit types)
  *
  * Same pattern as RiskTable / ObservationTable:
- *  - Filters: search, type, vessel, state, valid-from date range
+ *  - Filters: search, project/voyage, type, vessel, state, valid-from date range
+ *    (Project / Voyage = filter only, no column — same as ObservationTable)
  *  - Actions:
  *      View → all states
  *      Edit → DRAFT only
@@ -30,6 +31,7 @@ export type WorkPermitRow = {
   permitNo: string
   type: PermitType
   vessel: string
+  projectVoyage: string | null
   location: string
   validFrom: Date
   validTo: Date
@@ -63,6 +65,7 @@ const actionCls =
 
 export default function WorkPermitTable({ permits }: { permits: WorkPermitRow[] }) {
   const [search, setSearch] = useState("")
+  const [projectVoyage, setProjectVoyage] = useState("")
   const [type, setType] = useState("")
   const [vessel, setVessel] = useState("")
   const [state, setState] = useState("")
@@ -79,6 +82,8 @@ export default function WorkPermitTable({ permits }: { permits: WorkPermitRow[] 
     const q = search.trim().toLowerCase()
     return permits.filter((p) => {
       if (q && !`${p.permitNo} ${p.location}`.toLowerCase().includes(q)) return false
+      const pv = projectVoyage.trim().toLowerCase()
+      if (pv && !(p.projectVoyage ?? "").toLowerCase().includes(pv)) return false
       if (type && p.type !== type) return false
       if (vessel && p.vessel !== vessel) return false
       if (state && p.state !== state) return false
@@ -87,12 +92,13 @@ export default function WorkPermitTable({ permits }: { permits: WorkPermitRow[] 
       if (dateTo && day > dateTo) return false
       return true
     })
-  }, [permits, search, type, vessel, state, dateFrom, dateTo])
+  }, [permits, search, projectVoyage, type, vessel, state, dateFrom, dateTo])
 
-  const hasFilters = search || type || vessel || state || dateFrom || dateTo
+  const hasFilters = search || projectVoyage || type || vessel || state || dateFrom || dateTo
 
   function clearFilters() {
     setSearch("")
+    setProjectVoyage("")
     setType("")
     setVessel("")
     setState("")
@@ -120,6 +126,13 @@ export default function WorkPermitTable({ permits }: { permits: WorkPermitRow[] 
           onChange={(e) => setSearch(e.target.value)}
           aria-label="Search permits"
         />
+        <input
+          className={`${filterCls} lg:col-span-2`}
+          placeholder="Project / Voyage…"
+          value={projectVoyage}
+          onChange={(e) => setProjectVoyage(e.target.value)}
+          aria-label="Filter by project or voyage"
+        />
         <select className={filterCls} value={type} onChange={(e) => setType(e.target.value)} aria-label="Filter by type">
           <option value="">All Types</option>
           {PERMIT_TYPES.map((t) => (
@@ -138,6 +151,14 @@ export default function WorkPermitTable({ permits }: { permits: WorkPermitRow[] 
             <option key={s} value={s}>{s.charAt(0) + s.slice(1).toLowerCase()}</option>
           ))}
         </select>
+        <label className="lg:col-span-2 flex items-center gap-2 text-xs text-slate-600 dark:text-slate-400">
+          <span className="whitespace-nowrap">Valid from</span>
+          <input type="date" className={filterCls} value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} aria-label="Valid from date" />
+        </label>
+        <label className="lg:col-span-2 flex items-center gap-2 text-xs text-slate-600 dark:text-slate-400">
+          <span className="whitespace-nowrap">to</span>
+          <input type="date" className={filterCls} value={dateTo} min={dateFrom || undefined} onChange={(e) => setDateTo(e.target.value)} aria-label="Valid to date" />
+        </label>
         <button
           type="button"
           onClick={clearFilters}
@@ -146,14 +167,6 @@ export default function WorkPermitTable({ permits }: { permits: WorkPermitRow[] 
         >
           Clear filters
         </button>
-        <label className="lg:col-span-3 flex items-center gap-2 text-xs text-slate-600 dark:text-slate-400">
-          <span className="whitespace-nowrap">Valid from</span>
-          <input type="date" className={filterCls} value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} aria-label="Valid from date" />
-        </label>
-        <label className="lg:col-span-3 flex items-center gap-2 text-xs text-slate-600 dark:text-slate-400">
-          <span className="whitespace-nowrap">to</span>
-          <input type="date" className={filterCls} value={dateTo} min={dateFrom || undefined} onChange={(e) => setDateTo(e.target.value)} aria-label="Valid to date" />
-        </label>
       </div>
 
       {/* ── Table ──────────────────────────────────────────────── */}

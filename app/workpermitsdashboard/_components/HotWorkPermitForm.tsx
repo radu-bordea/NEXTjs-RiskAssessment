@@ -40,12 +40,13 @@ import {
   QuestionRow,
   YesNoNa,
   inputCls,
+  ReadOnlyField,
 } from "./permitFormUI"
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 type FormState = {
   // 1. General
-  vessel: string
+  projectVoyage: string
   date: string
   location: string
   description: string
@@ -91,7 +92,7 @@ const emptyAnswers = (items: readonly { id: string }[]) =>
   Object.fromEntries(items.map((i) => [i.id, ""])) as Record<string, Answer>
 
 const initialState: FormState = {
-  vessel: "",
+  projectVoyage: "",
   date: "",
   location: "",
   description: "",
@@ -126,7 +127,7 @@ const initialState: FormState = {
 }
 
 // ─── Main form ───────────────────────────────────────────────────────────────
-export default function HotWorkPermitForm() {
+export default function HotWorkPermitForm({ vessel }: { vessel: string }) {
   const [form, setForm] = useState<FormState>(initialState)
   const [errors, setErrors] = useState<string[]>([])
   const [message, setMessage] = useState<string | null>(null)
@@ -172,7 +173,6 @@ export default function HotWorkPermitForm() {
   // ── Validation (only for Issue Permit — drafts can be incomplete) ──
   function validate() {
     const e: string[] = []
-    if (!form.vessel.trim()) e.push("Vessel is required")
     if (!form.date) e.push("Date is required")
     if (!form.location.trim()) e.push("Location of work is required")
     if (!form.description.trim()) e.push("Description of work is required")
@@ -207,7 +207,7 @@ export default function HotWorkPermitForm() {
 
   function handleSaveDraft() {
     setErrors([])
-    console.log("SAVE DRAFT", form)
+    console.log("SAVE DRAFT", { vessel, ...form })
     setMessage("Draft saved (UI only — not stored in the database yet).")
   }
 
@@ -219,7 +219,7 @@ export default function HotWorkPermitForm() {
       window.scrollTo({ top: 0, behavior: "smooth" })
       return
     }
-    console.log("ISSUE PERMIT", form)
+    console.log("ISSUE PERMIT", { vessel, ...form })
     setMessage("Permit ready to issue (UI only — not stored in the database yet).")
   }
 
@@ -285,20 +285,21 @@ export default function HotWorkPermitForm() {
         {/* 1 ── General ─────────────────────────────────────────── */}
         <Section number={1} title="General">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Field label="Vessel" required>
-              <input className={inputCls} value={form.vessel} onChange={(e) => set("vessel", e.target.value)} placeholder="e.g. MV Atlantic Star" />
+            <ReadOnlyField label="Vessel" value={vessel} hint="From your login" />
+            <Field label="Project / Voyage">
+              <input className={inputCls} value={form.projectVoyage} onChange={(e) => set("projectVoyage", e.target.value)} placeholder="e.g. Survey 2026-14" />
             </Field>
             <Field label="Date" required>
               <input type="date" className={inputCls} value={form.date} onChange={(e) => set("date", e.target.value)} />
+            </Field>
+            <Field label="Person responsible for safety" required>
+              <input className={inputCls} value={form.responsiblePerson} onChange={(e) => set("responsiblePerson", e.target.value)} />
             </Field>
             <Field label="Location of work" required className="sm:col-span-2">
               <input className={inputCls} value={form.location} onChange={(e) => set("location", e.target.value)} placeholder="e.g. Engine room workshop" />
             </Field>
             <Field label="Description of work" required className="sm:col-span-2">
               <textarea rows={3} className={inputCls} value={form.description} onChange={(e) => set("description", e.target.value)} placeholder="What hot work will be done?" />
-            </Field>
-            <Field label="Person responsible for safety" required className="sm:col-span-2">
-              <input className={inputCls} value={form.responsiblePerson} onChange={(e) => set("responsiblePerson", e.target.value)} />
             </Field>
           </div>
         </Section>

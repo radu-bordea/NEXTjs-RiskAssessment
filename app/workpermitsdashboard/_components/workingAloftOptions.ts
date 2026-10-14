@@ -9,15 +9,6 @@
 /** Permit becomes invalid this many hours after issue (from the paper form) */
 export const WORKING_ALOFT_MAX_HOURS = 8
 
-/** Type of work — decides which Section 2 questions are shown */
-export type WorkType = "ALOFT" | "OVERSIDE" | "BOTH" | ""
-
-export const WORK_TYPES: { value: Exclude<WorkType, "">; label: string; icon: string }[] = [
-  { value: "ALOFT",    label: "Working aloft",    icon: "🪜" },
-  { value: "OVERSIDE", label: "Working overside", icon: "🌊" },
-  { value: "BOTH",     label: "Both",             icon: "🔁" },
-]
-
 // ─── Section 1 — Availability and good condition of equipment (Yes / No) ─────
 export const EQUIPMENT_ITEMS = [
   { id: "lifeline",        label: "Lifeline" },

@@ -249,3 +249,27 @@ export function QuestionRow({
     </div>
   )
 }
+
+// ─── Read-only value (e.g. vessel from the logged-in user) ───────────────────
+export function ReadOnlyField({
+  label,
+  value,
+  hint,
+  className = "",
+}: {
+  label: string
+  value: string
+  hint?: string
+  className?: string
+}) {
+  return (
+    <Field label={label} hint={hint} className={className}>
+      <input
+        className={`${inputCls} bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 cursor-not-allowed`}
+        value={value}
+        readOnly
+        tabIndex={-1}
+      />
+    </Field>
+  )
+}
