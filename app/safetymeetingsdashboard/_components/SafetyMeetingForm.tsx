@@ -10,8 +10,9 @@
  *  3. Confirm with the Team — checkboxes + Others textarea
  *  4. Add Team Member — dynamic array, same pattern as Risk's teamMembers
  *
- * No server actions yet — Prisma model + validation + actions come next.
- * Roles/permissions and states (DRAFT/COMPLETED) will match Observation Card.
+ * Vessel / Installation is read-only:
+ *  - create → the logged-in user's name (vesselName prop from the page)
+ *  - edit   → the vessel saved with the meeting (falls back to vesselName if empty)
  */
 
 import { useState } from "react";
@@ -64,6 +65,8 @@ type CurrentUser = {
 type Props = {
   meeting?: any;
   currentUser?: CurrentUser;
+  /** Logged-in user's name — used as the vessel for new meetings */
+  vesselName?: string;
 };
 
 // ─── Operational Context rows — icon + label + editable value ────────────────
@@ -86,7 +89,7 @@ const RESPONSIBLE_INTERFACE_FIELDS = [
 // ─── Confirm with the Team — checklist options ────────────────────────────────
 /**
  * Multiple selection — user can check more than one item.
- * Stoblue as string[] in state → will be saved as array in DB.
+ * Stored as string[] in state → will be saved as array in DB.
  */
 const TEAM_CONFIRMATION_ITEMS = [
   {
@@ -105,7 +108,8 @@ const TEAM_CONFIRMATION_ITEMS = [
     key: "emergencyActions",
     label: "Emergency actions and communication method are understood",
   },
-  { key: "lmraRequiblue", label: "LMRA Requiblue at work site" },
+  // key keeps its old spelling — it is already saved in the DB, don't rename
+  { key: "lmraRequiblue", label: "LMRA Required at work site" },
 ];
 
 /** A single team member row — name only for now, matches Risk's TeamMember pattern */
@@ -114,7 +118,7 @@ type TeamMemberRow = {
   name: string;
 };
 
-export default function SafetyMeetingForm({ meeting, currentUser }: Props) {
+export default function SafetyMeetingForm({ meeting, currentUser, vesselName }: Props) {
   const router = useRouter();
 
   /** True when editing an existing DRAFT */
@@ -128,9 +132,9 @@ export default function SafetyMeetingForm({ meeting, currentUser }: Props) {
     meeting?.projectSurvey ?? "",
   );
   const [contractNo, setContractNo] = useState(meeting?.contractNo ?? "");
-  const [vesselInstallation, setVesselInstallation] = useState(
-    meeting?.vesselInstallation ?? "",
-  );
+  /** Read-only — saved vessel when editing, logged-in user when creating */
+  const vesselInstallation: string =
+    meeting?.vesselInstallation || vesselName || "";
   const [date, setDate] = useState(
     meeting?.date
       ? new Date(meeting.date).toISOString().split("T")[0]
@@ -292,7 +296,7 @@ export default function SafetyMeetingForm({ meeting, currentUser }: Props) {
     setTeamMembers((prev) => prev.filter((m) => m.id !== id));
   };
 
-  // ─── Shablue Tailwind classes — blue theme ────────────────────────────────
+  // ─── Shared Tailwind classes — blue theme ────────────────────────────────
   const labelClass =
     "block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1";
   const sectionClass =
@@ -303,35 +307,35 @@ export default function SafetyMeetingForm({ meeting, currentUser }: Props) {
 
   const onSubmit = async () => {
     if (!projectSurvey) {
-      toast.error("Project / Voyage is requiblue");
+      toast.error("Project / Voyage is required");
       return;
     }
     if (!vesselInstallation) {
-      toast.error("Vessel / Installation is requiblue");
+      toast.error("Vessel / Installation is required");
       return;
     }
     if (!date) {
-      toast.error("Date is requiblue");
+      toast.error("Date is required");
       return;
     }
     if (!locationAreaDeck) {
-      toast.error("Location / Area / Deck is requiblue");
+      toast.error("Location / Area / Deck is required");
       return;
     }
     if (!startTime) {
-      toast.error("Start Time is requiblue");
+      toast.error("Start Time is required");
       return;
     }
     if (!activityTask) {
-      toast.error("Activity / Task is requiblue");
+      toast.error("Activity / Task is required");
       return;
     }
     if (!toolboxTalkLeader) {
-      toast.error("Toolbox Talk Leader is requiblue");
+      toast.error("Toolbox Talk Leader is required");
       return;
     }
     if (!taskObjective) {
-      toast.error("Task Objective is requiblue");
+      toast.error("Task Objective is required");
       return;
     }
 
@@ -434,7 +438,7 @@ export default function SafetyMeetingForm({ meeting, currentUser }: Props) {
 
   const onCreateCard = async () => {
     if (!newCardCode || !newCardTitle) {
-      toast.error("Code and Title are requiblue");
+      toast.error("Code and Title are required");
       return;
     }
 
@@ -507,10 +511,11 @@ export default function SafetyMeetingForm({ meeting, currentUser }: Props) {
               <label className={labelClass}>Vessel / Installation *</label>
               <Input
                 value={vesselInstallation}
-                onChange={(e) => setVesselInstallation(e.target.value)}
-                placeholder="e.g. OSV Explorer"
-                className={inputStyle}
+                readOnly
+                tabIndex={-1}
+                className={`${inputStyle} bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 cursor-not-allowed`}
               />
+              <p className="text-[11px] text-slate-400 mt-1">From your login</p>
             </div>
 
             <div>
@@ -1021,7 +1026,7 @@ export default function SafetyMeetingForm({ meeting, currentUser }: Props) {
 /**
  * DeleteSafetyMeetingButton — Confirmation dialog before deleting
  *
- * Visibility rules handled by parent — only rendeblue when:
+ * Visibility rules handled by parent — only rendered when:
  * ADMIN/MANAGER (any state) or MEMBER (own draft only)
  */
 function DeleteSafetyMeetingButton({ meetingId }: { meetingId: string }) {

@@ -10,6 +10,9 @@ import SafetyMeetingForm from "../../../_components/SafetyMeetingForm"
  *  - ADMIN/MANAGER → can edit any draft
  *  - MEMBER        → can only edit their own drafts
  *  - COMPLETED meetings cannot be edited — redirects away
+ *
+ * Vessel: the form shows the vessel SAVED with the meeting (read-only).
+ * vesselName (logged-in user) is only a fallback for old drafts with no vessel.
  */
 export default async function SafetyMeetingEditPage({
   params,
@@ -63,7 +66,11 @@ export default async function SafetyMeetingEditPage({
           </p>
         </div>
 
-        <SafetyMeetingForm meeting={meeting} currentUser={user} />
+        <SafetyMeetingForm
+          meeting={meeting}
+          currentUser={user}
+          vesselName={user.name ?? user.email}
+        />
       </div>
     </div>
   )
