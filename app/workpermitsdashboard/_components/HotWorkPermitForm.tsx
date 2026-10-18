@@ -126,6 +126,19 @@ const initialState: FormState = {
   closeOutAt: "",
 }
 
+// ─── "All Yes" link for section headers (same look as Working Aloft) ─────────
+function AllYesButton({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="text-xs font-medium text-blue-700 dark:text-blue-400 hover:underline cursor-pointer whitespace-nowrap"
+    >
+      All Yes
+    </button>
+  )
+}
+
 // ─── Main form ───────────────────────────────────────────────────────────────
 export default function HotWorkPermitForm({ vessel }: { vessel: string }) {
   const [form, setForm] = useState<FormState>(initialState)
@@ -140,6 +153,24 @@ export default function HotWorkPermitForm({ vessel }: { vessel: string }) {
 
   const setFireMeasure = (id: string, value: Answer) =>
     setForm((f) => ({ ...f, fireMeasures: { ...f.fireMeasures, [id]: value } }))
+
+  /**
+   * Section 5 "All Yes" — items 1–9 and item 11 → YES.
+   * Item 10 (type of ventilation) is a dropdown, so the user still picks it.
+   */
+  const setAllChecksYes = () =>
+    setForm((f) => ({
+      ...f,
+      checks: Object.fromEntries(Object.keys(f.checks).map((k) => [k, "YES"])) as Record<string, Answer>,
+      fireWatchNominated: "YES",
+    }))
+
+  /** Section 8 "All Yes" — every fire prevention measure → YES */
+  const setAllFireMeasuresYes = () =>
+    setForm((f) => ({
+      ...f,
+      fireMeasures: Object.fromEntries(Object.keys(f.fireMeasures).map((k) => [k, "YES"])) as Record<string, Answer>,
+    }))
 
   /** Setting "valid from" auto-fills "valid to" = from + 8 hrs (user can shorten) */
   const handleValidFrom = (value: string) =>
@@ -167,6 +198,12 @@ export default function HotWorkPermitForm({ vessel }: { vessel: string }) {
   const durationError = duration !== null && (duration <= 0 || duration > HOT_WORK_MAX_HOURS)
 
   const checksAnswered = Object.values(form.checks).filter(Boolean).length
+  /** Section 5 counter: items 1–9 + item 10 (ventilation) + item 11 (fire-watch) */
+  const SECTION5_TOTAL = HOT_WORK_CHECKS.length + 2
+  const section5Done =
+    checksAnswered + (form.ventilationType ? 1 : 0) + (form.fireWatchNominated ? 1 : 0)
+  /** Highlight item 10 when everything else in section 5 is answered */
+  const ventilationMissing = !form.ventilationType && section5Done === SECTION5_TOTAL - 1
   const fireAnswered = Object.values(form.fireMeasures).filter(Boolean).length
   const namedWorkers = form.workers.filter((w) => w.trim())
 
@@ -377,7 +414,13 @@ export default function HotWorkPermitForm({ vessel }: { vessel: string }) {
         <Section
           number={5}
           title="Check section"
-          right={<Counter done={checksAnswered} total={HOT_WORK_CHECKS.length} />}
+          subtitle="“All Yes” fills items 1–9 and 11 — choose item 10 yourself"
+          right={
+            <div className="flex items-center gap-3">
+              <AllYesButton onClick={setAllChecksYes} />
+              <Counter done={section5Done} total={SECTION5_TOTAL} />
+            </div>
+          }
         >
           {HOT_WORK_CHECKS.map((c, i) => (
             <QuestionRow key={c.id} number={i + 1} label={c.label}>
@@ -387,7 +430,7 @@ export default function HotWorkPermitForm({ vessel }: { vessel: string }) {
 
           <QuestionRow number={10} label="Type of ventilation?">
             <select
-              className={`${inputCls} sm:w-56`}
+              className={`${inputCls} sm:w-56 ${ventilationMissing ? "border-amber-400 ring-2 ring-amber-300" : ""}`}
               value={form.ventilationType}
               onChange={(e) => set("ventilationType", e.target.value)}
               aria-label="Type of ventilation"
@@ -398,6 +441,11 @@ export default function HotWorkPermitForm({ vessel }: { vessel: string }) {
               ))}
             </select>
           </QuestionRow>
+          {ventilationMissing && (
+            <p className="-mt-1 mb-2 text-sm text-amber-700 dark:text-amber-400">
+              ↑ Item 10: choose the type of ventilation
+            </p>
+          )}
 
           <QuestionRow number={11} label="Are fire-watchmen nominated, instructed and standing by?">
             <YesNoNa ariaLabel="Fire-watchmen nominated" value={form.fireWatchNominated} onChange={(v) => set("fireWatchNominated", v)} />
@@ -454,7 +502,12 @@ export default function HotWorkPermitForm({ vessel }: { vessel: string }) {
           number={8}
           title="Fire prevention measures"
           subtitle="Item 14"
-          right={<Counter done={fireAnswered} total={FIRE_PREVENTION_MEASURES.length} />}
+          right={
+            <div className="flex items-center gap-3">
+              <AllYesButton onClick={setAllFireMeasuresYes} />
+              <Counter done={fireAnswered} total={FIRE_PREVENTION_MEASURES.length} />
+            </div>
+          }
         >
           {FIRE_PREVENTION_MEASURES.map((m) => (
             <QuestionRow key={m.id} label={m.label}>
