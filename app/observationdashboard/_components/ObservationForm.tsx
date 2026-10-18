@@ -84,10 +84,14 @@ export default function ObservationForm({ currentUser, observation }: Props) {
 
   // ─── Section 1 state ─────────────────────────────────────────────────────
 
-  /** Vessel or project name */
-  const [vesselProject, setVesselProject] = useState(
-    observation?.vesselProject ?? "",
-  );
+  /**
+   * Vessel — read-only, from the logged-in user.
+   *  - create → logged-in user's name (or email if no name)
+   *  - edit   → the vessel SAVED with the observation, so an Admin/Manager
+   *             editing a draft doesn't replace it with their own name
+   */
+  const vesselProject: string =
+    observation?.vesselProject || currentUser.name || currentUser.email || "";
 
   /** project voyage name */
   const [projectVoyage, setProjectVoyage] = useState(
@@ -585,10 +589,11 @@ export default function ObservationForm({ currentUser, observation }: Props) {
               <label className={labelClass}>Vessel / Project *</label>
               <Input
                 value={vesselProject}
-                onChange={(e) => setVesselProject(e.target.value)}
-                placeholder="e.g. MV Atlantic Star"
-                className="border-amber-200 focus-visible:ring-amber-400"
+                readOnly
+                tabIndex={-1}
+                className="border-amber-200 focus-visible:ring-amber-400 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 cursor-not-allowed"
               />
+              <p className="text-[11px] text-slate-400 mt-1">From your login</p>
             </div>
             <div>
               <label className={labelClass}>Project / Voyage</label>
