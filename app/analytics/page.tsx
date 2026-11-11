@@ -1,6 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import prisma from "@/lib/prisma";
+import { seesAllRisks } from "@/lib/riskAccess";
 import Link from "next/link";
 import AnalyticsCharts from "./_components/AnalyticsCharts";
 import AnalyticsFilters from "./_components/AnalyticsFilters";
@@ -16,6 +17,10 @@ import DownloadPdfButton from "./_components/DownloadPdfButton";
  *
  * Filters (date range + project/voyage name) come from URL search
  * params, set by the client-side AnalyticsFilters component.
+ *
+ * Access: ADMIN / MANAGER see all risks. MEMBER (vessel) sees only the risks
+ * they created — templates are left out of a member's numbers, because analytics
+ * shows the vessel's own activity. (Observation + SafetyMeeting: filtered later.)
  *
  * Field name note: Risk uses `projectVoyage`, SafetyMeeting currently
  * uses `projectSurvey` (same concept, different name for historical
@@ -34,6 +39,12 @@ export default async function ProjectAnalyticsPage({
   const { userId } = await auth();
   if (!userId) redirect("/sign-in");
 
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user) redirect("/sign-in");
+
+  /** Risk access — MEMBER only counts their own risks */
+  const riskAccessWhere = seesAllRisks(user) ? {} : { createdById: user.id };
+
   const { dateFrom, dateTo, project } = await searchParams;
 
   // ─── Build shared date range filter ────────────────────────────────
@@ -49,7 +60,7 @@ export default async function ProjectAnalyticsPage({
   const [riskProjects, safetyMeetingProjects, observationProjects] =
     await Promise.all([
       prisma.risk.findMany({
-        where: { projectVoyage: { not: null } },
+        where: { ...riskAccessWhere, projectVoyage: { not: null } },
         select: { projectVoyage: true },
         distinct: ["projectVoyage"],
       }),
@@ -74,7 +85,7 @@ export default async function ProjectAnalyticsPage({
   ).sort() as string[];
 
   // ─── Risk — filtered by initiationDate + projectVoyage ────────────
-  const riskWhere: any = {};
+  const riskWhere: any = { ...riskAccessWhere };
   if (hasDateFilter) riskWhere.initiationDate = dateFilter;
   if (isUnassignedFilter) {
     riskWhere.projectVoyage = null;

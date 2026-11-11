@@ -10,6 +10,7 @@ import {
   riskDraftSchema,
 } from "@/lib/validations/risk.schema";
 import { sendRiskNotification } from "@/lib/email/riskNotifications";
+import { canViewRisk, canChangeOwnRisk } from "@/lib/riskAccess";
 
 export async function createRisk(data: RiskFormValues) {
   const { userId } = await auth();
@@ -111,6 +112,12 @@ export async function createRisk(data: RiskFormValues) {
   }
 }
 
+/**
+ * getRiskById — one risk with all nested data
+ *
+ * Returns null when the risk doesn't exist OR the user may not see it
+ * (MEMBER opening another vessel's draft/completed risk).
+ */
 export async function getRiskById(id: string) {
   const { userId } = await auth();
 
@@ -118,7 +125,10 @@ export async function getRiskById(id: string) {
 
   if (!id) throw new Error("Risk ID missing");
 
-  return prisma.risk.findUnique({
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user) redirect("/sign-in");
+
+  const risk = await prisma.risk.findUnique({
     where: { id },
     include: {
       assessmentRows: {
@@ -133,6 +143,9 @@ export async function getRiskById(id: string) {
       stateUpdatedBy: true, // ← was missing, caused "—" in view
     },
   });
+
+  if (!risk || !canViewRisk(user, risk)) return null;
+  return risk;
 }
 
 /**
@@ -341,7 +354,7 @@ export async function createDraftFromTemplate(templateId: string) {
  *
  * Updates the draft in place — same row, state changes to COMPLETED.
  * The original template is never touched.
- * All roles can submit a draft.
+ * ADMIN / MANAGER can submit any draft · MEMBER only their own.
  *
  * @param id - The id of the DRAFT risk to complete
  * @param data - Updated form values
@@ -369,6 +382,10 @@ export async function submitDraft(id: string, data: RiskFormValues) {
     if (!existing) return { success: false, error: "Risk not found" };
     if (existing.state !== "DRAFT") {
       return { success: false, error: "Only drafts can be submitted" };
+    }
+    // MEMBER can only submit their own drafts
+    if (!canChangeOwnRisk(user, existing)) {
+      return { success: false, error: "You can only submit your own drafts" };
     }
 
     // Build new ref: base ref + initiation date + COMPLETED_N (preserving the draft's number)
@@ -512,7 +529,7 @@ export async function deleteRisk(id: string) {
  *
  * Always saves as DRAFT state — for saving progress while editing.
  * To submit a draft as COMPLETED use submitDraft instead.
- * All roles can update a draft.
+ * ADMIN / MANAGER can update any draft · MEMBER only their own.
  *
  * @param id - The cuid of the risk to update
  * @param data - Form values
@@ -533,10 +550,17 @@ export async function updateRisk(id: string, data: RiskFormValues) {
   const values = validated.data;
 
   try {
+    // Check access BEFORE deleting anything
+    const existing = await prisma.risk.findUnique({ where: { id } });
+    if (!existing) return { success: false, error: "Risk not found" };
+    // MEMBER can only update their own drafts
+    if (!canChangeOwnRisk(user, existing)) {
+      return { success: false, error: "You can only edit your own drafts" };
+    }
+
     await prisma.riskAssessmentRow.deleteMany({ where: { riskId: id } });
 
     // Rebuild ref using the CURRENT initiation date, preserving base ref + draft number
-    const existing = await prisma.risk.findUnique({ where: { id } });
     let refToSave = values.ref!;
 
     if (existing && values.initiationDate) {
@@ -617,7 +641,7 @@ export async function updateRisk(id: string, data: RiskFormValues) {
  * updateCompleted — Updates only the dates on a COMPLETED risk
  *
  * COMPLETED risks are mostly locked — only initiationDate and
- * reviewDate can be modified. All roles can do this.
+ * reviewDate can be modified. ADMIN / MANAGER any · MEMBER only their own.
  * Ref is rebuilt to reflect the updated initiation date.
  *
  * @param id - The cuid of the COMPLETED risk
@@ -646,6 +670,10 @@ export async function updateCompleted(
         success: false,
         error: "Only completed risks can be updated this way",
       };
+    }
+    // MEMBER can only update their own completed risks
+    if (!canChangeOwnRisk(user, existing)) {
+      return { success: false, error: "You can only edit your own risks" };
     }
 
     // 3. Rebuild ref using the new initiation date, preserving base ref + completed number

@@ -1,15 +1,16 @@
 import { auth } from "@clerk/nextjs/server"
 import { redirect, notFound } from "next/navigation"
 import prisma from "@/lib/prisma"
+import { canChangeOwnRisk } from "@/lib/riskAccess"
 import RiskForm from "../../../_components/RiskForm"
 
 /**
  * EditRiskPage — Edit an existing risk assessment
  *
  * Permissions per state:
- *  - TEMPLATE → ADMIN only
- *  - DRAFT    → all roles can edit
- *  - COMPLETED → all roles can edit dates only
+ *  - TEMPLATE  → ADMIN only
+ *  - DRAFT     → ADMIN / MANAGER any · MEMBER only their own
+ *  - COMPLETED → dates only · ADMIN / MANAGER any · MEMBER only their own
  */
 export default async function EditRiskPage({
   params,
@@ -48,7 +49,10 @@ export default async function EditRiskPage({
     redirect("/dashboard")
   }
 
-  // DRAFT and COMPLETED — all roles allowed
+  // DRAFT / COMPLETED — MEMBER only their own
+  if (risk.state !== "TEMPLATE" && !canChangeOwnRisk(user, risk)) {
+    redirect("/dashboard")
+  }
 
   return (
     <div className="min-h-screen bg-[#EEF5F0] dark:bg-slate-950 text-slate-900 dark:text-slate-100 px-6 md:px-10 py-10 font-sans">

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { renderToBuffer } from "@react-pdf/renderer";
 import prisma from "@/lib/prisma";
 import { auth } from "@clerk/nextjs/server";
-import { redirect } from "next/navigation";
+import { canViewRisk } from "@/lib/riskAccess";
 import RiskPDF from "./RiskPDF";
 
 /**
@@ -11,6 +11,7 @@ import RiskPDF from "./RiskPDF";
  * Fetches risk from DB, generates PDF using @react-pdf/renderer
  * and streams it as a file download.
  * Only TEMPLATE and COMPLETED risks can be downloaded.
+ * MEMBER can only download templates and their own risks.
  */
 export async function GET(
   request: NextRequest,
@@ -18,6 +19,11 @@ export async function GET(
 ) {
   const { userId } = await auth();
   if (!userId) {
+    return new NextResponse("Unauthorized", { status: 401 });
+  }
+
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user) {
     return new NextResponse("Unauthorized", { status: 401 });
   }
 
@@ -38,7 +44,8 @@ export async function GET(
     },
   });
 
-  if (!risk) {
+  // Same answer for "doesn't exist" and "not yours" — don't reveal other vessels' risks
+  if (!risk || !canViewRisk(user, risk)) {
     return new NextResponse("Risk not found", { status: 404 });
   }
 
