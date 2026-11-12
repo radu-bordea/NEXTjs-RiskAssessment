@@ -17,9 +17,9 @@ const BATCH_SIZE = 100;
  * (Template created, Draft created, Draft submitted/completed).
  *
  * Recipients (client rule):
- *  - ADMIN + MANAGER → notified about EVERYTHING, all vessels
- *  - MEMBER (vessel) → notified ONLY about risks they own (ownerId)
- *    → other vessels never receive emails about someone else's risk
+ *  - ADMIN + MANAGER → notified about EVERY action, by anyone, on all vessels
+ *  - MEMBER (vessel)  → NO notifications at all
+ *    (a Member is a vessel account shared by several crew members)
  *
  * Each recipient gets their OWN email (batch send), so nobody can see
  * the other recipients' email addresses.
@@ -28,7 +28,9 @@ const BATCH_SIZE = 100;
  *
  * @param action    - Human-readable action description (e.g. "Template Created")
  * @param risk      - The risk record (needs at least: id, ref, workActivity, state)
- * @param ownerId   - createdById of the risk — the vessel that owns it
+ * @param ownerId   - createdById of the risk (the vessel). Not used for recipients
+ *                    now — kept so vessels can be notified later if the client asks:
+ *                    add  { id: ownerId }  to the OR list below.
  * @param actorName - Name/email of the person who did the action
  * @param actorId   - Not used for filtering right now. Kept so the actor can be
  *                    excluded later with: id: { not: actorId }
@@ -47,10 +49,10 @@ export async function sendRiskNotification({
   actorId: string;
 }) {
   try {
-    // Admins + Managers (everything) OR the owner of this risk
+    // Only Admins + Managers — Members (vessels) get no emails
     const recipients = await prisma.user.findMany({
       where: {
-        OR: [{ role: { in: ["ADMIN", "MANAGER"] } }, { id: ownerId }],
+        OR: [{ role: { in: ["ADMIN", "MANAGER"] } }],
       },
       select: { email: true },
     });
