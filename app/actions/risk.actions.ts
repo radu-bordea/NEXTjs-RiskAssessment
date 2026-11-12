@@ -92,7 +92,7 @@ export async function createRisk(data: RiskFormValues) {
       },
     });
 
-    // Notify Admin/Manager users about the new template
+    // Notify Admins + Managers (templates are created by Admin, so no vessel owns it)
     await sendRiskNotification({
       action: "Template Created",
       risk: {
@@ -101,6 +101,7 @@ export async function createRisk(data: RiskFormValues) {
         workActivity: risk.workActivity,
         state: risk.state,
       },
+      ownerId: risk.createdById,
       actorName: user.name ?? user.email,
       actorId: userId,
     });
@@ -327,7 +328,7 @@ export async function createDraftFromTemplate(templateId: string) {
       },
     });
 
-    // Notify Admin/Manager users about the new draft
+    // Notify Admins + Managers + the vessel that owns this draft
     await sendRiskNotification({
       action: "Draft Created",
       risk: {
@@ -336,6 +337,7 @@ export async function createDraftFromTemplate(templateId: string) {
         workActivity: draft.workActivity,
         state: draft.state,
       },
+      ownerId: draft.createdById,
       actorName: user.name ?? user.email,
       actorId: userId,
     });
@@ -451,7 +453,8 @@ export async function submitDraft(id: string, data: RiskFormValues) {
       },
     });
 
-    // Notify Admin/Manager users about the completed submission
+    // Notify Admins + Managers + the vessel that owns this risk
+    // (owner = who created the draft, even if a Manager submits it)
     await sendRiskNotification({
       action: "Draft Submitted (Completed)",
       risk: {
@@ -460,6 +463,7 @@ export async function submitDraft(id: string, data: RiskFormValues) {
         workActivity: risk.workActivity,
         state: risk.state,
       },
+      ownerId: risk.createdById,
       actorName: user.name ?? user.email,
       actorId: userId,
     });
