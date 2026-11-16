@@ -2,6 +2,7 @@ import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import prisma from "@/lib/prisma";
 import { seesAllRisks } from "@/lib/riskAccess";
+import { ownRecordsWhere } from "@/lib/recordAccess";
 import Link from "next/link";
 import AnalyticsCharts from "./_components/AnalyticsCharts";
 import AnalyticsFilters from "./_components/AnalyticsFilters";
@@ -20,7 +21,8 @@ import DownloadPdfButton from "./_components/DownloadPdfButton";
  *
  * Access: ADMIN / MANAGER see all risks. MEMBER (vessel) sees only the risks
  * they created — templates are left out of a member's numbers, because analytics
- * shows the vessel's own activity. (Observation + SafetyMeeting: filtered later.)
+ * shows the vessel's own activity. Observations: MEMBER sees only their own.
+ * (SafetyMeeting: filtered later.)
  *
  * Field name note: Risk uses `projectVoyage`, SafetyMeeting currently
  * uses `projectSurvey` (same concept, different name for historical
@@ -44,6 +46,9 @@ export default async function ProjectAnalyticsPage({
 
   /** Risk access — MEMBER only counts their own risks */
   const riskAccessWhere = seesAllRisks(user) ? {} : { createdById: user.id };
+
+  /** Observation access — MEMBER only counts their own observations */
+  const observationAccessWhere = ownRecordsWhere(user);
 
   const { dateFrom, dateTo, project } = await searchParams;
 
@@ -70,7 +75,7 @@ export default async function ProjectAnalyticsPage({
         distinct: ["projectSurvey"],
       }),
       prisma.observation.findMany({
-        where: { projectVoyage: { not: null } },
+        where: { ...observationAccessWhere, projectVoyage: { not: null } },
         select: { projectVoyage: true },
         distinct: ["projectVoyage"],
       }),
@@ -107,7 +112,7 @@ export default async function ProjectAnalyticsPage({
   });
 
   // ─── Observation — filtered by date + projectVoyage ───────────────
-  const observationWhere: any = {};
+  const observationWhere: any = { ...observationAccessWhere };
   if (hasDateFilter) observationWhere.date = dateFilter;
   if (isUnassignedFilter) {
     observationWhere.projectVoyage = null;
