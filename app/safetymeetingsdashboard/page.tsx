@@ -1,12 +1,14 @@
 import { auth } from "@clerk/nextjs/server"
 import { redirect } from "next/navigation"
 import prisma from "@/lib/prisma"
+import { ownRecordsWhere } from "@/lib/recordAccess"
 import SafetyMeetingTable from "./_components/SafetyMeetingTable"
 
 /**
  * SafetyMeetingsDashboardPage — Toolbox Talk dashboard
  *
- * Server component — fetches all safety meetings from DB.
+ * ADMIN / MANAGER → all safety meetings
+ * MEMBER (vessel) → only the meetings they created
  */
 export default async function SafetyMeetingsDashboardPage() {
   const { userId } = await auth()
@@ -16,6 +18,7 @@ export default async function SafetyMeetingsDashboardPage() {
   if (!user) redirect("/sign-in")
 
   const meetings = await prisma.safetyMeeting.findMany({
+    where: ownRecordsWhere(user),
     orderBy: { date: "desc" },
     select: {
       id:                 true,

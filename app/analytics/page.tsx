@@ -21,8 +21,8 @@ import DownloadPdfButton from "./_components/DownloadPdfButton";
  *
  * Access: ADMIN / MANAGER see all risks. MEMBER (vessel) sees only the risks
  * they created — templates are left out of a member's numbers, because analytics
- * shows the vessel's own activity. Observations: MEMBER sees only their own.
- * (SafetyMeeting: filtered later.)
+ * shows the vessel's own activity. Observations + Safety Meetings: MEMBER sees
+ * only their own.
  *
  * Field name note: Risk uses `projectVoyage`, SafetyMeeting currently
  * uses `projectSurvey` (same concept, different name for historical
@@ -50,6 +50,9 @@ export default async function ProjectAnalyticsPage({
   /** Observation access — MEMBER only counts their own observations */
   const observationAccessWhere = ownRecordsWhere(user);
 
+  /** Safety Meeting access — MEMBER only counts their own meetings */
+  const safetyMeetingAccessWhere = ownRecordsWhere(user);
+
   const { dateFrom, dateTo, project } = await searchParams;
 
   // ─── Build shared date range filter ────────────────────────────────
@@ -70,7 +73,7 @@ export default async function ProjectAnalyticsPage({
         distinct: ["projectVoyage"],
       }),
       prisma.safetyMeeting.findMany({
-        where: { projectSurvey: { not: "" } },
+        where: { ...safetyMeetingAccessWhere, projectSurvey: { not: "" } },
         select: { projectSurvey: true },
         distinct: ["projectSurvey"],
       }),
@@ -134,7 +137,7 @@ export default async function ProjectAnalyticsPage({
   });
 
   // ─── SafetyMeeting — filtered by date + projectSurvey ─────────────
-  const safetyMeetingWhere: any = {};
+  const safetyMeetingWhere: any = { ...safetyMeetingAccessWhere };
   if (hasDateFilter) safetyMeetingWhere.date = dateFilter;
   if (isUnassignedFilter) {
     safetyMeetingWhere.projectSurvey = "";

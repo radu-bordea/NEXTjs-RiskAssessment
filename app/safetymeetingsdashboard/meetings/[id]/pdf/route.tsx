@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { renderToBuffer } from "@react-pdf/renderer"
 import prisma from "@/lib/prisma"
 import { auth } from "@clerk/nextjs/server"
+import { canAccessRecord } from "@/lib/recordAccess"
 import SafetyMeetingPDF from "./SafetyMeetingPDF"
 
 /**
@@ -10,6 +11,7 @@ import SafetyMeetingPDF from "./SafetyMeetingPDF"
  * Fetches safety meeting from DB, generates PDF using @react-pdf/renderer
  * and streams it as a file download.
  * Only COMPLETED meetings can be downloaded.
+ * MEMBER can only download their own.
  */
 export async function GET(
   request: NextRequest,
@@ -17,6 +19,11 @@ export async function GET(
 ) {
   const { userId } = await auth()
   if (!userId) {
+    return new NextResponse("Unauthorized", { status: 401 })
+  }
+
+  const user = await prisma.user.findUnique({ where: { id: userId } })
+  if (!user) {
     return new NextResponse("Unauthorized", { status: 401 })
   }
 
@@ -36,7 +43,8 @@ export async function GET(
     },
   })
 
-  if (!meeting) {
+  // Same answer for "doesn't exist" and "not yours"
+  if (!meeting || !canAccessRecord(user, meeting)) {
     return new NextResponse("Safety meeting not found", { status: 404 })
   }
 
