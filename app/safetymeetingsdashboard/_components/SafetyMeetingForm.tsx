@@ -10,6 +10,9 @@
  *  3. Confirm with the Team — checkboxes + Others textarea
  *  4. Add Team Member — dynamic array, same pattern as Risk's teamMembers
  *
+ * Toolbox Talk cards: shared library — everyone can choose, only ADMIN sees
+ * "Upload New Card".
+ *
  * Vessel / Installation is read-only:
  *  - create → the logged-in user's name (vesselName prop from the page)
  *  - edit   → the vessel saved with the meeting (falls back to vesselName if empty)
@@ -710,14 +713,17 @@ export default function SafetyMeetingForm({ meeting, currentUser, vesselName }: 
           </h2>
           <div className="flex items-center gap-2">
             <ManualDialogButton className="bg-white hover:bg-blue-50 text-blue-900 border border-blue-300 text-xs cursor-pointer" />
-            <Button
-              type="button"
-              size="sm"
-              onClick={onUploadClick}
-              className="bg-white hover:bg-blue-50 text-blue-900 border border-blue-300 text-xs cursor-pointer"
-            >
-              📤 Upload New Card
-            </Button>
+            {/* Upload New Card — Admin only (server also checks: createToolboxTalkCard) */}
+            {currentUser?.role === "ADMIN" && (
+              <Button
+                type="button"
+                size="sm"
+                onClick={onUploadClick}
+                className="bg-white hover:bg-blue-50 text-blue-900 border border-blue-300 text-xs cursor-pointer"
+              >
+                📤 Upload New Card
+              </Button>
+            )}
           </div>
         </div>
 
