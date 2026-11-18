@@ -11,7 +11,7 @@
  *  4. Add Team Member — dynamic array, same pattern as Risk's teamMembers
  *
  * Toolbox Talk cards: shared library — everyone can choose, only ADMIN sees
- * "Upload New Card".
+ * "Upload New Card" and the 🗑 delete button on each card.
  *
  * Vessel / Installation is read-only:
  *  - create → the logged-in user's name (vesselName prop from the page)
@@ -229,6 +229,12 @@ export default function SafetyMeetingForm({ meeting, currentUser, vesselName }: 
     setSelectedCards((prev) =>
       prev.includes(code) ? prev.filter((c) => c !== code) : [...prev, code],
     );
+  };
+
+  /** After an Admin deletes a card — remove it from the list and the selection */
+  const onCardDeleted = (cardId: string) => {
+    setCards((prev) => prev.filter((c) => c.id !== cardId));
+    setSelectedCards((prev) => prev.filter((id) => id !== cardId));
   };
 
   /** Search filter — matches title or tags */
@@ -754,7 +760,7 @@ export default function SafetyMeetingForm({ meeting, currentUser, vesselName }: 
           </div>
         </div>
 
-        <div className="max-h-100 overflow-y-auto divide-y divide-blue-50 dark:divide-slate-800">
+        <div className="max-h-100 overflow-y-auto pr-3 divide-y divide-blue-50 dark:divide-slate-800">
           {filterBlueCards.map((card) => {
             const isSelected = selectedCards.includes(card.id);
             return (
@@ -806,6 +812,14 @@ export default function SafetyMeetingForm({ meeting, currentUser, vesselName }: 
                   >
                     {isSelected ? "✓ Selected" : "+ Add"}
                   </Button>
+
+                  {/* Delete card — Admin only (server also checks) */}
+                  {currentUser?.role === "ADMIN" && (
+                    <DeleteCardButton
+                      card={{ id: card.id, code: card.code, title: card.title }}
+                      onDeleted={onCardDeleted}
+                    />
+                  )}
                 </div>
               </div>
             );
@@ -1083,6 +1097,77 @@ function DeleteSafetyMeetingButton({ meetingId }: { meetingId: string }) {
             onClick={handleDelete}
             disabled={deleting}
             className="bg-blue-500 hover:bg-red-600 text-white cursor-pointer"
+          >
+            {deleting ? "Deleting..." : "Yes, delete"}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
+
+/**
+ * DeleteCardButton — 🗑 button + confirmation dialog for one Toolbox Talk card
+ *
+ * Only rendered for ADMIN (parent checks). The server action also checks the
+ * role and blocks cards that are already used in safety meetings.
+ */
+function DeleteCardButton({
+  card,
+  onDeleted,
+}: {
+  card: { id: string; code: string; title: string };
+  onDeleted: (cardId: string) => void;
+}) {
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDelete = async () => {
+    setDeleting(true);
+    try {
+      const result = await deleteToolboxTalkCard(card.id);
+      if (result.success) {
+        toast.success(`Card ${card.code} deleted.`);
+        onDeleted(card.id);
+      } else {
+        // e.g. "This card is used in 3 safety meetings and can't be deleted."
+        toast.error(result.error ?? "Failed to delete card");
+      }
+    } catch {
+      toast.error("Something went wrong");
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  return (
+    <AlertDialog>
+      <AlertDialogTrigger asChild>
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          title={`Delete card ${card.code}`}
+          aria-label={`Delete card ${card.code}`}
+          className="text-xs shrink-0 border-red-200 text-red-500 hover:bg-red-50 hover:text-red-600 cursor-pointer"
+        >
+          🗑
+        </Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Delete card {card.code}?</AlertDialogTitle>
+          <AlertDialogDescription>
+            &ldquo;{card.title}&rdquo; and its picture will be permanently
+            deleted. This cannot be undone. Cards already used in safety
+            meetings cannot be deleted.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel className="cursor-pointer">Cancel</AlertDialogCancel>
+          <AlertDialogAction
+            onClick={handleDelete}
+            disabled={deleting}
+            className="bg-red-500 hover:bg-red-600 text-white cursor-pointer"
           >
             {deleting ? "Deleting..." : "Yes, delete"}
           </AlertDialogAction>

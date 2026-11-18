@@ -4,7 +4,7 @@ import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
-import { put } from "@vercel/blob";
+import { put, del } from "@vercel/blob";
 import { toolboxTalkCardSchema } from "@/lib/validations/safetyMeeting.schema";
 import { TOOLBOX_DEPARTMENTS } from "@/lib/toolboxDepartments";
 
@@ -112,11 +112,21 @@ export async function createToolboxTalkCard(formData: FormData) {
 }
 
 /**
- * deleteToolboxTalkCard — Permanently deletes a reusable card
+ * deleteToolboxTalkCard — Permanently deletes a reusable card + its picture
  *
- * Admin only. Note: does NOT delete the image from Blob storage
- * (Vercel Blob doesn't auto-cascade) — acceptable for now, can add
- * cleanup later if storage usage becomes a concern.
+ * Admin only.
+ *
+ * Cards already used in a Safety Meeting (draft or completed) can NOT be
+ * deleted — old meetings must keep showing which cards were discussed.
+ * The Admin gets a message with how many meetings use it.
+ *
+ * Order: the card is deleted from the database first, then its picture is
+ * removed from Vercel Blob. If removing the picture fails, the card is still
+ * deleted (only an unused file stays in Blob) — so the user never sees an error
+ * for something that actually worked.
+ *
+ * @param id - The cuid of the card to delete
+ * @returns { success: true } or { success: false, error: string }
  */
 export async function deleteToolboxTalkCard(id: string) {
   const { userId } = await auth();
@@ -133,7 +143,35 @@ export async function deleteToolboxTalkCard(id: string) {
   }
 
   try {
+    // Fetch the card + how many safety meetings use it
+    const card = await prisma.toolboxTalkCard.findUnique({
+      where: { id },
+      include: { _count: { select: { safetyMeetings: true } } },
+    });
+    if (!card) return { success: false, error: "Card not found" };
+
+    // Used in meetings → block (keeps past safety records complete)
+    const usedIn = card._count.safetyMeetings;
+    if (usedIn > 0) {
+      return {
+        success: false,
+        error: `This card is used in ${usedIn} safety meeting${usedIn === 1 ? "" : "s"} and can't be deleted.`,
+      };
+    }
+
+    // 1. Delete the card from the database
     await prisma.toolboxTalkCard.delete({ where: { id } });
+
+    // 2. Delete its picture from Vercel Blob (if it has one)
+    if (card.imageUrl) {
+      try {
+        await del(card.imageUrl);
+      } catch (blobError) {
+        // Card is already gone — only log, don't fail the whole delete
+        console.error("deleteToolboxTalkCard blob delete error:", blobError);
+      }
+    }
+
     revalidatePath("/safetymeetingsdashboard");
     return { success: true };
   } catch (error) {
