@@ -10,7 +10,9 @@
 export const WORK_PERMITS_BASE = "/workpermitsdashboard"
 
 export type PermitType = "HOT_WORK" | "CONFINED_SPACE" | "WORKING_ALOFT"
-export type PermitState = "DRAFT" | "ACTIVE" | "CLOSED" | "EXPIRED"
+/** Same values as the Prisma enums WorkPermitState / WorkPermitSource */
+export type PermitState = "DRAFT" | "COMPLETED" | "CLOSED_OUT"
+export type PermitSource = "FORM" | "MANUAL"
 
 export const PERMIT_TYPES: {
   type: PermitType
@@ -64,9 +66,35 @@ export const PERMIT_TYPE_LABEL: Record<PermitType, string> = {
   WORKING_ALOFT: "🪜 Aloft / Overside",
 }
 
+export const STATE_LABEL: Record<PermitState, string> = {
+  DRAFT:      "Draft",
+  COMPLETED:  "Completed",
+  CLOSED_OUT: "Closed-out",
+}
+
 export const STATE_STYLE: Record<PermitState, string> = {
-  DRAFT:   "bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
-  ACTIVE:  "bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
-  CLOSED:  "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
-  EXPIRED: "bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-400",
+  DRAFT:      "bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
+  COMPLETED:  "bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
+  CLOSED_OUT: "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
+}
+
+// ─── Source: created with a form, or an uploaded PDF ─────────────────────────
+export const SOURCE_LABEL: Record<PermitSource, string> = {
+  FORM:   "📝 Form",
+  MANUAL: "📎 Uploaded",
+}
+
+export const SOURCE_STYLE: Record<PermitSource, string> = {
+  FORM:   "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300",
+  MANUAL: "bg-teal-50 text-teal-700 dark:bg-teal-900/30 dark:text-teal-400",
+}
+
+/** 4th dashboard card — upload an existing paper permit as PDF */
+export const MANUAL_PERMIT_CARD = {
+  label: "Manual Work Permit",
+  icon: "📎",
+  description: "Upload an existing permit as a PDF file (max 10 MB).",
+  href: `${WORK_PERMITS_BASE}/new/manual`,
+  cardStyle: "border-teal-200 hover:border-teal-400 dark:border-teal-900/50 dark:hover:border-teal-700",
+  iconStyle: "bg-teal-100 dark:bg-teal-900/30",
 }
