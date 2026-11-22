@@ -13,6 +13,7 @@ export const PERMIT_NO_PREFIX = {
   HOT_WORK: "HW",
   CONFINED_SPACE: "CS",
   WORKING_ALOFT: "WA",
+  OTHER: "OT",
 } as const
 
 export type PermitTypeKey = keyof typeof PERMIT_NO_PREFIX

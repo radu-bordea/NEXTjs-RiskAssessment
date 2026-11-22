@@ -23,7 +23,8 @@ import { createManualWorkPermit } from "@/app/actions/workPermit.actions"
 import { MAX_PDF_SIZE_BYTES, MAX_PDF_SIZE_MB } from "@/lib/validations/workPermit.schema"
 import {
   MANUAL_PERMIT_CARD,
-  PERMIT_TYPES,
+  ALL_PERMIT_TYPE_OPTIONS,
+  PERMIT_TYPE_LABEL,
   WORK_PERMITS_BASE,
   type PermitType,
 } from "./permitTypes"
@@ -222,9 +223,9 @@ export default function ManualWorkPermitForm({ vessel }: { vessel: string }) {
                 disabled={busy}
               >
                 <option value="">Select type…</option>
-                {PERMIT_TYPES.map((t) => (
+                {ALL_PERMIT_TYPE_OPTIONS.map((t) => (
                   <option key={t.type} value={t.type}>
-                    {t.icon} {t.label}
+                    {PERMIT_TYPE_LABEL[t.type].split(" ")[0]} {t.label}
                   </option>
                 ))}
               </select>

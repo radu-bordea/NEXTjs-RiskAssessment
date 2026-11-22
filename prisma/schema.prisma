@@ -360,6 +360,7 @@ enum WorkPermitType {
   HOT_WORK
   CONFINED_SPACE
   WORKING_ALOFT
+  OTHER
 }
 
 enum WorkPermitSource {

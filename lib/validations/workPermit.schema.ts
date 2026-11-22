@@ -10,7 +10,7 @@ import { z } from "zod"
  */
 
 /** Same values as the Prisma enum WorkPermitType */
-export const WORK_PERMIT_TYPES = ["HOT_WORK", "CONFINED_SPACE", "WORKING_ALOFT"] as const
+export const WORK_PERMIT_TYPES = ["HOT_WORK", "CONFINED_SPACE", "WORKING_ALOFT", "OTHER"] as const
 
 /** Max size of an uploaded PDF — per file */
 export const MAX_PDF_SIZE_MB = 10

@@ -15,7 +15,7 @@
 import { useMemo, useState } from "react"
 import Link from "next/link"
 import {
-  PERMIT_TYPES,
+  ALL_PERMIT_TYPE_OPTIONS,
   PERMIT_TYPE_LABEL,
   SOURCE_LABEL,
   SOURCE_STYLE,
@@ -144,7 +144,7 @@ export default function WorkPermitTable({ permits }: { permits: WorkPermitRow[] 
         />
         <select className={filterCls} value={type} onChange={(e) => setType(e.target.value)} aria-label="Filter by type">
           <option value="">All Types</option>
-          {PERMIT_TYPES.map((t) => (
+          {ALL_PERMIT_TYPE_OPTIONS.map((t) => (
             <option key={t.type} value={t.type}>{t.label}</option>
           ))}
         </select>

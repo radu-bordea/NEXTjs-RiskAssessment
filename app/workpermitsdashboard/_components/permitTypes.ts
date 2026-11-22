@@ -9,13 +9,15 @@
 
 export const WORK_PERMITS_BASE = "/workpermitsdashboard"
 
-export type PermitType = "HOT_WORK" | "CONFINED_SPACE" | "WORKING_ALOFT"
+/** OTHER = uploaded permits only (no form, no dashboard card) */
+export type PermitType = "HOT_WORK" | "CONFINED_SPACE" | "WORKING_ALOFT" | "OTHER"
+export type FormPermitType = Exclude<PermitType, "OTHER">
 /** Same values as the Prisma enums WorkPermitState / WorkPermitSource */
 export type PermitState = "DRAFT" | "COMPLETED" | "CLOSED_OUT"
 export type PermitSource = "FORM" | "MANUAL"
 
 export const PERMIT_TYPES: {
-  type: PermitType
+  type: FormPermitType
   label: string
   short: string
   icon: string
@@ -64,7 +66,14 @@ export const PERMIT_TYPE_LABEL: Record<PermitType, string> = {
   HOT_WORK: "🔥 Hot Work",
   CONFINED_SPACE: "🚪 Confined Space",
   WORKING_ALOFT: "🪜 Aloft / Overside",
+  OTHER:          "📋 Others",
 }
+
+/** All types for selects and filters: the 3 form types + Others */
+export const ALL_PERMIT_TYPE_OPTIONS: { type: PermitType; label: string }[] = [
+  ...PERMIT_TYPES.map((p) => ({ type: p.type as PermitType, label: p.label })),
+  { type: "OTHER", label: "Others" },
+]
 
 export const STATE_LABEL: Record<PermitState, string> = {
   DRAFT:      "Draft",
