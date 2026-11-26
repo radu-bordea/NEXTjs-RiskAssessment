@@ -12,12 +12,20 @@
  *
  * All UI pieces (Section, Field, inputs, buttons, Yes/No/N/A) come from permitFormUI.tsx.
  *
- * Not connected to DB yet — Save Draft / Issue Permit only console.log.
- * Next steps: Zod schema → server actions → Prisma.
+ * Saves to the database (WorkPermit table) with saveHotWorkPermit:
+ *  - Save Draft   → DRAFT (can be incomplete)
+ *  - Issue Permit → COMPLETED (all required fields), or CLOSED_OUT if the
+ *                   close-out in section 10 is already confirmed
+ * Validation rules live in lib/validations/hotWorkPermit.schema.ts
+ * (the same rules run here in the browser and again on the server).
  */
 
 import { useState } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
+import { toast } from "sonner"
+import { saveHotWorkPermit } from "@/app/actions/hotWorkPermit.actions"
+import { hotWorkPermitSchema, zodMessages } from "@/lib/validations/hotWorkPermit.schema"
 import {
   FIRE_PREVENTION_MEASURES,
   HOT_WORK_CHECKS,
@@ -126,6 +134,13 @@ const initialState: FormState = {
   closeOutAt: "",
 }
 
+/** "2026-11-25T08:30" (browser local time) → exact ISO time for the database */
+function toIso(value: string): string | null {
+  if (!value) return null
+  const d = new Date(value)
+  return Number.isNaN(d.getTime()) ? null : d.toISOString()
+}
+
 // ─── "All Yes" link for section headers (same look as Working Aloft) ─────────
 function AllYesButton({ onClick }: { onClick: () => void }) {
   return (
@@ -144,6 +159,8 @@ export default function HotWorkPermitForm({ vessel }: { vessel: string }) {
   const [form, setForm] = useState<FormState>(initialState)
   const [errors, setErrors] = useState<string[]>([])
   const [message, setMessage] = useState<string | null>(null)
+  const [saving, setSaving] = useState<"draft" | "issue" | null>(null)
+  const router = useRouter()
 
   const set = <K extends keyof FormState>(key: K, value: FormState[K]) =>
     setForm((f) => ({ ...f, [key]: value }))
@@ -208,44 +225,50 @@ export default function HotWorkPermitForm({ vessel }: { vessel: string }) {
   const namedWorkers = form.workers.filter((w) => w.trim())
 
   // ── Validation (only for Issue Permit — drafts can be incomplete) ──
+  /** Same Zod rules the server uses — see hotWorkPermit.schema.ts */
   function validate() {
-    const e: string[] = []
-    if (!form.date) e.push("Date is required")
-    if (!form.location.trim()) e.push("Location of work is required")
-    if (!form.description.trim()) e.push("Description of work is required")
-    if (!form.responsiblePerson.trim()) e.push("Person responsible for safety is required")
-    if (namedWorkers.length === 0) e.push("Add at least one person carrying out the hot work")
-    if (!form.validFrom || !form.validTo) e.push("Permit validity (from / to) is required")
-    else if (durationError) e.push(`Permit must end after it starts and last max ${HOT_WORK_MAX_HOURS} hours`)
-    if (!form.enclosedSpacePermit) e.push("Answer: Enclosed Space Entry Permit issued?")
-    if (!form.otherPermitsRequired) e.push("Answer: Other work permits required?")
-    if (form.otherPermitsRequired === "YES" && !form.otherPermitsSpecify.trim())
-      e.push("Specify which other permits are required")
-    if (!form.toolboxMeetingHeld) e.push("Answer: Toolbox meeting discussed and agreed?")
-    if (checksAnswered < HOT_WORK_CHECKS.length) e.push("Answer all check items 1–9")
-    if (!form.ventilationType) e.push("Select type of ventilation (item 10)")
-    if (!form.fireWatchNominated) e.push("Answer: Fire-watchmen nominated? (item 11)")
-    if (form.fireWatchNominated === "YES" && !form.fireWatchNames.trim()) e.push("Enter fire-watchmen name(s)")
-    if (form.ppe.length === 0 && !form.ppeOther.trim()) e.push("Select required personal protection (item 12)")
-    if (fireAnswered < FIRE_PREVENTION_MEASURES.length) e.push("Answer all fire prevention measures (item 14)")
-    if (!form.masterName.trim()) e.push("Master name is required")
-    if (!form.supervisorName.trim()) e.push("Supervisor name is required")
-    if (!form.authorizationConfirmed) e.push("Master / Supervisor must confirm all safety checks")
-    if (!form.workersAcknowledged) e.push("Persons carrying out hot work must acknowledge the procedures")
-    // Section 10 is optional, but if filled it must make sense
-    if (form.extensionTo && form.validTo && form.extensionTo <= form.validTo)
-      e.push("Extension must end after the original 'Valid to' time")
-    if (form.workCommencedAt && form.workCompletedAt && form.workCompletedAt <= form.workCommencedAt)
-      e.push("Work completed must be after work commenced")
-    if (form.closeOutConfirmed && (!form.closeOutOfficer.trim() || !form.closeOutAt))
-      e.push("Close-out needs the officer's name and date/time")
-    return e
+    const result = hotWorkPermitSchema.safeParse(form)
+    return result.success ? [] : zodMessages(result.error)
+  }
+
+  /** Saves to the DB. submit = false → draft, true → issue permit */
+  async function save(submit: boolean) {
+    setSaving(submit ? "issue" : "draft")
+    setMessage(null)
+    try {
+      const result = await saveHotWorkPermit(form, submit, {
+        validFrom: toIso(form.validFrom),
+        validTo: toIso(form.validTo),
+        closeOutAt: toIso(form.closeOutAt),
+      })
+
+      if (!result.success) {
+        setErrors(result.errors)
+        window.scrollTo({ top: 0, behavior: "smooth" })
+        return
+      }
+
+      setErrors([])
+      toast.success(
+        result.state === "DRAFT"
+          ? `Draft ${result.permitNo} saved`
+          : result.state === "CLOSED_OUT"
+            ? `Permit ${result.permitNo} issued and closed out`
+            : `Permit ${result.permitNo} issued`
+      )
+      router.push(WORK_PERMITS_BASE)
+      router.refresh()
+    } catch (error) {
+      console.error("save hot work permit:", error)
+      toast.error("Could not save the permit. Check your connection and try again.")
+    } finally {
+      setSaving(null)
+    }
   }
 
   function handleSaveDraft() {
     setErrors([])
-    console.log("SAVE DRAFT", { vessel, ...form })
-    setMessage("Draft saved (UI only — not stored in the database yet).")
+    void save(false)
   }
 
   function handleIssue() {
@@ -256,8 +279,7 @@ export default function HotWorkPermitForm({ vessel }: { vessel: string }) {
       window.scrollTo({ top: 0, behavior: "smooth" })
       return
     }
-    console.log("ISSUE PERMIT", { vessel, ...form })
-    setMessage("Permit ready to issue (UI only — not stored in the database yet).")
+    void save(true)
   }
 
   return (
@@ -629,16 +651,18 @@ export default function HotWorkPermitForm({ vessel }: { vessel: string }) {
           <button
             type="button"
             onClick={handleSaveDraft}
-            className="px-4 py-2.5 rounded-lg border border-blue-300 dark:border-blue-800 text-sm font-medium text-blue-900 dark:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-950/40 cursor-pointer"
+            disabled={saving !== null}
+            className="px-4 py-2.5 rounded-lg border border-blue-300 dark:border-blue-800 text-sm font-medium text-blue-900 dark:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-950/40 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Save Draft
+            {saving === "draft" ? "Saving…" : "Save Draft"}
           </button>
           <button
             type="button"
             onClick={handleIssue}
-            className="px-5 py-2.5 rounded-lg bg-blue-900 hover:bg-blue-800 text-sm font-semibold text-white cursor-pointer"
+            disabled={saving !== null}
+            className="px-5 py-2.5 rounded-lg bg-blue-900 hover:bg-blue-800 text-sm font-semibold text-white cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Issue Permit
+            {saving === "issue" ? "Issuing…" : "Issue Permit"}
           </button>
         </div>
       </div>

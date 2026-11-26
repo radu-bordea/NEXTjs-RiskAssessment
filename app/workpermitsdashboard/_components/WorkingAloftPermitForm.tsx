@@ -10,11 +10,19 @@
  *  → Authorization  →  Section 3: completion (filled in later)
  *
  * All UI pieces come from permitFormUI.tsx (same look as the other permits).
- * Not connected to DB yet — Save Draft / Issue Permit only console.log.
+ *
+ * Saves to the database (WorkPermit table) with saveWorkingAloftPermit:
+ *  - Save Draft   → DRAFT (can be incomplete)
+ *  - Issue Permit → COMPLETED, or CLOSED_OUT if section 3 (completion) is confirmed
+ * Validation rules live in lib/validations/workingAloftPermit.schema.ts
  */
 
 import { useState } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
+import { toast } from "sonner"
+import { saveWorkingAloftPermit } from "@/app/actions/workingAloftPermit.actions"
+import { workingAloftPermitSchema as permitSchema, zodMessages } from "@/lib/validations/workingAloftPermit.schema"
 import {
   ALOFT_CHECKS,
   AUXILIARY_ITEMS,
@@ -105,11 +113,20 @@ const initialState: FormState = {
 
 const countAnswered = (a: Answers) => Object.values(a).filter(Boolean).length
 
+/** "2026-11-25T08:30" (browser local time) → exact ISO time for the database */
+function toIso(value: string): string | null {
+  if (!value) return null
+  const d = new Date(value)
+  return Number.isNaN(d.getTime()) ? null : d.toISOString()
+}
+
 // ─── Main form ───────────────────────────────────────────────────────────────
 export default function WorkingAloftPermitForm({ vessel }: { vessel: string }) {
   const [form, setForm] = useState<FormState>(initialState)
   const [errors, setErrors] = useState<string[]>([])
   const [message, setMessage] = useState<string | null>(null)
+  const [saving, setSaving] = useState<"draft" | "issue" | null>(null)
+  const router = useRouter()
 
   const set = <K extends keyof FormState>(key: K, value: FormState[K]) =>
     setForm((f) => ({ ...f, [key]: value }))
@@ -149,45 +166,52 @@ export default function WorkingAloftPermitForm({ vessel }: { vessel: string }) {
   const aloftDone = countAnswered(form.aloftChecks)
   const oversideDone = countAnswered(form.oversideChecks)
 
-  const namedPersons = form.persons.filter((p) => p.trim())
-  const permitRefs = form.otherPermitRefs.filter((r) => r.trim())
 
   // ── Validation (only for Issue Permit — drafts can be incomplete) ──
+  /** Same Zod rules the server uses — see the schema file */
   function validate() {
-    const e: string[] = []
-    if (!form.location.trim()) e.push("Location of work is required")
-    if (!form.jobDescription.trim()) e.push("Job description is required")
-    if (namedPersons.length === 0) e.push("Add at least one person involved")
+    const result = permitSchema.safeParse(form)
+    return result.success ? [] : zodMessages(result.error)
+  }
 
-    if (!form.validFrom || !form.validTo) e.push("Permit validity (from / to) is required")
-    else if (durationError) e.push(`Permit must end after it starts and last max ${WORKING_ALOFT_MAX_HOURS} hours`)
+  /** Saves to the DB. submit = false → draft, true → issue permit */
+  async function save(submit: boolean) {
+    setSaving(submit ? "issue" : "draft")
+    setMessage(null)
+    try {
+      const result = await saveWorkingAloftPermit(form, submit, {
+        validFrom: toIso(form.validFrom),
+        validTo: toIso(form.validTo),
+        closeOutAt: toIso(form.completedAt),
+      })
 
-    if (!form.otherPermitsRequired) e.push("Answer: Other work permits required for this job?")
-    if (form.otherPermitsRequired === "YES" && permitRefs.length === 0)
-      e.push("Enter the reference number of the other work permit(s)")
+      if (!result.success) {
+        setErrors(result.errors)
+        window.scrollTo({ top: 0, behavior: "smooth" })
+        return
+      }
 
-    if (equipmentDone < EQUIPMENT_ITEMS.length) e.push("Section 1: answer all equipment items")
-    if (auxiliaryDone < AUXILIARY_ITEMS.length) e.push("Section 1: answer all auxiliary equipment & warnings items")
-    if (form.auxOtherText.trim() && !form.auxOtherAnswer) e.push("Section 1: answer Yes / No for “Other”")
-
-    if (aloftDone < ALOFT_CHECKS.length) e.push("Section 2: answer all working aloft questions")
-    if (oversideDone < OVERSIDE_CHECKS.length) e.push("Section 2: answer all working overside questions")
-
-    if (!form.discussedConfirmed) e.push("Confirm the work plan meeting and risk assessment")
-    if (!form.teamLeaderName.trim()) e.push("Authorized team leader is required")
-    if (!form.responsibleOfficerName.trim()) e.push("Responsible officer for work aloft / overside is required")
-    if (!form.masterName.trim()) e.push("Master is required")
-
-    // Section 3 is optional, but must make sense if filled
-    if (form.withdrawnConfirmed && (!form.completedAt || !form.completionOfficerName.trim()))
-      e.push("Section 3: completion needs the time and the responsible officer's name")
-    return e
+      setErrors([])
+      toast.success(
+        result.state === "DRAFT"
+          ? `Draft ${result.permitNo} saved`
+          : result.state === "CLOSED_OUT"
+            ? `Permit ${result.permitNo} issued and closed out`
+            : `Permit ${result.permitNo} issued`
+      )
+      router.push(WORK_PERMITS_BASE)
+      router.refresh()
+    } catch (error) {
+      console.error("save permit:", error)
+      toast.error("Could not save the permit. Check your connection and try again.")
+    } finally {
+      setSaving(null)
+    }
   }
 
   function handleSaveDraft() {
     setErrors([])
-    console.log("SAVE DRAFT", { vessel, ...form })
-    setMessage("Draft saved (UI only — not stored in the database yet).")
+    void save(false)
   }
 
   function handleIssue() {
@@ -198,8 +222,7 @@ export default function WorkingAloftPermitForm({ vessel }: { vessel: string }) {
       window.scrollTo({ top: 0, behavior: "smooth" })
       return
     }
-    console.log("ISSUE PERMIT", { vessel, ...form })
-    setMessage("Permit ready to issue (UI only — not stored in the database yet).")
+    void save(true)
   }
 
   /** "All Yes" link in a section header */
@@ -513,16 +536,18 @@ export default function WorkingAloftPermitForm({ vessel }: { vessel: string }) {
           <button
             type="button"
             onClick={handleSaveDraft}
-            className="px-4 py-2.5 rounded-lg border border-blue-300 dark:border-blue-800 text-sm font-medium text-blue-900 dark:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-950/40 cursor-pointer"
+            disabled={saving !== null}
+            className="px-4 py-2.5 rounded-lg border border-blue-300 dark:border-blue-800 text-sm font-medium text-blue-900 dark:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-950/40 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Save Draft
+            {saving === "draft" ? "Saving…" : "Save Draft"}
           </button>
           <button
             type="button"
             onClick={handleIssue}
-            className="px-5 py-2.5 rounded-lg bg-blue-900 hover:bg-blue-800 text-sm font-semibold text-white cursor-pointer"
+            disabled={saving !== null}
+            className="px-5 py-2.5 rounded-lg bg-blue-900 hover:bg-blue-800 text-sm font-semibold text-white cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Issue Permit
+            {saving === "issue" ? "Issuing…" : "Issue Permit"}
           </button>
         </div>
       </div>

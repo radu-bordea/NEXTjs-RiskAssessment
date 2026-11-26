@@ -30,6 +30,7 @@ model User {
   safetyMeetingsStateUpdated SafetyMeeting[] @relation("SafetyMeetingStateUpdatedBy")
 
   workPermitsCreated WorkPermit[] @relation("WorkPermitCreatedBy")
+  workPermitsClosed  WorkPermit[] @relation("WorkPermitClosedBy")
 }
 
 model Risk {
@@ -398,6 +399,16 @@ model WorkPermit {
   pdfFileName String? // original file name, e.g. "HotWork_0312.pdf"
 
   // ─── Relations ────────────────────────────────────────────────────
+  // Form answers (checklists, people, gas tests...) — one JSON per permit, shape depends on type.
+  // Manual uploads leave this empty. Analytics uses the columns above, not this.
+  details     Json?
+
+  // State history
+  completedAt   DateTime?
+  closedOutAt   DateTime?
+  closedOutById String?
+  closedOutBy   User?     @relation("WorkPermitClosedBy", fields: [closedOutById], references: [id])
+
   createdById String
   createdBy   User   @relation("WorkPermitCreatedBy", fields: [createdById], references: [id])
 

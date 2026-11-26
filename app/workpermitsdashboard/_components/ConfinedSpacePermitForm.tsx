@@ -12,11 +12,19 @@
  *  6. Pre-entry atmosphere test    12. Completion certificate
  *
  * Sections 10–12 are filled in DURING / AFTER the work → optional when creating.
- * Not connected to DB yet — Save Draft / Issue Permit only console.log.
+ *
+ * Saves to the database (WorkPermit table) with saveConfinedSpacePermit:
+ *  - Save Draft   → DRAFT (can be incomplete)
+ *  - Issue Permit → COMPLETED, or CLOSED_OUT if the completion certificate is confirmed
+ * Validation rules live in lib/validations/confinedSpacePermit.schema.ts
  */
 
 import { useState } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
+import { toast } from "sonner"
+import { saveConfinedSpacePermit } from "@/app/actions/confinedSpacePermit.actions"
+import { confinedSpacePermitSchema as permitSchema, zodMessages } from "@/lib/validations/confinedSpacePermit.schema"
 import {
   BA_TESTS,
   CONFINED_SPACE_MAX_HOURS,
@@ -162,6 +170,13 @@ const countTrue = (c: Checks) => Object.values(c).filter(Boolean).length
 
 const MAX_PERSONNEL = 5 // paper form has 5 rows — ask client if this is a hard limit
 
+/** "2026-11-25T08:30" (browser local time) → exact ISO time for the database */
+function toIso(value: string): string | null {
+  if (!value) return null
+  const d = new Date(value)
+  return Number.isNaN(d.getTime()) ? null : d.toISOString()
+}
+
 // ─── Small local pieces ──────────────────────────────────────────────────────
 function GasBadge({ status }: { status: "" | "SAFE" | "UNSAFE" }) {
   if (!status) return null
@@ -272,6 +287,8 @@ export default function ConfinedSpacePermitForm({ vessel }: { vessel: string }) 
   const [form, setForm] = useState<FormState>(initialState)
   const [errors, setErrors] = useState<string[]>([])
   const [message, setMessage] = useState<string | null>(null)
+  const [saving, setSaving] = useState<"draft" | "issue" | null>(null)
+  const router = useRouter()
 
   const set = <K extends keyof FormState>(key: K, value: FormState[K]) =>
     setForm((f) => ({ ...f, [key]: value }))
@@ -324,55 +341,56 @@ export default function ConfinedSpacePermitForm({ vessel }: { vessel: string }) 
   const preEntryUnsafe = preEntryStatuses.some((s) => s === "UNSAFE")
 
   const namedPersonnel = form.personnel.filter((p) => p.trim())
-  const namedRescue = form.rescueMembers.filter((p) => p.trim())
 
   const unsafeAtmoRows = form.atmosphereChecks.filter((r) =>
     GAS_KEYS.some((g) => gasStatus(g, r[g]) === "UNSAFE")
   ).length
 
   // ── Validation (only for Issue Permit — drafts can be incomplete) ──
+  /** Same Zod rules the server uses — see the schema file */
   function validate() {
-    const e: string[] = []
-    if (!form.location.trim()) e.push("Location / name of enclosed space is required")
-    if (!form.reason.trim()) e.push("Reason for entry is required")
-    if (!form.validFrom || !form.validTo) e.push("Permit validity (from / to) is required")
-    else if (durationError) e.push(`Permit must end after it starts and last max ${CONFINED_SPACE_MAX_HOURS} hours`)
-    if (!form.permitPosted) e.push("Confirm permit posted outside the space with a “SAFE FOR ENTRY” tag")
+    const result = permitSchema.safeParse(form)
+    return result.success ? [] : zodMessages(result.error)
+  }
 
-    if (officerDone < OFFICER_CHECKS.length) e.push(`Section A: confirm all ${OFFICER_CHECKS.length} responsible officer checks`)
-    if (entrantDone < ENTRANT_CHECKS.length) e.push(`Section B: confirm all ${ENTRANT_CHECKS.length} person-entering checks`)
-    const minutes = Number(form.reportingIntervalMin)
-    if (!form.reportingIntervalMin || !(minutes > 0)) e.push("Section B: enter the agreed reporting interval (minutes)")
-    if (equipmentDone < EQUIPMENT_ITEMS.length) e.push("Section C: confirm all SCBA and equipment checks")
+  /** Saves to the DB. submit = false → draft, true → issue permit */
+  async function save(submit: boolean) {
+    setSaving(submit ? "issue" : "draft")
+    setMessage(null)
+    try {
+      const result = await saveConfinedSpacePermit(form, submit, {
+        validFrom: toIso(form.validFrom),
+        validTo: toIso(form.validTo),
+        closeOutAt: toIso(form.completionAt),
+      })
 
-    if (!preEntryComplete) e.push("Pre-entry atmosphere test: enter all 4 readings")
-    else if (preEntryUnsafe) e.push("⚠ Pre-entry atmosphere is NOT within safe limits — permit cannot be issued")
-    if (!form.preEntryBy.trim()) e.push("Pre-entry atmosphere test: enter who tested")
-    if (!form.preEntryAt) e.push("Pre-entry atmosphere test: enter the test time")
+      if (!result.success) {
+        setErrors(result.errors)
+        window.scrollTo({ top: 0, behavior: "smooth" })
+        return
+      }
 
-    if (emergencyDone < EMERGENCY_EQUIPMENT.length) e.push("Confirm all emergency equipment at the entrance")
-
-    if (!form.master.name.trim() || !form.master.at) e.push("Master or nominated personnel: name and date/time")
-    if (!form.supervisor.name.trim() || !form.supervisor.at) e.push("Responsible for supervising entry: name and date/time")
-    if (!form.officerInCharge.name.trim() || !form.officerInCharge.at) e.push("Responsible officer in charge: name and date/time")
-    if (!form.rescueLeader.trim()) e.push("Rescue team leader is required")
-    if (namedRescue.length === 0) e.push("Add at least one rescue team member")
-    if (!form.allSatisfied) e.push("Confirm all safety checks and precautions have been taken")
-    if (namedPersonnel.length === 0) e.push("Add at least one person entering the space")
-
-    // Optional sections — must make sense if filled
-    form.entryLog.forEach((r, i) => {
-      if (r.timeIn && r.timeOut && r.timeOut <= r.timeIn) e.push(`Entry log row ${i + 1}: time out must be after time in`)
-    })
-    if (form.completionConfirmed && (!form.completionOfficer.trim() || !form.completionAt))
-      e.push("Completion certificate needs the officer's name and date/time")
-    return e
+      setErrors([])
+      toast.success(
+        result.state === "DRAFT"
+          ? `Draft ${result.permitNo} saved`
+          : result.state === "CLOSED_OUT"
+            ? `Permit ${result.permitNo} issued and closed out`
+            : `Permit ${result.permitNo} issued`
+      )
+      router.push(WORK_PERMITS_BASE)
+      router.refresh()
+    } catch (error) {
+      console.error("save permit:", error)
+      toast.error("Could not save the permit. Check your connection and try again.")
+    } finally {
+      setSaving(null)
+    }
   }
 
   function handleSaveDraft() {
     setErrors([])
-    console.log("SAVE DRAFT", { vessel, ...form })
-    setMessage("Draft saved (UI only — not stored in the database yet).")
+    void save(false)
   }
 
   function handleIssue() {
@@ -383,8 +401,7 @@ export default function ConfinedSpacePermitForm({ vessel }: { vessel: string }) 
       window.scrollTo({ top: 0, behavior: "smooth" })
       return
     }
-    console.log("ISSUE PERMIT", { vessel, ...form })
-    setMessage("Permit ready to issue (UI only — not stored in the database yet).")
+    void save(true)
   }
 
   /** "Tick all" link for long checklists */
@@ -818,16 +835,18 @@ export default function ConfinedSpacePermitForm({ vessel }: { vessel: string }) 
           <button
             type="button"
             onClick={handleSaveDraft}
-            className="px-4 py-2.5 rounded-lg border border-blue-300 dark:border-blue-800 text-sm font-medium text-blue-900 dark:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-950/40 cursor-pointer"
+            disabled={saving !== null}
+            className="px-4 py-2.5 rounded-lg border border-blue-300 dark:border-blue-800 text-sm font-medium text-blue-900 dark:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-950/40 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Save Draft
+            {saving === "draft" ? "Saving…" : "Save Draft"}
           </button>
           <button
             type="button"
             onClick={handleIssue}
-            className="px-5 py-2.5 rounded-lg bg-blue-900 hover:bg-blue-800 text-sm font-semibold text-white cursor-pointer"
+            disabled={saving !== null}
+            className="px-5 py-2.5 rounded-lg bg-blue-900 hover:bg-blue-800 text-sm font-semibold text-white cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Issue Permit
+            {saving === "issue" ? "Issuing…" : "Issue Permit"}
           </button>
         </div>
       </div>
