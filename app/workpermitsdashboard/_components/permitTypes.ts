@@ -75,6 +75,21 @@ export const ALL_PERMIT_TYPE_OPTIONS: { type: PermitType; label: string }[] = [
   { type: "OTHER", label: "Others" },
 ]
 
+/**
+ * An existing permit opened in a form for 👁 view or ✏️ edit.
+ * `form` = the saved answers (the `details` JSON); missing fields fall back to the form's defaults.
+ */
+export type ExistingPermit<F> = {
+  id: string
+  permitNo: string
+  state: PermitState
+  form: Partial<F>
+  createdByName?: string | null
+  /** ISO string */
+  closedOutAt?: string | null
+  closedOutByName?: string | null
+}
+
 export const STATE_LABEL: Record<PermitState, string> = {
   DRAFT:      "Draft",
   COMPLETED:  "Completed",

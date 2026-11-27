@@ -34,7 +34,8 @@ import {
   VENTILATION_TYPES,
   type Answer,
 } from "./hotWorkOptions"
-import { WORK_PERMITS_BASE } from "./permitTypes"
+import { WORK_PERMITS_BASE, type ExistingPermit } from "./permitTypes"
+import { PermitActionBar, PermitStatusBar, permitFormMode } from "./permitFormParts"
 import {
   AddButton,
   CheckItem,
@@ -134,6 +135,15 @@ const initialState: FormState = {
   closeOutAt: "",
 }
 
+/** Saved answers (from the DB) → full form state; new questions get empty answers */
+const fromSaved = (saved: Partial<FormState>): FormState => ({
+  ...initialState,
+  ...saved,
+  workers: saved.workers?.length ? saved.workers : [""],
+  checks: { ...initialState.checks, ...saved.checks },
+  fireMeasures: { ...initialState.fireMeasures, ...saved.fireMeasures },
+})
+
 /** "2026-11-25T08:30" (browser local time) → exact ISO time for the database */
 function toIso(value: string): string | null {
   if (!value) return null
@@ -155,8 +165,22 @@ function AllYesButton({ onClick }: { onClick: () => void }) {
 }
 
 // ─── Main form ───────────────────────────────────────────────────────────────
-export default function HotWorkPermitForm({ vessel }: { vessel: string }) {
-  const [form, setForm] = useState<FormState>(initialState)
+export default function HotWorkPermitForm({
+  vessel,
+  permit,
+  readOnly = false,
+  canEdit = false,
+}: {
+  vessel: string
+  /** Existing permit → edit (or view with readOnly). Empty → new permit */
+  permit?: ExistingPermit<FormState>
+  /** 👁 View page: everything read-only */
+  readOnly?: boolean
+  /** View page: show the ✏️ Edit button */
+  canEdit?: boolean
+}) {
+  const [form, setForm] = useState<FormState>(() => (permit ? fromSaved(permit.form) : initialState))
+  const mode = permitFormMode(permit, readOnly)
   const [errors, setErrors] = useState<string[]>([])
   const [message, setMessage] = useState<string | null>(null)
   const [saving, setSaving] = useState<"draft" | "issue" | null>(null)
@@ -236,11 +260,16 @@ export default function HotWorkPermitForm({ vessel }: { vessel: string }) {
     setSaving(submit ? "issue" : "draft")
     setMessage(null)
     try {
-      const result = await saveHotWorkPermit(form, submit, {
-        validFrom: toIso(form.validFrom),
-        validTo: toIso(form.validTo),
-        closeOutAt: toIso(form.closeOutAt),
-      })
+      const result = await saveHotWorkPermit(
+        form,
+        submit,
+        {
+          validFrom: toIso(form.validFrom),
+          validTo: toIso(form.validTo),
+          closeOutAt: toIso(form.closeOutAt),
+        },
+        permit?.id
+      )
 
       if (!result.success) {
         setErrors(result.errors)
@@ -250,13 +279,16 @@ export default function HotWorkPermitForm({ vessel }: { vessel: string }) {
 
       setErrors([])
       toast.success(
-        result.state === "DRAFT"
-          ? `Draft ${result.permitNo} saved`
-          : result.state === "CLOSED_OUT"
-            ? `Permit ${result.permitNo} issued and closed out`
-            : `Permit ${result.permitNo} issued`
+        mode === "correct"
+          ? `Changes to ${result.permitNo} saved`
+          : result.state === "DRAFT"
+            ? `Draft ${result.permitNo} saved`
+            : result.state === "CLOSED_OUT"
+              ? `Permit ${result.permitNo} issued and closed out`
+              : `Permit ${result.permitNo} issued`
       )
-      router.push(WORK_PERMITS_BASE)
+      // New permit → back to the list; existing permit → its view page
+      router.push(permit ? `${WORK_PERMITS_BASE}/${result.id}` : WORK_PERMITS_BASE)
       router.refresh()
     } catch (error) {
       console.error("save hot work permit:", error)
@@ -320,6 +352,8 @@ export default function HotWorkPermitForm({ vessel }: { vessel: string }) {
         </span>
       </div>
 
+      <PermitStatusBar permit={permit} mode={mode} />
+
       {/* ── Messages ─────────────────────────────────────────────── */}
       {errors.length > 0 && (
         <div className="mb-6 rounded-lg border border-red-300 dark:border-red-900 bg-red-50 dark:bg-red-950/30 px-4 py-3">
@@ -339,7 +373,8 @@ export default function HotWorkPermitForm({ vessel }: { vessel: string }) {
         </div>
       )}
 
-      <div className="space-y-6">
+      {/* View mode: every input inside is read-only */}
+      <fieldset disabled={mode === "view"} className="space-y-6 min-w-0">
 
         {/* 1 ── General ─────────────────────────────────────────── */}
         <Section number={1} title="General">
@@ -643,29 +678,17 @@ export default function HotWorkPermitForm({ vessel }: { vessel: string }) {
             necessary safety precautions implemented before work commences.
           </p>
         </Section>
-      </div>
+      </fieldset>
 
       {/* ── Sticky action bar ─────────────────────────────────────── */}
-      <div className="fixed bottom-0 inset-x-0 border-t border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-950/95 backdrop-blur">
-        <div className={`${FORM_WIDTH} mx-auto px-4 sm:px-6 py-3 flex items-center justify-end gap-3`}>
-          <button
-            type="button"
-            onClick={handleSaveDraft}
-            disabled={saving !== null}
-            className="px-4 py-2.5 rounded-lg border border-blue-300 dark:border-blue-800 text-sm font-medium text-blue-900 dark:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-950/40 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {saving === "draft" ? "Saving…" : "Save Draft"}
-          </button>
-          <button
-            type="button"
-            onClick={handleIssue}
-            disabled={saving !== null}
-            className="px-5 py-2.5 rounded-lg bg-blue-900 hover:bg-blue-800 text-sm font-semibold text-white cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {saving === "issue" ? "Issuing…" : "Issue Permit"}
-          </button>
-        </div>
-      </div>
+      <PermitActionBar
+        mode={mode}
+        permitId={permit?.id}
+        canEdit={canEdit}
+        saving={saving}
+        onSaveDraft={handleSaveDraft}
+        onIssue={handleIssue}
+      />
     </div>
   )
 }
