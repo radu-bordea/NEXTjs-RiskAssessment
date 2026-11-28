@@ -10,6 +10,7 @@
  *  - "edit"    → existing DRAFT             → Save Draft + Issue Permit
  *  - "correct" → issued permit, Admin only  → Save Changes (full validation)
  *  - "view"    → read-only (👁)              → Back + Edit (if allowed)
+ *                 + 📄 Download PDF link in the status bar (not for drafts)
  */
 
 import Link from "next/link"
@@ -61,6 +62,15 @@ export function PermitStatusBar({
           >
             ✏️ {modeText}
           </span>
+        )}
+        {mode === "view" && permit.state !== "DRAFT" && (
+          // <a>, not <Link>: the route returns a file download
+          <a
+            href={`${WORK_PERMITS_BASE}/${permit.id}/pdf`}
+            className="ml-auto inline-flex items-center gap-1 rounded-md border border-blue-300 dark:border-blue-800 px-3 py-1.5 text-xs font-semibold text-blue-900 dark:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-950/40"
+          >
+            📄 Download PDF
+          </a>
         )}
       </div>
       {(permit.createdByName || closedAt) && (
